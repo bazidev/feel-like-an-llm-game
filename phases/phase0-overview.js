@@ -720,6 +720,8 @@ window.phase0 = {
             setTimeout(() => {
                 messageDiv.remove();
                 style.remove();
+                // Start timer AFTER avatar setup
+                Game.startTimer();
                 Game.nextPhase();
             }, 300);
         }, 2000);

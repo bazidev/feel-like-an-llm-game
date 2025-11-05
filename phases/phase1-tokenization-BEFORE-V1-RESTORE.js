@@ -1,13 +1,13 @@
-// Phase 1: Tokenization - V1 DESIGN RESTORED
+// Phase 1: Tokenization - V1 DESIGN WITH PROPER LOGIC
 window.phase1 = {
     currentStep: 'concept1', // 'concept1' -> 'concept2' -> 'examples' -> 'yourdata' -> 'info1' -> 'info2' -> 'recap'
     currentExample: 0,
     
     // For interactive tokenization
-    userSplits: [],
-    validatedTokens: [],
+    userSplits: [],         // Where user clicked (character indices)
+    validatedTokens: [],    // Array of correctly validated tokens
     currentText: '',
-    correctTokens: [],
+    correctTokens: [],      // Target tokens to match
     colorIndex: 0,
     
     tokenColors: [
@@ -15,57 +15,42 @@ window.phase1 = {
         '#ec4899', '#14b8a6', '#f97316', '#06b6d4'
     ],
     
-    // V1 CHALLENGES (5 total)
-    challenges: [
+    tutorialChallenges: [
         {
             word: "playing",
-            question: "Challenge 1: How should this tokenize?",
-            explanation: "Rule: Common suffixes like -ing, -ed, -ness typically split into separate tokens",
             options: [
-                { tokens: ["playing"], correct: false, why: "❌ Too large - common suffixes like '-ing' split separately" },
-                { tokens: ["play", "ing"], correct: true, why: "✓ Perfect! You recognized the pattern: 'play' (root) + 'ing' (suffix). This helps the AI understand word relationships like play/playing/played." },
-                { tokens: ["p", "l", "a", "y", "i", "n", "g"], correct: false, why: "❌ Too granular - we don't split to individual letters" }
-            ]
-        },
-        {
-            word: "Hello World",
-            question: "Challenge 2: How does this tokenize?",
-            explanation: "Rule: Spaces and whitespace are their own tokens",
-            options: [
-                { tokens: ["Hello World"], correct: false, why: "❌ Spaces must be tokens! Otherwise you can't distinguish 'Hello World' from 'HelloWorld'" },
-                { tokens: ["Hello", " ", "World"], correct: true, why: "✓ Excellent! You caught the space! Spaces are tokens because they're meaningful separators. Token 1='Hello', Token 2=' ', Token 3='World'." },
-                { tokens: ["Hel", "lo", "Wor", "ld"], correct: false, why: "❌ Random splits don't follow learned patterns" }
-            ]
+                { tokens: ["play", "ing"], correct: true },
+                { tokens: ["playing"], correct: false },
+                { tokens: ["p", "l", "a", "y", "i", "n", "g"], correct: false }
+            ],
+            explanation: "The suffix '-ing' splits from the root word"
         },
         {
             word: "I'm",
-            question: "Challenge 3: How do contractions split?",
-            explanation: "Rule: Contractions split at the apostrophe, keeping it with the suffix",
             options: [
-                { tokens: ["I'm"], correct: false, why: "❌ Contractions typically split - 'I am' became 'I'm', so it splits back" },
-                { tokens: ["I", "'m"], correct: true, why: "✓ Spot on! Contractions split: 'I' + ''m'. The apostrophe stays with 'm' because that's how the AI learned the pattern from training data." },
-                { tokens: ["I", "'", "m"], correct: false, why: "❌ The apostrophe usually groups with the following letter, not as a separate token" }
-            ]
+                { tokens: ["I", "'m"], correct: true },
+                { tokens: ["I'm"], correct: false },
+                { tokens: ["I", "m"], correct: false }
+            ],
+            explanation: "Contractions split at the apostrophe"
         },
         {
-            word: "unhappiness",
-            question: "Challenge 4: How do prefixes and suffixes combine?",
-            explanation: "Rule: Both prefixes (un-, re-) and suffixes (-ness, -ment) can split",
+            word: "happiness",
             options: [
-                { tokens: ["unhappiness"], correct: false, why: "❌ Too large - both 'un-' (prefix) and '-ness' (suffix) are common patterns that split" },
-                { tokens: ["un", "happy", "ness"], correct: true, why: "✓ Perfect understanding! Prefix 'un' + root 'happy' + suffix 'ness'. This is efficient - the AI learns 'happy' once and recognizes unhappy, happiness, happily, etc." },
-                { tokens: ["u", "n", "h", "a", "p", "p", "y"], correct: false, why: "❌ Way too granular - letters aren't tokens" }
-            ]
+                { tokens: ["happi", "ness"], correct: true },
+                { tokens: ["happiness"], correct: false },
+                { tokens: ["happy", "ness"], correct: false }
+            ],
+            explanation: "The suffix '-ness' splits, with spelling adjustment"
         },
         {
-            word: "rocks!",
-            question: "Challenge 5: What about punctuation?",
-            explanation: "Rule: Punctuation marks are separate tokens",
+            word: "walked",
             options: [
-                { tokens: ["rocks!"], correct: false, why: "❌ Punctuation splits separately - it has its own meaning!" },
-                { tokens: ["rocks", "!"], correct: true, why: "✓ You got it! Punctuation is always separate: 'rocks' + '!'. This lets the AI understand sentence structure, questions (?), and emphasis (!)." },
-                { tokens: ["ro", "cks", "!"], correct: false, why: "❌ Don't split the word itself randomly - only the punctuation" }
-            ]
+                { tokens: ["walk", "ed"], correct: true },
+                { tokens: ["walked"], correct: false },
+                { tokens: ["wal", "ked"], correct: false }
+            ],
+            explanation: "The suffix '-ed' splits from the root verb"
         }
     ],
     
@@ -87,7 +72,7 @@ window.phase1 = {
         }
     },
     
-    // CONCEPT PAGES (same as before)
+    // STEP 1: Why LLMs tokenize + How we simplified
     renderConcept1(container) {
         container.innerHTML = `
             <div style="height: 100%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
@@ -157,6 +142,7 @@ window.phase1 = {
         `;
     },
     
+    // STEP 2: Rules + Reality check
     renderConcept2(container) {
         container.innerHTML = `
             <div style="height: 100%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
@@ -170,7 +156,7 @@ window.phase1 = {
                         Break text into tokens - the atoms of AI understanding
                     </p>
                     
-                    <!-- Rules Card -->
+                    <!-- Rules Card (OLD DESIGN) -->
                     <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(191, 0, 255, 0.05)); 
                                border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 16px; padding: 24px; margin-bottom: 24px; text-align: left;">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
@@ -197,7 +183,7 @@ window.phase1 = {
                         </div>
                     </div>
                     
-                    <!-- Reality Check -->
+                    <!-- Reality Check (OLD DESIGN) -->
                     <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05)); 
                                border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 16px; padding: 24px; margin-bottom: 32px;">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
@@ -246,153 +232,150 @@ window.phase1 = {
         `;
     },
     
-    // EXAMPLES - V1 DESIGN EXACT REPLICA
+    // STEP 3: Multiple choice examples (V1 STYLE)
     renderExamples(container) {
-        const challenge = this.challenges[this.currentExample];
+        const challenge = this.tutorialChallenges[this.currentExample];
         if (!challenge) {
             this.currentStep = 'yourdata';
             this.render(container);
             return;
         }
         
+        // Shuffle options
+        const shuffledOptions = [...challenge.options].sort(() => Math.random() - 0.5);
+        
         container.innerHTML = `
-            <div class="phase">
-                <!-- Left Sidebar -->
-                <div class="phase-sidebar">
-                    <div>
-                        <h2 class="phase-title">Tokenization: Pattern Rules</h2>
-                        <p class="phase-subtitle">You don't understand words - you split by patterns</p>
+            <div style="display: grid; grid-template-columns: 350px 1fr; height: 100%; overflow: hidden;">
+                
+                <!-- Sidebar -->
+                <div style="background: rgba(0, 0, 0, 0.4); padding: 32px 24px; overflow-y: auto; border-right: 2px solid rgba(0, 212, 255, 0.3);">
+                    <h2 style="font-size: 20px; color: var(--primary); margin-bottom: 12px; font-weight: 600;">Tokenization: Pattern Rules</h2>
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 28px;">
+                        You don't understand words - you split by patterns
+                    </p>
+                    <p style="font-size: 12px; color: rgba(255, 255, 255, 0.5); line-height: 1.6; margin-bottom: 32px;">
+                        You're a machine following rules. You split text into tokens based on patterns you learned during training
+                        - not because you "understand" language.
+                    </p>
+                    
+                    <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(191, 0, 255, 0.05)); 
+                               border: 2px solid rgba(0, 212, 255, 0.25); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                        <h3 style="font-size: 14px; color: #f59e0b; margin-bottom: 14px; font-weight: 600;">Tokenization Rules</h3>
+                        <div style="font-size: 12px; line-height: 1.8; color: var(--text-secondary);">
+                            <div style="margin-bottom: 10px;">
+                                <strong style="color: var(--primary);">1. Common suffixes split:</strong> -ing, -ed, -ness
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <strong style="color: var(--primary);">2. Spaces are tokens</strong>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <strong style="color: var(--primary);">3. Punctuation separates</strong>
+                            </div>
+                            <div>
+                                <strong style="color: var(--primary);">4. Common prefixes split:</strong> un-, re-
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="phase-description">
-                        You're a machine following rules. You split text into tokens based on patterns you learned during training - not because you "understand" language.
-                    </div>
-                    
-                    <div class="hint-section">
-                        <h4>Tokenization Rules</h4>
-                        <p><strong>1. Common suffixes split:</strong> -ing, -ed, -ness<br>
-                        <strong>2. Spaces are tokens</strong><br>
-                        <strong>3. Punctuation separates</strong><br>
-                        <strong>4. Common prefixes split:</strong> un-, re-</p>
-                    </div>
-                    
-                    <div style="padding: 12px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px;">
-                        <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0; line-height: 1.6;">
-                            <strong>Reality Check:</strong> You learned these patterns from millions of text examples. You don't "know" what "playing" means - you just pattern-match that "-ing" usually splits.
+                    <div style="background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(239, 68, 68, 0.05)); 
+                               border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 18px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                            <span style="font-size: 18px;">⚡</span>
+                            <h3 style="font-size: 13px; color: #ef4444; margin: 0; font-weight: 600;">Reality Check:</h3>
+                        </div>
+                        <p style="font-size: 11px; line-height: 1.6; color: rgba(255, 255, 255, 0.65); margin: 0;">
+                            You learned these patterns from millions of text examples. You don't "know" what 
+                            "playing" means - you just pattern-match that "-ing" usually splits.
                         </p>
                     </div>
                 </div>
                 
-                <!-- Right Content Area -->
-                <div class="phase-content">
-                
-                    <div style="width: 100%; max-width: 600px;">
-                        <div style="margin-bottom: 24px; text-align: center;">
-                            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">
-                                ${this.currentExample + 1} of ${this.challenges.length}
-                            </p>
-                            <h3 style="font-size: 16px; color: var(--text-primary); margin-bottom: 12px;">${challenge.question}</h3>
-                            <p style="font-size: 13px; color: rgba(0, 245, 255, 0.8); padding: 10px 16px; background: rgba(0, 245, 255, 0.05); border-radius: 8px; border-left: 3px solid var(--primary);">${challenge.explanation}</p>
+                <!-- Main Content -->
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 50px; overflow-y: auto; background: rgba(0, 0, 0, 0.2);">
+                    <div style="max-width: 700px; width: 100%; text-align: center;">
+                        
+                        <div style="font-size: 13px; color: rgba(255, 255, 255, 0.5); margin-bottom: 32px;">
+                            ${this.currentExample + 1} of ${this.tutorialChallenges.length}
                         </div>
                         
-                        <div style="padding: 32px; background: rgba(0, 245, 255, 0.05); border: 1px solid rgba(0, 245, 255, 0.2); border-radius: 12px; margin-bottom: 32px; text-align: center;">
-                            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Text to tokenize:</p>
-                            <div style="font-size: 32px; font-weight: 700; color: var(--primary); font-family: 'JetBrains Mono', monospace;">${challenge.word}</div>
+                        <h1 style="font-size: 32px; margin-bottom: 32px; color: white; font-weight: 600;">
+                            Challenge ${this.currentExample + 1}: How should this tokenize?
+                        </h1>
+                        
+                        <!-- Curved bracket showing rule -->
+                        <div style="background: rgba(0, 212, 255, 0.06); border: 2px solid rgba(0, 212, 255, 0.3); 
+                                   border-radius: 16px; padding: 16px 24px; margin-bottom: 40px; display: inline-block;">
+                            <div style="font-size: 13px; color: var(--primary); font-weight: 500;">
+                                Rule: ${challenge.explanation}
+                            </div>
                         </div>
                         
-                        <div id="optionsContainer" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
-                            ${challenge.options.map((option, idx) => {
-                                const tokenDisplay = option.tokens.map(t => t === ' ' ? '␣' : t).join(' | ');
-                                return `
-                                    <button class="token-option" onclick="phase1.checkAnswer(${idx})" 
-                                        style="padding: 16px 20px; background: rgba(15, 23, 42, 0.6); 
-                                        border: 1px solid rgba(0, 245, 255, 0.2); border-radius: 8px; 
-                                        cursor: pointer; transition: all 0.2s; text-align: left; font-family: 'JetBrains Mono', monospace;">
-                                        <span style="font-size: 16px; color: var(--text-primary);">${tokenDisplay}</span>
-                                    </button>
-                                `;
-                            }).join('')}
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6); margin-bottom: 12px;">Text to tokenize:</div>
+                            <div style="font-size: 48px; font-weight: 700; color: var(--primary); font-family: 'JetBrains Mono', monospace; letter-spacing: 2px;">
+                                ${challenge.word}
+                            </div>
                         </div>
                         
-                        <div id="feedback" style="margin-top: 20px; padding: 16px; border-radius: 8px; min-height: 60px; display: none;"></div>
+                        <div style="height: 50px;"></div>
+                        
+                        <div id="exampleChoices" style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px;">
+                            ${shuffledOptions.map((option, idx) => `
+                                <button onclick="phase1.checkExample(${option.correct})" 
+                                        style="padding: 18px 32px; background: rgba(0, 0, 0, 0.4); border: 2px solid rgba(0, 212, 255, 0.3); 
+                                               border-radius: 12px; color: white; font-size: 20px; cursor: pointer; 
+                                               transition: all 0.3s; font-family: 'JetBrains Mono', monospace; font-weight: 500;
+                                               box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+                                    ${option.tokens.map(t => `<span style="display: inline-block; background: rgba(0, 212, 255, 0.15); padding: 6px 16px; 
+                                                                      margin: 0 6px; border-radius: 8px; border: 1px solid rgba(0, 212, 255, 0.4);">${t}</span>`).join(' ')}
+                                </button>
+                            `).join('')}
+                        </div>
+                        
+                        <div id="exampleFeedback" style="min-height: 100px; font-size: 16px; line-height: 1.6;"></div>
+                        
                     </div>
                 </div>
+                
             </div>
         `;
     },
     
-    checkAnswer(selectedIdx) {
-        const challenge = this.challenges[this.currentExample];
-        const option = challenge.options[selectedIdx];
-        const feedback = document.getElementById('feedback');
-        const optionsContainer = document.getElementById('optionsContainer');
+    checkExample(isCorrect) {
+        const feedback = document.getElementById('exampleFeedback');
+        const challenge = this.tutorialChallenges[this.currentExample];
+        const explanation = challenge.explanation;
         
-        // Disable all buttons
-        optionsContainer.querySelectorAll('.token-option').forEach(btn => {
-            btn.style.pointerEvents = 'none';
-            btn.style.opacity = '0.5';
-        });
-        
-        // Highlight selected
-        const selectedBtn = optionsContainer.querySelectorAll('.token-option')[selectedIdx];
-        
-        if (option.correct) {
-            // Correct answer!
-            selectedBtn.style.background = 'rgba(34, 197, 94, 0.2)';
-            selectedBtn.style.borderColor = 'rgba(34, 197, 94, 0.8)';
-            
-            feedback.style.display = 'block';
-            feedback.style.background = 'rgba(34, 197, 94, 0.1)';
-            feedback.style.border = '1px solid rgba(34, 197, 94, 0.3)';
+        if (isCorrect) {
+            SoundManager.play('success');
+            Game.addScore(10);
             feedback.innerHTML = `
-                <div style="text-align: left;">
-                    <p style="color: #22c55e; font-weight: 600; margin-bottom: 12px; font-size: 16px;">✓ Correct!</p>
-                    <p style="color: var(--text-primary); font-size: 14px; line-height: 1.7;">${option.why}</p>
+                <div style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.1)); 
+                           border: 2px solid #22c55e; border-radius: 12px; padding: 24px;">
+                    <div style="font-size: 28px; margin-bottom: 12px; color: #22c55e;">✓ Correct!</div>
+                    <div style="font-size: 15px; color: rgba(255, 255, 255, 0.8);">${explanation}</div>
                 </div>
             `;
             
-            Game.addScore(20);
-            SoundManager.play('success');
-            
-            // Move to next challenge
             setTimeout(() => {
                 this.currentExample++;
                 const container = document.getElementById('phaseContainer');
                 this.render(container);
             }, 2000);
-            
         } else {
-            // Wrong answer
-            selectedBtn.style.background = 'rgba(239, 68, 68, 0.2)';
-            selectedBtn.style.borderColor = 'rgba(239, 68, 68, 0.8)';
-            
-            feedback.style.display = 'block';
-            feedback.style.background = 'rgba(239, 68, 68, 0.1)';
-            feedback.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+            SoundManager.play('error');
+            Game.addScore(-5);
             feedback.innerHTML = `
-                <div style="text-align: left;">
-                    <p style="color: #ef4444; font-weight: 600; margin-bottom: 12px; font-size: 16px;">✗ Try Again</p>
-                    <p style="color: var(--text-primary); font-size: 14px; line-height: 1.7;">${option.why}</p>
+                <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1)); 
+                           border: 2px solid #ef4444; border-radius: 12px; padding: 24px;">
+                    <div style="font-size: 28px; margin-bottom: 12px; color: #ef4444;">✗ Not quite!</div>
+                    <div style="font-size: 15px; color: rgba(255, 255, 255, 0.8);">Hint: ${explanation}</div>
                 </div>
             `;
-            
-            Game.addScore(-5);
-            SoundManager.play('error');
-            
-            // Re-enable after delay
-            setTimeout(() => {
-                optionsContainer.querySelectorAll('.token-option').forEach(btn => {
-                    btn.style.pointerEvents = 'auto';
-                    btn.style.opacity = '1';
-                    btn.style.background = 'rgba(15, 23, 42, 0.6)';
-                    btn.style.borderColor = 'rgba(0, 245, 255, 0.2)';
-                });
-                feedback.style.display = 'none';
-            }, 2000);
         }
     },
     
-    // INTERACTIVE TOKENIZATION (V1 STYLE)
+    // STEP 4: Interactive tokenization of full text (V1 STYLE - WORD BY WORD REMOVAL)
     renderYourData(container) {
         // Initialize if first time
         if (!this.currentText) {
@@ -404,27 +387,34 @@ window.phase1 = {
         
         const targetCount = this.correctTokens.length;
         const currentCount = this.validatedTokens.length;
+        const accuracy = targetCount > 0 ? Math.round((currentCount / targetCount) * 100) : 0;
         
         container.innerHTML = `
-            <div class="phase">
-                <!-- Left Sidebar -->
-                <div class="phase-sidebar">
-                    <div>
-                        <h2 class="phase-title">Tokenize your data</h2>
-                        <p class="phase-subtitle">Apply rules to your training text</p>
-                    </div>
-                    
-                    <div class="phase-description">
+            <div style="display: grid; grid-template-columns: 350px 1fr; height: 100%; overflow: hidden;">
+                
+                <!-- Sidebar -->
+                <div style="background: rgba(0, 0, 0, 0.4); padding: 32px 24px; overflow-y: auto; border-right: 2px solid rgba(0, 212, 255, 0.3);">
+                    <h2 style="font-size: 20px; color: var(--primary); margin-bottom: 12px; font-weight: 600;">Tokenize your data</h2>
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 28px;">
+                        Apply rules to your training text
+                    </p>
+                    <p style="font-size: 12px; color: rgba(255, 255, 255, 0.5); line-height: 1.6; margin-bottom: 32px;">
                         Now tokenize your actual training data. Click between characters to add split marks (|).
+                    </p>
+                    
+                    <div style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(251, 191, 36, 0.05)); 
+                               border: 2px solid rgba(255, 193, 7, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 32px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                            <span style="font-size: 18px;">💡</span>
+                            <h3 style="font-size: 14px; color: #fbbf24; margin: 0; font-weight: 600;">Target</h3>
+                        </div>
+                        <p style="font-size: 12px; line-height: 1.6; color: rgba(255, 255, 255, 0.7); margin: 0;">
+                            You need approximately <strong style="color: #fbbf24;">${targetCount} tokens</strong> based on the rules.
+                        </p>
                     </div>
                     
-                    <div class="hint-section" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(251, 191, 36, 0.05));">
-                        <h4 style="color: #fbbf24;">💡 Target</h4>
-                        <p style="color: rgba(255, 255, 255, 0.7);">You need approximately <strong style="color: #fbbf24;">${targetCount} tokens</strong> based on the rules.</p>
-                    </div>
-                    
-                    <div style="margin-top: 20px;">
-                        <h4 style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">✅ Validated tokens:</h4>
+                    <div style="margin-bottom: 24px;">
+                        <h3 style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">✅ Validated tokens:</h3>
                         <div id="tokenProgressBar" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 60px; padding: 12px; 
                                                           background: rgba(0, 0, 0, 0.3); border-radius: 8px; max-height: 200px; overflow-y: auto;">
                             ${this.validatedTokens.length === 0 ? '<div style="color: rgba(255, 255, 255, 0.3); font-size: 11px;">No tokens yet...</div>' : 
@@ -436,49 +426,63 @@ window.phase1 = {
                     </div>
                 </div>
                 
-                <!-- Right Content Area -->
-                <div class="phase-content">
-                    <div style="width: 100%; max-width: 900px;">
+                <!-- Main Content -->
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 50px; overflow-y: auto; background: rgba(0, 0, 0, 0.2);">
+                    <div style="max-width: 900px; width: 100%;">
                         
-                        <div id="feedbackMessage" style="min-height: 50px; margin-bottom: 24px; text-align: center; font-size: 15px;"></div>
+                        <div id="feedbackMessage" style="min-height: 60px; margin-bottom: 32px; text-align: center; font-size: 15px;"></div>
                         
-                        <div id="interactiveText" style="font-size: 22px; line-height: 2.2; font-weight: 500; 
+                        <div id="interactiveText" style="font-size: 24px; line-height: 2.2; font-weight: 500; 
                                                        color: white; text-align: left; font-family: 'JetBrains Mono', monospace; 
-                                                       padding: 32px; background: rgba(0, 245, 255, 0.05); border-radius: 12px; 
-                                                       border: 1px solid rgba(0, 245, 255, 0.2); margin-bottom: 32px; min-height: 250px;">
+                                                       padding: 32px; background: rgba(0, 0, 0, 0.3); border-radius: 16px; 
+                                                       border: 2px solid rgba(0, 212, 255, 0.2); margin-bottom: 32px; min-height: 300px;">
                             ${this.makeClickableText(this.currentText)}
                         </div>
                         
-                        <!-- Stats -->
+                        <!-- Stats & Submit -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
-                            <div style="text-align: center; padding: 20px; background: rgba(0, 245, 255, 0.05); border-radius: 12px; border: 1px solid rgba(0, 245, 255, 0.2);">
-                                <div style="font-size: 36px; font-weight: 700; color: var(--primary);">${currentCount}</div>
+                            <div style="text-align: center; padding: 20px; background: rgba(0, 212, 255, 0.1); border-radius: 12px; border: 2px solid rgba(0, 212, 255, 0.3);">
+                                <div style="font-size: 40px; font-weight: 700; color: var(--primary);">${currentCount}</div>
                                 <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Your Tokens</div>
                             </div>
-                            <div style="text-align: center; padding: 20px; background: rgba(191, 0, 255, 0.05); border-radius: 12px; border: 1px solid rgba(191, 0, 255, 0.2);">
-                                <div style="font-size: 36px; font-weight: 700; color: var(--secondary);">${targetCount}</div>
+                            <div style="text-align: center; padding: 20px; background: rgba(191, 0, 255, 0.1); border-radius: 12px; border: 2px solid rgba(191, 0, 255, 0.3);">
+                                <div style="font-size: 40px; font-weight: 700; color: var(--secondary);">${targetCount}</div>
                                 <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Target Tokens</div>
                             </div>
                         </div>
                         
                         ${this.currentText.trim().length === 0 ? `
                             <button onclick="phase1.finishTokenization()" 
-                                    style="width: 100%; padding: 18px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-                                           border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; 
+                                    style="width: 100%; padding: 20px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                           border: none; border-radius: 12px; color: white; font-size: 18px; font-weight: 600; 
                                            cursor: pointer; box-shadow: 0 6px 30px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
                                 ✓ Finish tokenization
                             </button>
                         ` : ''}
                         
+                        ${currentCount > 0 && this.currentText.trim().length > 0 ? `
+                            <div id="accuracyFeedback" style="padding: 20px; background: ${accuracy >= 80 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; 
+                                                             border: 2px solid ${accuracy >= 80 ? '#22c55e' : '#ef4444'}; border-radius: 12px;">
+                                <div style="font-size: 16px; color: ${accuracy >= 80 ? '#22c55e' : '#ef4444'}; font-weight: 600; margin-bottom: 8px;">
+                                    ${accuracy >= 80 ? '✓ Good progress!' : '✗ Needs improvement'}
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary);">
+                                    Accuracy: ${accuracy}%<br>
+                                    Correct splits: ${currentCount}/${targetCount}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
                     </div>
                 </div>
+                
             </div>
         `;
     },
     
     makeClickableText(text) {
         if (!text || text.trim().length === 0) {
-            return '<div style="color: rgba(255, 255, 255, 0.3); text-align: center; font-size: 14px;">All text tokenized! 🎉</div>';
+            return '<div style="color: rgba(255, 255, 255, 0.3); text-align: center; font-size: 16px;">All text tokenized! 🎉</div>';
         }
         
         let html = '';
@@ -488,14 +492,14 @@ window.phase1 = {
             
             // Add clickable boundary BEFORE this character
             html += `<span class="token-boundary" onclick="phase1.toggleBoundary(${idx})" 
-                           style="display: inline-block; width: ${this.userSplits.includes(idx) ? '10px' : '3px'}; height: 26px; cursor: pointer; 
-                                  background: ${this.userSplits.includes(idx) ? 'rgba(0, 245, 255, 0.5)' : 'transparent'}; 
-                                  border-left: ${this.userSplits.includes(idx) ? '2px solid var(--primary)' : '1px dashed rgba(0, 245, 255, 0.25)'}; 
-                                  margin: 0 1px; transition: all 0.15s; position: relative; top: 3px; vertical-align: middle;"
-                           onmouseover="this.style.background='rgba(0, 245, 255, 0.35)'; this.style.borderLeft='2px solid var(--primary)'; this.style.width='8px'" 
-                           onmouseout="this.style.background='${this.userSplits.includes(idx) ? 'rgba(0, 245, 255, 0.5)' : 'transparent'}'; 
-                                      this.style.borderLeft='${this.userSplits.includes(idx) ? '2px solid var(--primary)' : '1px dashed rgba(0, 245, 255, 0.25)'}';
-                                      this.style.width='${this.userSplits.includes(idx) ? '10px' : '3px'}'"></span>`;
+                           style="display: inline-block; width: ${this.userSplits.includes(idx) ? '12px' : '4px'}; height: 28px; cursor: pointer; 
+                                  background: ${this.userSplits.includes(idx) ? 'rgba(0, 212, 255, 0.5)' : 'transparent'}; 
+                                  border-left: ${this.userSplits.includes(idx) ? '3px solid var(--primary)' : '1px dashed rgba(0, 212, 255, 0.3)'}; 
+                                  margin: 0 2px; transition: all 0.2s; position: relative; top: 3px; vertical-align: middle;"
+                           onmouseover="this.style.background='rgba(0, 212, 255, 0.4)'; this.style.borderLeft='2px solid var(--primary)'; this.style.width='10px'" 
+                           onmouseout="this.style.background='${this.userSplits.includes(idx) ? 'rgba(0, 212, 255, 0.5)' : 'transparent'}'; 
+                                      this.style.borderLeft='${this.userSplits.includes(idx) ? '3px solid var(--primary)' : '1px dashed rgba(0, 212, 255, 0.3)'}';
+                                      this.style.width='${this.userSplits.includes(idx) ? '12px' : '4px'}'"></span>`;
             
             // Add the character itself
             html += `<span class="token-char" style="display: inline;">${char === ' ' ? '&nbsp;' : char}</span>`;
@@ -504,14 +508,14 @@ window.phase1 = {
         // Add final boundary AFTER last character
         const lastIdx = text.length;
         html += `<span class="token-boundary" onclick="phase1.toggleBoundary(${lastIdx})" 
-                       style="display: inline-block; width: ${this.userSplits.includes(lastIdx) ? '10px' : '3px'}; height: 26px; cursor: pointer; 
-                              background: ${this.userSplits.includes(lastIdx) ? 'rgba(0, 245, 255, 0.5)' : 'transparent'}; 
-                              border-left: ${this.userSplits.includes(lastIdx) ? '2px solid var(--primary)' : '1px dashed rgba(0, 245, 255, 0.25)'}; 
-                              margin: 0 1px; transition: all 0.15s; position: relative; top: 3px; vertical-align: middle;"
-                       onmouseover="this.style.background='rgba(0, 245, 255, 0.35)'; this.style.borderLeft='2px solid var(--primary)'; this.style.width='8px'" 
-                       onmouseout="this.style.background='${this.userSplits.includes(lastIdx) ? 'rgba(0, 245, 255, 0.5)' : 'transparent'}'; 
-                                  this.style.borderLeft='${this.userSplits.includes(lastIdx) ? '2px solid var(--primary)' : '1px dashed rgba(0, 245, 255, 0.25)'}';
-                                  this.style.width='${this.userSplits.includes(lastIdx) ? '10px' : '3px'}'"></span>`;
+                       style="display: inline-block; width: ${this.userSplits.includes(lastIdx) ? '12px' : '4px'}; height: 28px; cursor: pointer; 
+                              background: ${this.userSplits.includes(lastIdx) ? 'rgba(0, 212, 255, 0.5)' : 'transparent'}; 
+                              border-left: ${this.userSplits.includes(lastIdx) ? '3px solid var(--primary)' : '1px dashed rgba(0, 212, 255, 0.3)'}; 
+                              margin: 0 2px; transition: all 0.2s; position: relative; top: 3px; vertical-align: middle;"
+                       onmouseover="this.style.background='rgba(0, 212, 255, 0.4)'; this.style.borderLeft='2px solid var(--primary)'; this.style.width='10px'" 
+                       onmouseout="this.style.background='${this.userSplits.includes(lastIdx) ? 'rgba(0, 212, 255, 0.5)' : 'transparent'}'; 
+                                  this.style.borderLeft='${this.userSplits.includes(lastIdx) ? '3px solid var(--primary)' : '1px dashed rgba(0, 212, 255, 0.3)'}';
+                                  this.style.width='${this.userSplits.includes(lastIdx) ? '12px' : '4px'}'"></span>`;
         
         return html;
     },
@@ -520,8 +524,10 @@ window.phase1 = {
         SoundManager.play('click');
         
         if (this.userSplits.includes(idx)) {
+            // Remove boundary
             this.userSplits = this.userSplits.filter(i => i !== idx);
         } else {
+            // Add boundary
             this.userSplits.push(idx);
             this.userSplits.sort((a, b) => a - b);
         }
@@ -530,7 +536,7 @@ window.phase1 = {
         if (this.userSplits.length >= 2) {
             this.validateCurrentToken();
         } else {
-            // Just re-render
+            // Just re-render to show updated boundaries
             const container = document.getElementById('interactiveText');
             if (container) {
                 container.innerHTML = this.makeClickableText(this.currentText);
@@ -539,42 +545,44 @@ window.phase1 = {
     },
     
     validateCurrentToken() {
+        // Get the first token marked by boundaries
         const start = this.userSplits[0];
         const end = this.userSplits[1];
         const userToken = this.currentText.substring(start, end);
         
+        // Check if this token matches the next expected token
         const nextExpectedToken = this.correctTokens[this.validatedTokens.length];
         const isCorrect = userToken === nextExpectedToken;
         
         const feedback = document.getElementById('feedbackMessage');
         
         if (isCorrect) {
-            // Success!
+            // Success! Remove token from text
             SoundManager.play('success');
             Game.addScore(10);
             
             this.validatedTokens.push(userToken);
             
-            feedback.innerHTML = `<div style="color: #22c55e; font-weight: 600; padding: 10px; background: rgba(34, 197, 94, 0.1); border-radius: 8px;">✓ Correct! "${userToken}" +10 points</div>`;
+            feedback.innerHTML = `<div style="color: #22c55e; font-weight: 600; padding: 12px; background: rgba(34, 197, 94, 0.1); border-radius: 8px;">✓ Correct! "${userToken}" +10 points</div>`;
             
             // Remove the validated part from text and reset splits
             this.currentText = this.currentText.substring(end);
             this.userSplits = [];
             
-            // Re-render
+            // Re-render everything
             setTimeout(() => {
                 const container = document.getElementById('phaseContainer');
                 this.render(container);
-            }, 400);
+            }, 500);
             
         } else {
             // Error! Show red highlight for 2 seconds
             SoundManager.play('error');
             Game.addScore(-5);
             
-            feedback.innerHTML = `<div style="color: #ef4444; font-weight: 600; padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px;">✗ Incorrect! Expected "${nextExpectedToken}" but got "${userToken}". Try again! -5 points</div>`;
+            feedback.innerHTML = `<div style="color: #ef4444; font-weight: 600; padding: 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px;">✗ Incorrect! Expected "${nextExpectedToken}" but got "${userToken}". Try again! -5 points</div>`;
             
-            // Highlight in red
+            // Highlight the selected text in red
             const textContainer = document.getElementById('interactiveText');
             if (textContainer) {
                 const beforeText = this.currentText.substring(0, start);
@@ -588,7 +596,7 @@ window.phase1 = {
                 `;
             }
             
-            // Clear after 2 seconds
+            // Clear splits and feedback after 2 seconds
             setTimeout(() => {
                 this.userSplits = [];
                 feedback.innerHTML = '';
@@ -646,7 +654,7 @@ window.phase1 = {
         return tokens;
     },
     
-    // INFO & RECAP (keeping them simple)
+    // INFO STEPS (same as before, keeping them short)
     renderInfoStep1(container) {
         container.innerHTML = `
             <div style="height: 100%; overflow-y: auto; padding: 40px;">

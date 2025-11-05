@@ -4,16 +4,16 @@ const Game = {
         currentPhase: 0,
         totalPhases: 7,
         score: 0,
-        level: 0,
         tokensProcessed: 0,
         modelName: 'Unnamed Model',
         avatar: null,
         phaseScores: {},
         phaseCompleted: {},
         startTime: Date.now(),
+        timerInterval: null,
         
-        // Training Data - Connected Journey
-        trainingText: "A cat sat on a mat. The dog played with a ball.",
+        // Training Data - Connected Journey (expanded for richer patterns)
+        trainingText: "A cat sat on the mat. The dog played with the ball. The cat likes fish. The dog likes bones.",
         tokens: [],           // Filled in Phase 1 (Tokenization)
         embeddings: {},       // Filled in Phase 2 (Embeddings)
         attentionWeights: {}, // Filled in Phase 3 (Attention)
@@ -28,6 +28,7 @@ const Game = {
         this.updateUI();
         this.setupEventListeners();
         this.renderCurrentPhase();
+        // Timer will start after avatar setup, not here
     },
     
     setupEventListeners() {
@@ -82,26 +83,47 @@ const Game = {
                 currentPhase: 0,
                 totalPhases: 7,
                 score: 0,
-                level: 0,
                 tokensProcessed: 0,
                 modelName: 'Unnamed Model',
                 avatar: null,
                 phaseScores: {},
                 phaseCompleted: {},
                 startTime: Date.now(),
+                timerInterval: null,
                 
                 // Reset training data
-                trainingText: "A cat sat on a mat. The dog played with a ball.",
+                trainingText: "A cat sat on the mat. The dog played with the ball. The cat likes fish. The dog likes bones.",
                 tokens: [],
                 embeddings: {},
                 attentionWeights: {},
                 model: null,
                 userTrainingText: null
             };
+            
+            // Reset phase0 to 'intro' step so user starts from beginning
+            if (window.phase0) {
+                window.phase0.currentStep = 'intro';
+                window.phase0.selectedDataset = null;
+                window.phase0.selectedName = null;
+                window.phase0.selectedAvatar = null;
+            }
+            
+            // Reset phase1 to 'concept1' step so it starts from beginning
+            if (window.phase1) {
+                window.phase1.currentStep = 'concept1';
+                window.phase1.currentExample = 0;
+                window.phase1.userSplits = [];
+                window.phase1.validatedTokens = [];
+                window.phase1.colorIndex = 0;
+                window.phase1.currentText = '';
+                window.phase1.correctTokens = [];
+            }
+            
             this.saveState();
             this.updateUI();
             this.closeModal('gameCompleteModal');
             this.renderCurrentPhase();
+            this.startTimer(); // Restart timer
             SoundManager.play('success');
         }, 200);
     },
@@ -214,15 +236,6 @@ const Game = {
     addScore(points) {
         this.state.score += points;
         this.animateStatChange('scoreValue', this.state.score);
-        
-        // Level up every 1000 points
-        const newLevel = Math.floor(this.state.score / 1000);
-        if (newLevel > this.state.level) {
-            this.state.level = newLevel;
-            this.animateStatChange('levelValue', this.state.level);
-            SoundManager.play('levelUp');
-        }
-        
         this.saveState();
     },
     
@@ -242,9 +255,17 @@ const Game = {
     updateUI() {
         // Update header stats
         document.getElementById('scoreValue').textContent = this.state.score;
-        document.getElementById('levelValue').textContent = this.state.level;
         document.getElementById('tokensValue').textContent = this.state.tokensProcessed.toLocaleString();
         document.getElementById('modelName').textContent = this.state.modelName;
+        this.updateTimerDisplay();
+        
+        // Update avatar if exists
+        if (this.state.avatar && window.phase0 && window.phase0.avatars) {
+            const avatarData = window.phase0.avatars.find(a => a.id === this.state.avatar);
+            if (avatarData) {
+                document.getElementById('modelAvatar').textContent = avatarData.icon;
+            }
+        }
         
         // Update progress bar
         const progress = (this.state.currentPhase / (this.state.totalPhases - 1)) * 100;
@@ -254,16 +275,27 @@ const Game = {
         document.getElementById('phaseIndicator').textContent = 
             `Phase ${this.state.currentPhase} of ${this.state.totalPhases - 1}`;
         
-        // Update navigation buttons
-        document.getElementById('prevBtn').disabled = this.state.currentPhase === 0;
-        
+        // Navigation section
+        const phaseNav = document.querySelector('.phase-nav');
+        const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
-        if (this.state.currentPhase === this.state.totalPhases - 1) {
-            nextBtn.textContent = 'Finish';
-            nextBtn.disabled = true;
+        
+        // Hide navigation during Phase 0 (has its own internal flow)
+        if (this.state.currentPhase === 0) {
+            if (phaseNav) phaseNav.style.display = 'none';
         } else {
-            nextBtn.textContent = 'Next →';
-            nextBtn.disabled = !this.state.phaseCompleted[this.state.currentPhase];
+            if (phaseNav) phaseNav.style.display = 'flex';
+            
+            // Update navigation buttons
+            prevBtn.disabled = this.state.currentPhase <= 1; // Can't go back past phase 1
+            
+            if (this.state.currentPhase === this.state.totalPhases - 1) {
+                nextBtn.textContent = 'Finish';
+                nextBtn.disabled = true;
+            } else {
+                nextBtn.textContent = 'Next →';
+                nextBtn.disabled = !this.state.phaseCompleted[this.state.currentPhase];
+            }
         }
     },
     
@@ -388,6 +420,42 @@ const Game = {
                 }
             }, 100);
         }
+    },
+    
+    // Timer functions
+    startTimer() {
+        if (this.state.timerInterval) {
+            clearInterval(this.state.timerInterval);
+        }
+        this.state.startTime = this.state.startTime || Date.now();
+        this.state.timerInterval = setInterval(() => {
+            this.updateTimerDisplay();
+        }, 1000);
+    },
+    
+    stopTimer() {
+        if (this.state.timerInterval) {
+            clearInterval(this.state.timerInterval);
+            this.state.timerInterval = null;
+        }
+    },
+    
+    updateTimerDisplay() {
+        const timerElement = document.getElementById('gameTimer');
+        if (timerElement && this.state.startTime) {
+            const elapsedTime = Math.floor((Date.now() - this.state.startTime) / 1000);
+            const minutes = Math.floor(elapsedTime / 60);
+            const seconds = elapsedTime % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+    },
+    
+    getElapsedTime() {
+        if (!this.state.startTime) return '00:00';
+        const elapsedTime = Math.floor((Date.now() - this.state.startTime) / 1000);
+        const minutes = Math.floor(elapsedTime / 60);
+        const seconds = elapsedTime % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
 };
 

@@ -71,11 +71,36 @@ const SoundManager = {
             gainNode.connect(audioContext.destination);
             
             // Different frequencies and patterns for different sounds
+            // More musical and distinctive!
             const soundPatterns = {
-                success: { freq: 523.25, duration: 0.15, type: 'sine', pattern: [523.25, 659.25, 783.99] }, // C-E-G chord
-                error: { freq: 233.08, duration: 0.2, type: 'sawtooth', pattern: [233.08] }, // Bb (dissonant)
-                click: { freq: 1046.50, duration: 0.05, type: 'sine', pattern: [1046.50] }, // High C (short click)
-                levelUp: { freq: 523.25, duration: 0.12, type: 'sine', pattern: [523.25, 659.25, 783.99, 1046.50] } // C major arpeggio
+                success: { 
+                    freq: 523.25, 
+                    duration: 0.18, 
+                    type: 'sine', 
+                    pattern: [659.25, 783.99, 1046.50], // E-G-C ascending (uplifting!)
+                    volume: 0.12
+                },
+                error: { 
+                    freq: 415.30, 
+                    duration: 0.25, 
+                    type: 'triangle', 
+                    pattern: [415.30, 311.13], // Ab-Eb descending (sad/wrong)
+                    volume: 0.10
+                },
+                click: { 
+                    freq: 1318.51, 
+                    duration: 0.04, 
+                    type: 'square', 
+                    pattern: [1318.51], // High E (crisp click)
+                    volume: 0.08
+                },
+                levelUp: { 
+                    freq: 523.25, 
+                    duration: 0.14, 
+                    type: 'sine', 
+                    pattern: [523.25, 659.25, 783.99, 1046.50, 1318.51], // C-E-G-C-E full celebration!
+                    volume: 0.15
+                }
             };
             
             const pattern = soundPatterns[type] || soundPatterns.click;
@@ -88,25 +113,36 @@ const SoundManager = {
                 pattern.pattern.forEach((freq, i) => {
                     const osc = audioContext.createOscillator();
                     const gain = audioContext.createGain();
-                    osc.connect(gain);
+                    const filter = audioContext.createBiquadFilter();
+                    
+                    osc.connect(filter);
+                    filter.connect(gain);
                     gain.connect(audioContext.destination);
                     
                     osc.frequency.value = freq;
                     osc.type = pattern.type;
                     
-                    const startTime = audioContext.currentTime + (i * pattern.duration * 0.3);
-                    const endTime = startTime + pattern.duration;
+                    // Add gentle low-pass filter for warmth
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 2000;
+                    filter.Q.value = 1;
                     
-                    gain.gain.setValueAtTime(0.08, startTime);
+                    // Timing for arpeggio effect
+                    const startTime = audioContext.currentTime + (i * pattern.duration * 0.35);
+                    const endTime = startTime + pattern.duration * 1.2;
+                    
+                    // Volume envelope with smooth fade
+                    gain.gain.setValueAtTime(0, startTime);
+                    gain.gain.linearRampToValueAtTime(pattern.volume, startTime + 0.01);
                     gain.gain.exponentialRampToValueAtTime(0.001, endTime);
                     
                     osc.start(startTime);
                     osc.stop(endTime);
                 });
             } else {
-                // Single note
+                // Single note - crisp and short
                 oscillator.frequency.value = pattern.freq;
-                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(pattern.volume, audioContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + pattern.duration);
                 
                 oscillator.start(audioContext.currentTime);

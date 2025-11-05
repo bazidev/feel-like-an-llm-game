@@ -19,8 +19,13 @@
         <header class="game-header">
             <div class="header-content">
                 <div class="model-info">
-                    <div class="model-name" id="modelName">Unnamed Model</div>
-                    <div class="model-version">v0.1 - In Training</div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="modelAvatar" style="font-size: 24px;"></span>
+                        <div>
+                            <div class="model-name" id="modelName">Unnamed Model</div>
+                            <div class="model-version">v0.1 - In Training</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="stats-container">
                     <div class="stat">
@@ -28,15 +33,15 @@
                         <span class="stat-value" id="scoreValue">0</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-label">Level</span>
-                        <span class="stat-value" id="levelValue">0</span>
+                        <span class="stat-label">Time</span>
+                        <span class="stat-value" id="gameTimer">00:00</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Tokens</span>
                         <span class="stat-value" id="tokensValue">0</span>
                     </div>
                 </div>
-                <button class="reset-btn" id="resetBtn">🔄 Reset</button>
+                <button class="reset-btn" id="resetBtn">❌ Reset</button>
             </div>
             <div class="progress-bar-container">
                 <div class="progress-bar" id="progressBar"></div>
@@ -99,13 +104,13 @@
     <script src="./particles.js"></script>
     <script src="./sounds.js"></script>
     <script src="./game.js"></script>
-    <script src="./phases/phase0-naming.js"></script>
+    <script src="./phases/phase0-overview.js"></script>
     <script src="./phases/phase1-tokenization.js"></script>
     <script src="./phases/phase2-embeddings.js"></script>
     <script src="./phases/phase3-attention.js"></script>
-    <script src="./phases/phase4-prediction.js"></script>
-    <script src="./phases/phase5-training.js"></script>
-    <script src="./phases/phase6-application.js"></script>
+    <script src="./phases/phase4-training.js"></script>
+    <script src="./phases/phase5-generation.js"></script>
+    <script src="./phases/phase6-finale.js"></script>
     <script src="./app.js"></script>
 </body>
 </html>
