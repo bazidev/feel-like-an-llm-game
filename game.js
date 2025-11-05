@@ -39,6 +39,9 @@ const Game = {
         // Reset button
         document.getElementById('resetBtn').addEventListener('click', () => this.confirmReset());
         
+        // Scoreboard button
+        document.getElementById('scoreboardBtn').addEventListener('click', () => this.showScoreboard());
+        
         // Hint toggle
         document.getElementById('hintToggle').addEventListener('click', () => this.toggleHint());
         
@@ -119,11 +122,15 @@ const Game = {
                 window.phase1.correctTokens = [];
             }
             
+            // Clear avatar display
+            document.getElementById('modelAvatar').textContent = '';
+            document.getElementById('modelName').textContent = 'Unnamed Model';
+            
             this.saveState();
             this.updateUI();
             this.closeModal('gameCompleteModal');
             this.renderCurrentPhase();
-            this.startTimer(); // Restart timer
+            // Don't start timer here - it starts after avatar selection
             SoundManager.play('success');
         }, 200);
     },
@@ -456,6 +463,170 @@ const Game = {
         const minutes = Math.floor(elapsedTime / 60);
         const seconds = elapsedTime % 60;
         return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    },
+    
+    // Scoreboard System
+    saveToScoreboard() {
+        const records = this.getScoreboardRecords();
+        
+        const elapsedSeconds = Math.floor((Date.now() - this.state.startTime) / 1000);
+        const rating = this.calculateRating(this.state.score, elapsedSeconds, this.state.tokensProcessed);
+        
+        const record = {
+            id: Date.now(),
+            modelName: this.state.modelName || 'Unnamed Model',
+            avatar: this.state.avatar,
+            score: this.state.score,
+            time: elapsedSeconds,
+            timeFormatted: this.getElapsedTime(),
+            tokens: this.state.tokensProcessed,
+            rating: rating,
+            date: new Date().toLocaleDateString(),
+            timestamp: Date.now()
+        };
+        
+        records.push(record);
+        
+        // Keep only top 10 records (sorted by rating)
+        records.sort((a, b) => b.rating - a.rating);
+        const topRecords = records.slice(0, 10);
+        
+        localStorage.setItem('llmScoreboard', JSON.stringify(topRecords));
+        
+        return {record, rank: topRecords.findIndex(r => r.id === record.id) + 1};
+    },
+    
+    getScoreboardRecords() {
+        try {
+            const data = localStorage.getItem('llmScoreboard');
+            return data ? JSON.parse(data) : [];
+        } catch (e) {
+            console.error('Error loading scoreboard:', e);
+            return [];
+        }
+    },
+    
+    calculateRating(score, timeSeconds, tokens) {
+        // Formula: Higher score = better, Lower time = better, More tokens = better
+        // Rating = Score * (1 + tokens/100) / (timeSeconds/60)
+        // This rewards high scores, processing more tokens, and doing it quickly
+        
+        const timeMinutes = Math.max(timeSeconds / 60, 0.1); // Avoid division by zero
+        const tokenBonus = 1 + (tokens / 100); // Each 100 tokens adds 100% bonus
+        const rating = (score * tokenBonus) / timeMinutes;
+        
+        return Math.round(rating * 10) / 10; // Round to 1 decimal
+    },
+    
+    getRatingGrade(rating) {
+        if (rating >= 200) return {grade: 'S', color: '#fbbf24', label: 'Legendary'};
+        if (rating >= 150) return {grade: 'A+', color: '#22c55e', label: 'Excellent'};
+        if (rating >= 100) return {grade: 'A', color: '#3b82f6', label: 'Great'};
+        if (rating >= 70) return {grade: 'B', color: '#8b5cf6', label: 'Good'};
+        if (rating >= 50) return {grade: 'C', color: '#ec4899', label: 'Fair'};
+        return {grade: 'D', color: '#ef4444', label: 'Needs Practice'};
+    },
+    
+    showScoreboard() {
+        const records = this.getScoreboardRecords();
+        const modal = document.getElementById('scoreboardModal');
+        const content = document.getElementById('scoreboardContent');
+        
+        if (records.length === 0) {
+            content.innerHTML = `
+                <div style="text-align: center; padding: 60px 20px;">
+                    <div style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;">🏆</div>
+                    <h3 style="font-size: 20px; color: var(--text-secondary); margin-bottom: 12px;">No records yet!</h3>
+                    <p style="font-size: 14px; color: var(--text-secondary); opacity: 0.7;">
+                        Complete the game to see your scores here.
+                    </p>
+                </div>
+            `;
+        } else {
+            content.innerHTML = `
+                <div style="margin-bottom: 20px; padding: 16px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(191, 0, 255, 0.05)); 
+                           border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 12px;">
+                    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.7;">
+                        <strong style="color: var(--primary);">Rating Formula:</strong> 
+                        Score × (1 + Tokens/100) ÷ Time (minutes)
+                        <br>
+                        <span style="opacity: 0.8;">Higher is better! Maximize score and tokens while minimizing time.</span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${records.map((record, index) => {
+                        const ratingData = this.getRatingGrade(record.rating);
+                        const avatarData = window.phase0 && window.phase0.avatars 
+                            ? window.phase0.avatars.find(a => a.id === record.avatar) 
+                            : null;
+                        const avatarIcon = avatarData ? avatarData.icon : '🤖';
+                        
+                        return `
+                            <div style="padding: 20px; background: ${index === 0 ? 'linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.1))' : 'rgba(15, 23, 42, 0.6)'};
+                                       border: 2px solid ${index === 0 ? 'rgba(251, 191, 36, 0.5)' : 'rgba(0, 245, 255, 0.2)'}; 
+                                       border-radius: 12px; position: relative;">
+                                
+                                ${index === 0 ? '<div style="position: absolute; top: -10px; right: 20px; background: linear-gradient(135deg, #fbbf24, #f59e0b); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #000;">👑 TOP</div>' : ''}
+                                
+                                <div style="display: grid; grid-template-columns: 50px 1fr auto; gap: 16px; align-items: center;">
+                                    
+                                    <!-- Rank -->
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 28px; font-weight: 700; color: ${index === 0 ? '#fbbf24' : index === 1 ? '#c0c0c0' : index === 2 ? '#cd7f32' : 'var(--primary)'};">
+                                            #${index + 1}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Info -->
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                            <span style="font-size: 24px;">${avatarIcon}</span>
+                                            <span style="font-size: 18px; font-weight: 700; color: white;">${record.modelName}</span>
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 12px; color: var(--text-secondary);">
+                                            <div>
+                                                <span style="color: var(--primary);">Score:</span> 
+                                                <strong style="color: white;">${record.score}</strong>
+                                            </div>
+                                            <div>
+                                                <span style="color: var(--secondary);">Time:</span> 
+                                                <strong style="color: white;">${record.timeFormatted}</strong>
+                                            </div>
+                                            <div>
+                                                <span style="color: #f59e0b;">Tokens:</span> 
+                                                <strong style="color: white;">${record.tokens}</strong>
+                                            </div>
+                                        </div>
+                                        <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.7; margin-top: 6px;">
+                                            ${record.date}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Rating -->
+                                    <div style="text-align: center; padding: 12px 20px; background: rgba(0, 0, 0, 0.4); border-radius: 10px; 
+                                               border: 2px solid ${ratingData.color};">
+                                        <div style="font-size: 28px; font-weight: 700; color: ${ratingData.color};">
+                                            ${ratingData.grade}
+                                        </div>
+                                        <div style="font-size: 11px; color: ${ratingData.color}; font-weight: 600; margin-top: 4px;">
+                                            ${ratingData.label}
+                                        </div>
+                                        <div style="font-size: 16px; color: white; font-weight: 600; margin-top: 6px;">
+                                            ${record.rating}
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+        
+        modal.classList.add('active');
+        SoundManager.play('click');
     }
 };
 

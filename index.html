@@ -41,6 +41,7 @@
                         <span class="stat-value" id="tokensValue">0</span>
                     </div>
                 </div>
+                <button class="scoreboard-btn" id="scoreboardBtn">🏆 Scoreboard</button>
                 <button class="reset-btn" id="resetBtn">❌ Reset</button>
             </div>
             <div class="progress-bar-container">
@@ -94,6 +95,27 @@
             <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
                 <button class="btn-secondary" id="cancelResetBtn">Cancel</button>
                 <button class="btn-primary" id="confirmResetBtn" style="background: linear-gradient(135deg, var(--error), #dc2626);">Reset Everything</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scoreboard Modal -->
+    <div class="modal" id="scoreboardModal">
+        <div class="modal-content" style="max-width: 850px; max-height: 85vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+                <h2 style="font-size: 32px; color: var(--primary); margin: 0; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                           -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    🏆 Scoreboard
+                </h2>
+                <button onclick="Game.closeModal('scoreboardModal')" 
+                        style="background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); 
+                               border-radius: 10px; padding: 10px 18px; color: white; cursor: pointer; 
+                               font-size: 15px; font-weight: 600; transition: all 0.3s;">
+                    ✕ Close
+                </button>
+            </div>
+            <div id="scoreboardContent" style="min-height: 250px;">
+                <!-- Dynamically populated -->
             </div>
         </div>
     </div>
