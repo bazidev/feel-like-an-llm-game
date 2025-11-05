@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Phase Test</title>
+</head>
+<body>
+    <h1>Testing Phase Loading</h1>
+    <div id="output"></div>
+    <div id="test-container"></div>
+
+    <script>
+        console.log("Step 1: Page loaded");
+    </script>
+
+    <script src="phases/phase0-naming.js"></script>
+
+    <script>
+        console.log("Step 2: After phase0 script tag");
+        console.log("typeof phase0:", typeof phase0);
+        console.log("window.phase0:", window.phase0);
+        
+        const output = document.getElementById('output');
+        if (typeof phase0 !== 'undefined') {
+            output.innerHTML = '<p style="color: green;">✅ phase0 loaded successfully!</p>';
+            console.log("Phase0 object:", phase0);
+            console.log("Phase0.render:", typeof phase0.render);
+        } else {
+            output.innerHTML = '<p style="color: red;">❌ phase0 NOT loaded</p>';
+        }
+    </script>
+</body>
+</html>
+

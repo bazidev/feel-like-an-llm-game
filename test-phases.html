@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Phase Loading Test</title>
+</head>
+<body>
+    <h1>Phase Loading Test</h1>
+    <div id="output"></div>
+
+    <script src="phases/phase0-naming.js"></script>
+    <script src="phases/phase1-tokenization.js"></script>
+    <script src="phases/phase2-embeddings.js"></script>
+    <script src="phases/phase3-attention.js"></script>
+    <script src="phases/phase4-prediction.js"></script>
+    <script src="phases/phase5-training.js"></script>
+    <script src="phases/phase6-application.js"></script>
+    
+    <script>
+        const output = document.getElementById('output');
+        let html = '<h2>Checking phase objects:</h2>';
+        
+        for (let i = 0; i <= 6; i++) {
+            const phaseName = `phase${i}`;
+            if (typeof window[phaseName] !== 'undefined') {
+                html += `<p style="color: green;">✓ ${phaseName} is loaded</p>`;
+                if (typeof window[phaseName].render === 'function') {
+                    html += `<p style="color: green; margin-left: 20px;">✓ ${phaseName}.render() exists</p>`;
+                } else {
+                    html += `<p style="color: red; margin-left: 20px;">✗ ${phaseName}.render() missing</p>`;
+                }
+            } else {
+                html += `<p style="color: red;">✗ ${phaseName} not found</p>`;
+            }
+        }
+        
+        output.innerHTML = html;
+    </script>
+</body>
+</html>
+

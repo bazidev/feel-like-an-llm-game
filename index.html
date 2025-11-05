@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feel Like an LLM - Experience AI from the Inside</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="background-gradient"></div>
+    <canvas id="particles"></canvas>
+
+    <!-- Main Game Container -->
+    <div id="gameContainer" class="game-container">
+        
+        <!-- Progress Header -->
+        <header class="game-header">
+            <div class="header-content">
+                <div class="model-info">
+                    <div class="model-name" id="modelName">Unnamed Model</div>
+                    <div class="model-version">v0.1 - In Training</div>
+                </div>
+                <div class="stats-container">
+                    <div class="stat">
+                        <span class="stat-label">Score</span>
+                        <span class="stat-value" id="scoreValue">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Level</span>
+                        <span class="stat-value" id="levelValue">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Tokens</span>
+                        <span class="stat-value" id="tokensValue">0</span>
+                    </div>
+                </div>
+                <button class="reset-btn" id="resetBtn">🔄 Reset</button>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </header>
+
+        <!-- Phase Container -->
+        <main class="phase-container" id="phaseContainer">
+            <!-- Phases will be dynamically loaded here -->
+        </main>
+
+        <!-- Hint Panel -->
+        <div class="hint-panel" id="hintPanel">
+            <button class="hint-toggle" id="hintToggle">💡 Hint</button>
+            <div class="hint-content" id="hintContent"></div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="phase-nav">
+            <button class="nav-btn" id="prevBtn" disabled>← Previous</button>
+            <div class="phase-indicator" id="phaseIndicator">Phase 0 of 6</div>
+            <button class="nav-btn primary" id="nextBtn">Next →</button>
+        </nav>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="congratsModal">
+        <div class="modal-content">
+            <h2>🎉 Phase Complete!</h2>
+            <p id="phaseCompleteMessage"></p>
+            <div class="points-earned" id="pointsEarned"></div>
+            <button class="btn-primary" id="continueBtn">Continue Journey</button>
+        </div>
+    </div>
+
+    <div class="modal" id="gameCompleteModal">
+        <div class="modal-content">
+            <h2>🏆 Congratulations!</h2>
+            <p>You've completed your journey from data to intelligence!</p>
+            <div class="final-stats" id="finalStats"></div>
+            <button class="btn-primary" id="playAgainBtn">Play Again</button>
+        </div>
+    </div>
+
+    <div class="modal" id="resetConfirmModal">
+        <div class="modal-content">
+            <h2>⚠️ Reset Progress?</h2>
+            <p>This will erase all your progress, scores, and trained data. You'll start from the beginning.</p>
+            <p style="color: var(--error); font-weight: 600; margin-top: 16px;">This action cannot be undone!</p>
+            <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
+                <button class="btn-secondary" id="cancelResetBtn">Cancel</button>
+                <button class="btn-primary" id="confirmResetBtn" style="background: linear-gradient(135deg, var(--error), #dc2626);">Reset Everything</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="./particles.js"></script>
+    <script src="./sounds.js"></script>
+    <script src="./game.js"></script>
+    <script src="./phases/phase0-naming.js"></script>
+    <script src="./phases/phase1-tokenization.js"></script>
+    <script src="./phases/phase2-embeddings.js"></script>
+    <script src="./phases/phase3-attention.js"></script>
+    <script src="./phases/phase4-prediction.js"></script>
+    <script src="./phases/phase5-training.js"></script>
+    <script src="./phases/phase6-application.js"></script>
+    <script src="./app.js"></script>
+</body>
+</html>
+
