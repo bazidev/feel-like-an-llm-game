@@ -9,8 +9,7 @@ const Game = {
         avatar: null,
         phaseScores: {},
         phaseCompleted: {},
-        startTime: Date.now(),
-        timerInterval: null,
+        startTime: null,
         
         // Training Data - Connected Journey (expanded for richer patterns)
         trainingText: "A cat sat on the mat. The dog played with the ball. The cat likes fish. The dog likes bones.",
@@ -28,7 +27,10 @@ const Game = {
         this.updateUI();
         this.setupEventListeners();
         this.renderCurrentPhase();
-        // Timer will start after avatar setup, not here
+        // Restart timer if game has already started (has startTime)
+        if (this.state.startTime && this.state.currentPhase > 0) {
+            this.startTimer();
+        }
     },
     
     setupEventListeners() {
@@ -79,6 +81,9 @@ const Game = {
         // Close modal first
         this.closeModal('resetConfirmModal');
         
+        // Stop the timer
+        this.stopTimer();
+        
         // Wait for modal to close, then reset
         setTimeout(() => {
             localStorage.removeItem('gameState');
@@ -91,8 +96,7 @@ const Game = {
                 avatar: null,
                 phaseScores: {},
                 phaseCompleted: {},
-                startTime: Date.now(),
-                timerInterval: null,
+                startTime: null,
                 
                 // Reset training data
                 trainingText: "A cat sat on the mat. The dog played with the ball. The cat likes fish. The dog likes bones.",
@@ -125,6 +129,12 @@ const Game = {
             // Clear avatar display
             document.getElementById('modelAvatar').textContent = '';
             document.getElementById('modelName').textContent = 'Unnamed Model';
+            
+            // Reset timer display to 00:00
+            const timerElement = document.getElementById('gameTimer');
+            if (timerElement) {
+                timerElement.textContent = '00:00';
+            }
             
             this.saveState();
             this.updateUI();
@@ -431,19 +441,32 @@ const Game = {
     
     // Timer functions
     startTimer() {
-        if (this.state.timerInterval) {
-            clearInterval(this.state.timerInterval);
+        // Clear any existing timer first
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
         }
-        this.state.startTime = this.state.startTime || Date.now();
-        this.state.timerInterval = setInterval(() => {
+        
+        // Set start time if not already set
+        if (!this.state.startTime) {
+            this.state.startTime = Date.now();
+            this.saveState();
+        }
+        
+        // Update immediately
+        this.updateTimerDisplay();
+        
+        // Then update every second
+        this.timerInterval = setInterval(() => {
             this.updateTimerDisplay();
         }, 1000);
+        
+        console.log('✅ Timer started at:', new Date(this.state.startTime).toLocaleTimeString());
     },
     
     stopTimer() {
-        if (this.state.timerInterval) {
-            clearInterval(this.state.timerInterval);
-            this.state.timerInterval = null;
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
         }
     },
     
@@ -453,7 +476,8 @@ const Game = {
             const elapsedTime = Math.floor((Date.now() - this.state.startTime) / 1000);
             const minutes = Math.floor(elapsedTime / 60);
             const seconds = elapsedTime % 60;
-            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            timerElement.textContent = timeString;
         }
     },
     

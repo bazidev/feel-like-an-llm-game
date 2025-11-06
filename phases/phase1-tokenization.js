@@ -155,6 +155,13 @@ window.phase1 = {
                                        cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
                             Next →
                         </button>
+                        ${this.DEV_MODE ? `
+                        <button onclick="phase1.devSkipPhase()" 
+                                style="margin-left: 12px; padding: 12px 24px; background: linear-gradient(135deg, #ef4444, #dc2626); 
+                                       border: none; border-radius: 12px; color: white; font-size: 13px; font-weight: 600; 
+                                       cursor: pointer; opacity: 0.7;">
+                            ⚡ DEV: Skip Phase
+                        </button>` : ''}
                     </div>
                     
                 </div>
@@ -504,15 +511,6 @@ window.phase1 = {
                             </div>
                         </div>
                         
-                        ${this.DEV_MODE ? `
-                            <button onclick="phase1.devSkipTokenization()" 
-                                    style="width: 100%; padding: 12px; margin-top: 14px; background: linear-gradient(135deg, #f59e0b, #d97706); 
-                                           border: 2px solid #fbbf24; border-radius: 10px; color: white; font-size: 13px; font-weight: 700; 
-                                           cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);">
-                                ⚡ DEV: Skip Tokenization
-                            </button>
-                        ` : ''}
-                        
                     </div>
                 </div>
             </div>
@@ -672,8 +670,8 @@ window.phase1 = {
     },
     
     
-    devSkipTokenization() {
-        // DEV ONLY: Auto-complete tokenization
+    devSkipPhase() {
+        // DEV ONLY: Skip entire phase 1
         if (!this.DEV_MODE) return;
         
         // Set all correct tokens as validated
@@ -769,12 +767,37 @@ window.phase1 = {
                                 Computers can't work with text directly. Each token is assigned a unique numerical ID from a <strong style="color: var(--primary);">vocabulary</strong>:
                             </p>
                             
-                            <div style="background: rgba(0, 0, 0, 0.3); padding: 14px; border-radius: 10px; font-family: monospace; font-size: 12px; max-height: 240px; overflow-y: auto;">
-                                ${Game.state.tokens.slice(0, 10).map((token, idx) => 
-                                    `<div style="margin-bottom: 5px;"><span style="color: var(--primary);">"${token}"</span> → <span style="color: #22c55e;">ID: ${idx + 1}</span></div>`
-                                ).join('')}
-                                ${Game.state.tokens.length > 10 ? '<div style="color: var(--text-secondary); font-style: italic; margin-top: 5px;">...and more</div>' : ''}
+                            <div style="background: rgba(0, 0, 0, 0.3); padding: 14px; border-radius: 10px; font-family: monospace; font-size: 12px; max-height: 240px; overflow-y: auto; line-height: 2.2;">
+                                ${Game.state.tokens.slice(0, 15).map((token, idx) => {
+                                    const colors = ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'];
+                                    const color = colors[idx % colors.length];
+                                    const displayToken = token === ' ' ? '␣' : token;
+                                    return `<span style="display: inline-block; margin: 3px 4px; padding: 4px 10px; background: ${color}40; border: 1px solid ${color}; border-radius: 6px; white-space: nowrap;">
+                                        <span style="color: white; font-weight: 600;">"${displayToken}"</span>
+                                        <span style="color: ${color}; margin-left: 6px; font-size: 11px;">ID:${idx + 1}</span>
+                                    </span>`;
+                                }).join('')}
+                                ${Game.state.tokens.length > 15 ? '<div style="color: var(--text-secondary); font-style: italic; margin-top: 8px;">...and more</div>' : ''}
                             </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05)); 
+                               border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <span style="font-size: 20px;">⚡</span>
+                            <h3 style="font-size: 15px; color: #ef4444; margin: 0; font-weight: 700;">Reality Check: How Real LLMs Assign IDs</h3>
+                        </div>
+                        <div style="font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
+                            <p style="margin-bottom: 8px;">
+                                This game assigns IDs sequentially (1, 2, 3...). <strong style="color: #ef4444;">Real LLMs use a pre-built vocabulary</strong> created during training:
+                            </p>
+                            <p style="margin: 0;">
+                                • Each unique token gets a fixed ID (e.g., "the" might always be ID 257)<br>
+                                • IDs are <strong>NOT</strong> based on UTF-8 or ASCII codes<br>
+                                • The vocabulary is learned from training data using algorithms like <strong>Byte-Pair Encoding (BPE)</strong><br>
+                                • Example: GPT uses a vocabulary file mapping tokens → IDs
+                            </p>
                         </div>
                     </div>
                     
@@ -825,15 +848,17 @@ window.phase1 = {
                                 "The cat" and "cat The" are different! Position encoding tells the model where each token appears in the sequence:
                             </p>
                             
-                            <div style="background: rgba(0, 0, 0, 0.3); padding: 14px; border-radius: 10px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
-                                ${Game.state.tokens.slice(0, 8).map((token, idx) => 
-                                    `<div style="margin-bottom: 5px;">
-                                        <span style="color: var(--primary);">"${token}"</span> 
-                                        <span style="color: var(--text-secondary);">at position</span> 
-                                        <span style="color: #f59e0b;">${idx + 1}</span>
-                                    </div>`
-                                ).join('')}
-                                ${Game.state.tokens.length > 8 ? '<div style="color: var(--text-secondary); font-style: italic; margin-top: 5px;">...and more</div>' : ''}
+                            <div style="background: rgba(0, 0, 0, 0.3); padding: 14px; border-radius: 10px; font-family: monospace; font-size: 12px; max-height: 240px; overflow-y: auto; line-height: 2.2;">
+                                ${Game.state.tokens.slice(0, 15).map((token, idx) => {
+                                    const colors = ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'];
+                                    const color = colors[idx % colors.length];
+                                    const displayToken = token === ' ' ? '␣' : token;
+                                    return `<span style="display: inline-block; margin: 3px 4px; padding: 4px 10px; background: ${color}40; border: 1px solid ${color}; border-radius: 6px; white-space: nowrap;">
+                                        <span style="color: white; font-weight: 600;">"${displayToken}"</span>
+                                        <span style="color: ${color}; margin-left: 6px; font-size: 11px;">pos:${idx}</span>
+                                    </span>`;
+                                }).join('')}
+                                ${Game.state.tokens.length > 15 ? '<div style="color: var(--text-secondary); font-style: italic; margin-top: 8px;">...and more</div>' : ''}
                             </div>
                         </div>
                     </div>

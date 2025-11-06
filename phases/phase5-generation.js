@@ -145,18 +145,33 @@ window.phase5 = {
     renderNextWords() {
         const lastWord = this.generatedSequence[this.generatedSequence.length - 1];
         const model = Game.state.model.bigrams;
-        const nextOptions = model[lastWord];
+        let nextOptions = model[lastWord] || {};
         
-        if (!nextOptions || Object.keys(nextOptions).length === 0) {
+        // Check if this word appears at end of sentences in training data
+        const canEndSentence = this.checkIfCanEnd(lastWord);
+        
+        if (Object.keys(nextOptions).length === 0 && !canEndSentence) {
             return `
                 <div style="padding: 20px; background: rgba(239, 68, 68, 0.08); border-radius: 10px; text-align: center;">
                     <div style="font-size: 15px; color: #ef4444; margin-bottom: 8px;">⚠️ Dead End!</div>
-                    <div style="font-size: 13px; color: var(--text-secondary);">
-                        "${lastWord}" never appeared before another word in training. Start over with a different word!
+                    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                        "<strong>${lastWord}</strong>" never appeared before another word in training.<br>
+                        This word only appears at the <strong>end of sentences</strong> in your training data!<br><br>
+                        💡 <strong>Tip:</strong> Choose words that appear in the middle of sentences.
                     </div>
                 </div>
             `;
         }
+        
+        // Add punctuation options if word can end sentence
+        if (canEndSentence) {
+            nextOptions = { ...nextOptions, '.': 0.4, '!': 0.1, '?': 0.05 };
+        }
+        
+        // Sort by probability and take top 6 options
+        const sortedOptions = Object.entries(nextOptions)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6);
         
         return `
             <div style="padding: 16px; background: rgba(255, 255, 255, 0.02); border-radius: 10px;">
@@ -164,20 +179,36 @@ window.phase5 = {
                     After "<strong style="color: var(--primary);">${lastWord}</strong>", model predicts:
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                    ${Object.entries(nextOptions).map(([word, prob]) => `
+                    ${sortedOptions.map(([word, prob]) => {
+                        const isPunctuation = /^[.,!?]$/.test(word);
+                        const displayWord = word === ' ' ? '␣ (space)' : word;
+                        return `
                         <button onclick="phase5.addWord('${word}')"
-                                style="padding: 12px 16px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 212, 255, 0.2); 
+                                style="padding: 12px 16px; background: ${isPunctuation ? 'rgba(168, 85, 247, 0.2)' : 'rgba(0, 0, 0, 0.3)'}; 
+                                       border: 1px solid ${isPunctuation ? 'rgba(168, 85, 247, 0.4)' : 'rgba(0, 212, 255, 0.2)'}; 
                                        border-radius: 8px; cursor: pointer; transition: all 0.3s; text-align: left; display: flex; 
                                        justify-content: space-between; align-items: center;">
-                            <span style="font-size: 14px; color: white; font-family: 'JetBrains Mono', monospace;">${word}</span>
-                            <span style="font-size: 13px; color: ${prob > 0.5 ? '#22c55e' : '#f59e0b'}; font-weight: 600;">
+                            <span style="font-size: 14px; color: white; font-family: 'JetBrains Mono', monospace;">
+                                ${displayWord} ${isPunctuation ? '<span style="font-size: 11px; color: #a855f7;">(end sentence)</span>' : ''}
+                            </span>
+                            <span style="font-size: 13px; color: ${prob > 0.5 ? '#22c55e' : prob > 0.2 ? '#f59e0b' : '#6b7280'}; font-weight: 600;">
                                 ${(prob * 100).toFixed(0)}% likely
                             </span>
                         </button>
-                    `).join('')}
+                    `}).join('')}
+                </div>
+                <div style="margin-top: 12px; padding: 10px; background: rgba(0, 212, 255, 0.05); border-radius: 8px; font-size: 11px; color: var(--text-secondary);">
+                    💡 <strong>Showing top 6</strong> most likely continuations based on your training data patterns
                 </div>
             </div>
         `;
+    },
+    
+    checkIfCanEnd(word) {
+        // Check if this word appears before punctuation or at end of training sentences
+        const trainingText = Game.state.trainingData || '';
+        const pattern = new RegExp(word + '\\s*[.!?]', 'i');
+        return pattern.test(trainingText);
     },
     
     addWord(word) {
