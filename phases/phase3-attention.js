@@ -75,12 +75,38 @@ window.phase3 = {
                     
                     <!-- Reality Check -->
                     <div style="padding: 16px; background: rgba(239, 68, 68, 0.08); border: 2px solid rgba(239, 68, 68, 0.25); 
-                               border-radius: 12px; margin-bottom: 32px;">
+                               border-radius: 12px; margin-bottom: 20px;">
                         <div style="display: flex; align-items: center; gap: 8px; justify-content: center;">
                             <span style="font-size: 18px;">⚡</span>
                             <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">
                                 Reality Check: You're doing matrix math, not thinking. "Chef" and "cooked" have high attention because their vectors are similar.
                             </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Real LLM Concept -->
+                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.05)); 
+                               border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 32px; text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <span style="font-size: 20px;">🧠</span>
+                            <h3 style="font-size: 15px; color: #a855f7; margin: 0;">Real LLM Concept: Multi-Head Attention</h3>
+                        </div>
+                        <div style="font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
+                            <p style="margin-bottom: 10px;">
+                                This game shows simple attention. Real LLMs use <strong style="color: #a855f7;">Multi-Head Attention</strong>:
+                            </p>
+                            <div style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                                <div style="font-size: 11px; line-height: 1.8;">
+                                    • <strong style="color: #fbbf24;">Multiple attention heads</strong> run in parallel (GPT-3 has 96 heads!)<br>
+                                    • Each head learns different relationships: grammar, syntax, semantics, etc.<br>
+                                    • Uses <strong style="color: #fbbf24;">Query, Key, Value</strong> matrices (Q, K, V) for more complex calculations<br>
+                                    • Formula: Attention(Q, K, V) = softmax(QK<sup>T</sup>/√d<sub>k</sub>)V
+                                </div>
+                            </div>
+                            <p style="margin: 0; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border-left: 3px solid #fbbf24;">
+                                💡 <strong>Key Insight:</strong> Attention is the breakthrough that made LLMs powerful! Before attention, models couldn't understand long-range dependencies. 
+                                The famous paper "Attention Is All You Need" (2017) introduced the Transformer architecture used by all modern LLMs.
+                            </p>
                         </div>
                     </div>
                     
@@ -283,7 +309,7 @@ window.phase3 = {
                     </div>
                     
                     <div class="phase-description">
-                        Click a word (highlighted in purple), then click other words to set how much attention it should pay to them.
+                        Set attention weights to connect related words. Watch the visualization update!
                     </div>
                     
                     <div class="hint-section">
@@ -295,23 +321,24 @@ window.phase3 = {
                 </div>
                 
                 <div class="phase-content">
-                    <div style="width: 100%; max-width: 600px;">
+                    <div style="width: 100%; max-width: 680px;">
                         
-                        <div style="padding: 20px; background: rgba(0, 212, 255, 0.08); border-radius: 12px; margin-bottom: 24px; text-align: center;">
-                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Click the highlighted word, then set attention to others:</div>
-                            <div id="wordDisplay" style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                                ${words.map((word, idx) => `
-                                    <div class="attention-word ${idx === 0 ? 'selected' : ''}" data-idx="${idx}" onclick="phase3.selectWord(${idx})"
-                                         style="padding: 12px 18px; background: ${idx === 0 ? 'rgba(191, 0, 255, 0.3)' : 'rgba(255, 255, 255, 0.05)'}; 
-                                                border: 2px solid ${idx === 0 ? 'var(--secondary)' : 'rgba(255, 255, 255, 0.1)'}; border-radius: 10px; 
-                                                cursor: pointer; transition: all 0.3s; font-size: 16px; font-weight: 600;">
-                                        ${word}
-                                    </div>
-                                `).join('')}
+                        <!-- Visual Diagram -->
+                        <div style="padding: 16px; background: rgba(0, 212, 255, 0.08); border-radius: 12px; margin-bottom: 20px;">
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; text-align: center;">
+                                📊 Attention Visualization
+                            </div>
+                            <canvas id="attentionCanvas" width="640" height="300" 
+                                    style="border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 10px; 
+                                           background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 212, 255, 0.05)); 
+                                           display: block; margin: 0 auto;">
+                            </canvas>
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px; text-align: center;">
+                                💡 Purple = focused word • Line thickness = attention strength
                             </div>
                         </div>
                         
-                        <div id="attentionControls" style="margin-bottom: 24px;">
+                        <div id="attentionControls" style="margin-bottom: 20px;">
                             ${this.renderAttentionControls(words, 0)}
                         </div>
                         
@@ -326,6 +353,9 @@ window.phase3 = {
         
         this.selectedWord = 0;
         this.initializeWeights(words);
+        
+        // Draw initial canvas
+        setTimeout(() => this.drawAttentionCanvas(words, 0), 50);
     },
     
     initializeWeights(words) {
@@ -369,21 +399,12 @@ window.phase3 = {
         const sentence = this.sentences[this.currentSentence];
         const words = sentence.trim().split(/\s+/).filter(w => w.length > 0).slice(0, 6);
         
-        // Update UI
-        document.querySelectorAll('.attention-word').forEach((el, i) => {
-            if (i === idx) {
-                el.style.background = 'rgba(191, 0, 255, 0.3)';
-                el.style.borderColor = 'var(--secondary)';
-                el.classList.add('selected');
-            } else {
-                el.style.background = 'rgba(255, 255, 255, 0.05)';
-                el.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                el.classList.remove('selected');
-            }
-        });
-        
         // Update controls
         document.getElementById('attentionControls').innerHTML = this.renderAttentionControls(words, idx);
+        
+        // Redraw canvas
+        this.drawAttentionCanvas(words, idx);
+        
         SoundManager.play('click');
     },
     
@@ -392,7 +413,87 @@ window.phase3 = {
             this.attentionWeights[this.currentSentence][fromIdx] = {};
         }
         this.attentionWeights[this.currentSentence][fromIdx][toIdx] = parseFloat(value);
+        
+        // Redraw canvas to show updated weights
+        const sentence = this.sentences[this.currentSentence];
+        const words = sentence.trim().split(/\s+/).filter(w => w.length > 0).slice(0, 6);
+        this.drawAttentionCanvas(words, this.selectedWord);
+        
         SoundManager.play('click');
+    },
+    
+    drawAttentionCanvas(words, focusedIdx) {
+        const canvas = document.getElementById('attentionCanvas');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+        
+        // Calculate positions for words in a circle
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const radius = Math.min(width, height) / 2 - 60;
+        
+        const positions = words.map((word, idx) => {
+            const angle = (idx / words.length) * 2 * Math.PI - Math.PI / 2;
+            return {
+                x: centerX + radius * Math.cos(angle),
+                y: centerY + radius * Math.sin(angle),
+                word: word
+            };
+        });
+        
+        // Draw connection lines from focused word to others
+        const weights = this.attentionWeights[this.currentSentence]?.[focusedIdx] || {};
+        
+        positions.forEach((toPos, toIdx) => {
+            if (toIdx === focusedIdx) return;
+            
+            const weight = weights[toIdx] || 0.5;
+            const fromPos = positions[focusedIdx];
+            
+            // Draw line
+            ctx.beginPath();
+            ctx.moveTo(fromPos.x, fromPos.y);
+            ctx.lineTo(toPos.x, toPos.y);
+            ctx.strokeStyle = `rgba(0, 212, 255, ${weight * 0.8})`;
+            ctx.lineWidth = 1 + weight * 5; // Thicker = higher attention
+            ctx.stroke();
+            
+            // Draw weight label at midpoint
+            const midX = (fromPos.x + toPos.x) / 2;
+            const midY = (fromPos.y + toPos.y) / 2;
+            ctx.fillStyle = weight > 0.7 ? '#22c55e' : weight > 0.4 ? '#f59e0b' : '#6b7280';
+            ctx.font = 'bold 13px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(weight.toFixed(1), midX, midY - 5);
+        });
+        
+        // Draw word circles
+        positions.forEach((pos, idx) => {
+            const isFocused = idx === focusedIdx;
+            const nodeRadius = isFocused ? 45 : 35;
+            
+            // Circle
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, nodeRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = isFocused ? 'rgba(191, 0, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)';
+            ctx.fill();
+            ctx.strokeStyle = isFocused ? '#bf00ff' : 'rgba(0, 212, 255, 0.6)';
+            ctx.lineWidth = isFocused ? 3 : 2;
+            ctx.stroke();
+            
+            // Text
+            ctx.fillStyle = 'white';
+            ctx.font = isFocused ? 'bold 15px monospace' : 'bold 13px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(pos.word, pos.x, pos.y);
+        });
     },
     
     nextSentence() {
@@ -449,13 +550,46 @@ window.phase3 = {
                         </ul>
                     </div>
                     
-                    <!-- What's Next -->
-                    <div style="padding: 20px; background: linear-gradient(135deg, rgba(191, 0, 255, 0.08), rgba(0, 212, 255, 0.05)); 
-                               border: 2px solid rgba(191, 0, 255, 0.25); border-radius: 12px; margin-bottom: 32px;">
-                        <h3 style="font-size: 16px; color: var(--secondary); margin-bottom: 12px;">🔜 Next: Training</h3>
-                        <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">
-                            Now you'll use your tokens, embeddings, and attention weights to <strong>train a bigram model</strong> - learning which tokens follow which based on your training data. Then you'll generate NEW text!
-                        </p>
+                    <!-- Journey Checkpoint -->
+                    <div style="padding: 24px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.08)); 
+                               border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 14px; margin-bottom: 32px;">
+                        <div style="text-align: center; margin-bottom: 16px;">
+                            <span style="font-size: 32px;">🗺️</span>
+                            <h3 style="font-size: 18px; color: #fbbf24; margin: 8px 0 0 0; font-weight: 700;">Journey Checkpoint</h3>
+                        </div>
+                        
+                        <div style="display: grid; gap: 14px;">
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #22c55e; border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: #22c55e; margin-bottom: 6px;">📍 Where You Are</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    Your tokens now have <strong>relationships</strong>. The attention mechanism calculated how much each token should "focus on" others based on their vector similarity.
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--primary); border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 6px;">✅ What You Did</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    You computed ${totalWeights} attention scores through pure math (dot products, softmax). 
+                                    "Chef" pays high attention to "cooked" because their vectors are similar - discovered from training data, not programmed!
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--secondary); border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px;">🎯 What's Next</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    <strong>Training a language model:</strong> Build a bigram model that learns "which words follow which" from your training data. 
+                                    This creates the statistical patterns needed for text generation!
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #fbbf24; border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: #fbbf24; margin-bottom: 6px;">💡 Why It Matters</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    Attention is the BREAKTHROUGH that made modern LLMs possible! It allows the model to dynamically focus on relevant context. 
+                                    "The chef who trained in Paris cooked" - attention helps "cooked" focus on "chef", not just the nearest word "Paris".
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <button class="btn-primary" onclick="phase3.completePhase()" style="width: 100%; font-size: 17px; padding: 14px;">

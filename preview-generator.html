@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Image Generator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #000;
+        }
+        
+        .preview-card {
+            width: 1200px;
+            height: 630px;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1147 50%, #0a0e27 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            box-sizing: border-box;
+        }
+        
+        /* Animated background */
+        .preview-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        
+        .preview-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(191, 0, 255, 0.1) 0%, transparent 70%);
+            animation: rotate 15s linear infinite reverse;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+        
+        .emoji {
+            font-size: 120px;
+            margin-bottom: 30px;
+            filter: drop-shadow(0 0 30px rgba(0, 212, 255, 0.5));
+        }
+        
+        h1 {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 72px;
+            font-weight: 800;
+            margin: 0 0 20px 0;
+            background: linear-gradient(135deg, #00d4ff, #bf00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 60px rgba(0, 212, 255, 0.3);
+        }
+        
+        .subtitle {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 32px;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0 0 40px 0;
+            font-weight: 400;
+        }
+        
+        .features {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+        
+        .feature {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px 28px;
+            font-family: 'Inter', sans-serif;
+            font-size: 20px;
+            color: #00d4ff;
+            font-weight: 600;
+        }
+        
+        .cta {
+            margin-top: 50px;
+            font-family: 'Inter', sans-serif;
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+        
+        /* Grid pattern overlay */
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-card">
+        <div class="grid-overlay"></div>
+        <div class="content">
+            <div class="emoji">🤖</div>
+            <h1>Feel Like an LLM</h1>
+            <p class="subtitle">Experience AI from the Inside</p>
+            <div class="features">
+                <div class="feature">🔤 Tokenization</div>
+                <div class="feature">📊 Embeddings</div>
+                <div class="feature">🎯 Attention</div>
+                <div class="feature">✨ Generation</div>
+            </div>
+            <p class="cta">Build your own mini-LLM • Learn how ChatGPT works</p>
+        </div>
+    </div>
+    
+    <script>
+        // Instructions
+        console.log('%c📸 How to create your preview image:', 'font-size: 18px; font-weight: bold; color: #00d4ff;');
+        console.log('%c1. Open this page in your browser', 'font-size: 14px; color: #fff;');
+        console.log('%c2. Right-click on the preview card', 'font-size: 14px; color: #fff;');
+        console.log('%c3. Take a screenshot (1200x630px)', 'font-size: 14px; color: #fff;');
+        console.log('%c4. Save as "preview.png" in your project folder', 'font-size: 14px; color: #fff;');
+        console.log('%c5. Or use a tool like https://www.screely.com/', 'font-size: 14px; color: #fff;');
+    </script>
+</body>
+</html>
+

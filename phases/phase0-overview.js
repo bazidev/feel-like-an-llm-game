@@ -7,35 +7,35 @@ window.phase0 = {
     selectedAvatar: null,
     selectedDataset: null,
     
-    // Dataset options
+    // Dataset options - EXPANDED for better generation paths
     datasets: {
         animals: {
             name: "🐾 Animals",
-            text: "A cat sat on the mat. The dog played with the ball. The cat likes fish. The dog likes bones.",
+            text: "A cat sat on the mat. The dog played with the ball. The cat likes fish and milk. The dog likes bones and treats. The cat sat near the window. The dog played in the garden. The cat likes to sleep all day. The dog likes to run around. A cat and dog can be friends. The cat sat on the sofa. The dog played with the toy. A bird sang in the tree. The bird likes seeds and water. The cat watched the bird carefully.",
             description: "Learn about pets and their behaviors",
             color: "#22c55e"
         },
         space: {
             name: "🚀 Space",
-            text: "The rocket launched into orbit. The astronaut floated in space. The stars shine very brightly. The moon orbits around Earth.",
+            text: "The rocket launched into orbit successfully. The astronaut floated in space gracefully. The stars shine very brightly tonight. The moon orbits around Earth constantly. The rocket carried equipment into space. The astronaut wore a special suit. The stars form beautiful patterns at night. The moon looks big and bright. A satellite orbits the planet Earth. The rocket needs fuel to fly. The astronaut trained for many years. The stars are far away from Earth. The moon reflects the sunlight beautifully.",
             description: "Explore the cosmos and universe",
             color: "#3b82f6"
         },
         food: {
             name: "🍕 Food",
-            text: "The chef cooked fresh pasta. The pizza came from the oven. The chef loves Italian cuisine. The pasta tastes very delicious.",
+            text: "The chef cooked fresh pasta today. The pizza came from the oven hot. The chef loves Italian cuisine very much. The pasta tastes very delicious indeed. The chef cooked a special meal. The pizza has cheese and tomatoes. The chef loves to cook for people. The pasta came from Italy originally. A restaurant serves good food daily. The chef cooked with fresh ingredients. The pizza came out perfectly baked. The chef loves sharing recipes online. The pasta tastes amazing with sauce.",
             description: "Culinary adventures and cooking",
             color: "#f59e0b"
         },
         tech: {
             name: "💻 Technology",
-            text: "The programmer wrote clean code. The computer processed the data. The programmer loves software development. The computer runs very efficiently.",
+            text: "The programmer wrote clean code yesterday. The computer processed the data quickly. The programmer loves software development very much. The computer runs very efficiently now. The programmer wrote new features today. The computer processed millions of calculations. The programmer loves learning new skills. The computer runs many programs simultaneously. A developer builds useful applications daily. The programmer wrote documentation for users. The computer processed the task successfully. The programmer loves solving difficult problems. The computer runs faster than before.",
             description: "Coding and innovation world",
             color: "#8b5cf6"
         },
         sports: {
             name: "⚽ Sports",
-            text: "The player kicked the ball. The team scored a goal. The player loves football games. The team celebrates their victory.",
+            text: "The player kicked the ball hard. The team scored a goal happily. The player loves football games very much. The team celebrates their victory loudly. The player kicked with great skill. The team scored three goals today. The player loves training every day. The team celebrates each victory together. A coach trains the team regularly. The player kicked the ball accurately. The team scored in the final minute. The player loves competing against rivals. The team celebrates winning the championship.",
             description: "Athletics and competition",
             color: "#ef4444"
         }

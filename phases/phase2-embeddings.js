@@ -6,6 +6,10 @@ window.phase2 = {
     tokenGroups: {},
     targetGroups: {},
     
+    // Performance tracking
+    groupingAttempts: 0,
+    groupingCorrect: 0,
+    
     // Tutorial examples - Show data context, then test without understanding!
     exampleSets: [
         {
@@ -221,9 +225,20 @@ window.phase2 = {
                             <h3 style="font-size: 15px; color: #a855f7; margin: 0;">Real LLM Concept: Embedding Dimensions</h3>
                         </div>
                         <div style="font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
-                            <p style="margin: 0;">
+                            <p style="margin-bottom: 10px;">
                                 <strong style="color: #a855f7;">GPT-3:</strong> 12,288 dimensions | <strong style="color: #a855f7;">GPT-4:</strong> ~18,000 dimensions (estimated)
-                                <br>This game uses 2D for visualization, but real LLMs use thousands of dimensions to capture complex patterns!
+                            </p>
+                            <div style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                                <div style="font-size: 11px; line-height: 1.8;">
+                                    • This game uses <strong style="color: #fbbf24;">2D</strong> for visualization (x, y coordinates)<br>
+                                    • Real LLMs use <strong style="color: #fbbf24;">thousands of dimensions</strong> to capture nuanced patterns<br>
+                                    • More dimensions = more subtle relationships can be learned<br>
+                                    • Each dimension can represent different aspects (grammar, topic, sentiment, etc.)
+                                </div>
+                            </div>
+                            <p style="margin: 0; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border-left: 3px solid #fbbf24;">
+                                💡 <strong>Key Insight:</strong> Embeddings are learned, not programmed! The model discovers these patterns automatically from training data. 
+                                No one explicitly tells it "cat" and "dog" should be similar - it figures that out through billions of examples!
                             </p>
                         </div>
                     </div>
@@ -711,6 +726,7 @@ window.phase2 = {
                 </div>
             `;
             SoundManager.play('error');
+            Game.addScore(-10); // Penalty for wrong positioning
         }
     },
     
@@ -1004,6 +1020,8 @@ window.phase2 = {
         const tokens = this.groupingState.tokens;
         const feedback = document.getElementById('groupingFeedback');
         
+        this.groupingAttempts++; // Track every attempt
+        
         let correct = 0;
         let total = tokens.length;
         let errors = [];
@@ -1034,6 +1052,9 @@ window.phase2 = {
         feedback.style.display = 'block';
         
         if (accuracy >= 0.7) { // 70% correct
+            // Track best performance
+            this.groupingCorrect = correct;
+            
             feedback.style.background = 'rgba(34, 197, 94, 0.1)';
             feedback.style.border = '2px solid rgba(34, 197, 94, 0.3)';
             feedback.innerHTML = `
@@ -1044,7 +1065,12 @@ window.phase2 = {
                 </div>
             `;
             SoundManager.play('levelUp');
-            Game.addScore(150);
+            
+            // Calculate accuracy-based bonus: 70% accuracy = 105 points, 100% = 150 points
+            const baseBonus = 150;
+            const accuracyBonus = Math.floor(baseBonus * accuracy);
+            Game.addScore(accuracyBonus);
+            
             Game.state.embeddings = this.generateEmbeddings();
             
             setTimeout(() => {
@@ -1062,6 +1088,7 @@ window.phase2 = {
                 </div>
             `;
             SoundManager.play('error');
+            Game.addScore(-15); // Penalty for wrong grouping attempt
         }
     },
     
@@ -1147,13 +1174,46 @@ window.phase2 = {
                         </ul>
                     </div>
                     
-                    <!-- What's Next -->
-                    <div style="padding: 20px; background: linear-gradient(135deg, rgba(191, 0, 255, 0.08), rgba(0, 212, 255, 0.05)); 
-                               border: 2px solid rgba(191, 0, 255, 0.25); border-radius: 12px; margin-bottom: 32px;">
-                        <h3 style="font-size: 16px; color: var(--secondary); margin-bottom: 12px;">🔜 Next: Attention</h3>
-                        <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">
-                            Now you'll calculate <strong>attention weights</strong> - deciding how much each token should "pay attention" to other tokens based on their vector similarity. Pure math!
-                        </p>
+                    <!-- Journey Checkpoint -->
+                    <div style="padding: 24px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.08)); 
+                               border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 14px; margin-bottom: 32px;">
+                        <div style="text-align: center; margin-bottom: 16px;">
+                            <span style="font-size: 32px;">🗺️</span>
+                            <h3 style="font-size: 18px; color: #fbbf24; margin: 8px 0 0 0; font-weight: 700;">Journey Checkpoint</h3>
+                        </div>
+                        
+                        <div style="display: grid; gap: 14px;">
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #22c55e; border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: #22c55e; margin-bottom: 6px;">📍 Where You Are</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    Your data is now <strong>vectorized</strong>. Each token has become a point in mathematical space, positioned based on usage patterns.
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--primary); border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 6px;">✅ What You Did</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    You converted ${embeddingCount} tokens into 2D vectors. Tokens appearing in similar contexts got similar coordinates. 
+                                    No "understanding" needed - just pattern recognition from training data!
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--secondary); border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px;">🎯 What's Next</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    <strong>Attention mechanism:</strong> Calculate which tokens should "attend to" each other based on vector similarity. 
+                                    This helps the model understand context - "chef" + "cooked" = related concepts.
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #fbbf24; border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: #fbbf24; margin-bottom: 6px;">💡 Why It Matters</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    Without embeddings, "cat" is just ID #42. With embeddings, "cat" is near "dog" and "pet" in vector space - 
+                                    the model can now recognize relationships! This is how LLMs capture "meaning" through pure mathematics.
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <button class="btn-primary" onclick="phase2.completePhase()" style="width: 100%; font-size: 17px; padding: 14px;">

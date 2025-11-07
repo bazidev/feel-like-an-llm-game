@@ -238,14 +238,17 @@ const Game = {
         
         this.state.phaseCompleted[this.state.currentPhase] = true;
         this.saveState();
-        this.showCongratsModal(pointsEarned, message);
-        SoundManager.play('levelUp');
         
-        // Check if game is complete
+        // Don't show modal for final phase (phase 6) - it has its own recap display
         if (this.state.currentPhase === this.state.totalPhases - 1) {
-            setTimeout(() => {
-                this.showGameCompleteModal();
-            }, 2000);
+            // Final phase - stop timer and just show sound
+            this.stopTimer();
+            SoundManager.play('levelUp');
+            console.log('🎉 Game Complete! Showing final recap on screen.');
+        } else {
+            // Regular phase completion - show modal
+            this.showCongratsModal(pointsEarned, message);
+            SoundManager.play('levelUp');
         }
     },
     
@@ -297,8 +300,8 @@ const Game = {
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         
-        // Hide navigation during Phase 0 (has its own internal flow)
-        if (this.state.currentPhase === 0) {
+        // Hide navigation during Phase 0 and Phase 6 (they have their own internal flow)
+        if (this.state.currentPhase === 0 || this.state.currentPhase === 6) {
             if (phaseNav) phaseNav.style.display = 'none';
         } else {
             if (phaseNav) phaseNav.style.display = 'flex';
@@ -571,10 +574,9 @@ const Game = {
                 <div style="margin-bottom: 20px; padding: 16px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(191, 0, 255, 0.05)); 
                            border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 12px;">
                     <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.7;">
-                        <strong style="color: var(--primary);">Rating Formula:</strong> 
-                        Score × (1 + Tokens/100) ÷ Time (minutes)
+                        <strong style="color: var(--primary);">Performance Ranking</strong>
                         <br>
-                        <span style="opacity: 0.8;">Higher is better! Maximize score and tokens while minimizing time.</span>
+                        <span style="opacity: 0.8;">Based on your score, accuracy, and completion time.</span>
                     </div>
                 </div>
                 

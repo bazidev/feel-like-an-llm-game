@@ -45,12 +45,38 @@ window.phase5 = {
                     
                     <!-- Reality Check -->
                     <div style="padding: 16px; background: rgba(239, 68, 68, 0.08); border: 2px solid rgba(239, 68, 68, 0.25); 
-                               border-radius: 12px; margin-bottom: 32px;">
+                               border-radius: 12px; margin-bottom: 20px;">
                         <div style="display: flex; align-items: center; gap: 8px; justify-content: center;">
                             <span style="font-size: 18px;">⚡</span>
                             <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">
                                 Reality Check: You're rolling dice weighted by training data. No creativity - just probability!
                             </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Real LLM Concept -->
+                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.05)); 
+                               border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 32px; text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <span style="font-size: 20px;">🧠</span>
+                            <h3 style="font-size: 15px; color: #a855f7; margin: 0;">Real LLM Concept: Sampling & Temperature</h3>
+                        </div>
+                        <div style="font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
+                            <p style="margin-bottom: 10px;">
+                                This game always picks from probabilities. Real LLMs have <strong style="color: #a855f7;">parameters to control creativity</strong>:
+                            </p>
+                            <div style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                                <div style="font-size: 11px; line-height: 1.8;">
+                                    • <strong style="color: #fbbf24;">Temperature (0-2):</strong> Controls randomness. Low = predictable, High = creative/chaotic<br>
+                                    • <strong style="color: #fbbf24;">Top-K sampling:</strong> Only consider the top K most likely tokens<br>
+                                    • <strong style="color: #fbbf24;">Top-P (nucleus) sampling:</strong> Consider tokens until cumulative probability reaches P<br>
+                                    • <strong style="color: #fbbf24;">Beam search:</strong> Explore multiple generation paths simultaneously
+                                </div>
+                            </div>
+                            <p style="margin: 0; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border-left: 3px solid #fbbf24;">
+                                💡 <strong>Key Insight:</strong> LLMs don't "plan" sentences! They generate one token at a time, with NO ability to revise. 
+                                That's why they sometimes start sentences they can't finish logically. It's pure statistical prediction!
+                            </p>
                         </div>
                     </div>
                     
@@ -206,7 +232,7 @@ window.phase5 = {
     
     checkIfCanEnd(word) {
         // Check if this word appears before punctuation or at end of training sentences
-        const trainingText = Game.state.trainingData || '';
+        const trainingText = Game.state.trainingText || '';
         const pattern = new RegExp(word + '\\s*[.!?]', 'i');
         return pattern.test(trainingText);
     },
@@ -236,6 +262,10 @@ window.phase5 = {
     
     renderRecap(container) {
         const generated = Game.state.generatedText;
+        
+        // Calculate training data size
+        const trainingText = Game.state.trainingText || '';
+        const sentenceCount = trainingText.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
         
         container.innerHTML = `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 30px; overflow-y: auto;">
@@ -271,13 +301,70 @@ window.phase5 = {
                         </ul>
                     </div>
                     
-                    <!-- What's Next -->
-                    <div style="padding: 20px; background: linear-gradient(135deg, rgba(191, 0, 255, 0.08), rgba(0, 212, 255, 0.05)); 
-                               border: 2px solid rgba(191, 0, 255, 0.25); border-radius: 12px; margin-bottom: 32px;">
-                        <h3 style="font-size: 16px; color: var(--secondary); margin-bottom: 12px;">🔜 Next: Your Journey Complete</h3>
-                        <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">
-                            You've completed the full LLM journey! See your complete achievement and understand what you built.
-                        </p>
+                    <!-- Limited Dataset Explanation -->
+                    <div style="padding: 16px; background: rgba(239, 68, 68, 0.08); border: 2px solid rgba(239, 68, 68, 0.25); 
+                               border-radius: 12px; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <span style="font-size: 20px;">⚠️</span>
+                            <h3 style="font-size: 15px; color: #ef4444; margin: 0; font-weight: 700;">About Your Generated Text</h3>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.7;">
+                            <p style="margin: 0 0 10px 0;">
+                                Your generated text might seem odd or hit "dead ends" - this is <strong style="color: #ef4444;">expected with limited training data</strong>! 
+                            </p>
+                            <p style="margin: 0 0 10px 0;">
+                                <strong style="color: #fbbf24;">Why it happens:</strong> With only ${sentenceCount} training sentences, 
+                                the model has seen very few word combinations. Real LLMs train on trillions of tokens!
+                            </p>
+                            <p style="margin: 0;">
+                                <strong style="color: #22c55e;">What's impressive:</strong> Despite the tiny dataset, your text still makes SOME sense! 
+                                The words are real, the grammar often works, and it follows patterns from training. 
+                                It won't generate completely random gibberish - the statistical patterns still guide it toward sensible output.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Journey Checkpoint -->
+                    <div style="padding: 24px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.08)); 
+                               border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 14px; margin-bottom: 32px;">
+                        <div style="text-align: center; margin-bottom: 16px;">
+                            <span style="font-size: 32px;">🏁</span>
+                            <h3 style="font-size: 18px; color: #fbbf24; margin: 8px 0 0 0; font-weight: 700;">Final Checkpoint</h3>
+                        </div>
+                        
+                        <div style="display: grid; gap: 14px;">
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #22c55e; border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: #22c55e; margin-bottom: 6px;">🎉 What You Accomplished</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    You built a <strong>complete working LLM</strong> from scratch! Tokenization → Embeddings → Attention → Training → Generation. 
+                                    That's the full pipeline used by GPT, Claude, and every modern LLM!
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--primary); border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 6px;">✅ What You Created</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    Your AI generated "${generated}" using only statistical patterns. 
+                                    No hard-coded rules, no human intervention after training - pure learned probabilities in action!
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--secondary); border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px;">🔬 What's Next</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    See your <strong>complete journey summary</strong> and understand how your mini-LLM compares to real models like GPT-4. 
+                                    The principles are identical - only the scale differs!
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #fbbf24; border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: #fbbf24; margin-bottom: 6px;">💡 The Big Picture</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    You now understand how LLMs really work! They're not magic - just massive scale versions of what you built. 
+                                    More data, more parameters, more compute, but the same fundamental process: pattern recognition through mathematics.
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <button class="btn-primary" onclick="phase5.completePhase()" style="width: 100%; font-size: 17px; padding: 14px;">

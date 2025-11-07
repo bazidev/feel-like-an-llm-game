@@ -13,7 +13,20 @@ window.phase1 = {
     correctTokens: [],
     colorIndex: 0,
     tokenColorMap: {}, // Maps token value to color
-    showTutorial: true, // Show tutorial on first visit
+    showTutorial: false, // Will show after auto-demo
+    
+    // Auto-demo tracking
+    autoDemoInProgress: false,
+    autoDemoComplete: false,
+    
+    // Selection tracking
+    selectionStart: null,
+    selectionEnd: null,
+    isSelecting: false,
+    
+    // Performance tracking
+    correctAnswers: 0,
+    wrongAnswers: 0,
     
     tokenColors: [
         '#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', 
@@ -83,6 +96,8 @@ window.phase1 = {
             this.renderExamples(container);
         } else if (this.currentStep === 'yourdata') {
             this.renderYourData(container);
+        } else if (this.currentStep === 'checkpoint1') {
+            this.renderCheckpoint1(container);
         } else if (this.currentStep === 'info1') {
             this.renderInfoStep1(container);
         } else if (this.currentStep === 'info2') {
@@ -440,7 +455,7 @@ window.phase1 = {
                     </div>
                     
                     <div class="phase-description">
-                        Now tokenize your actual training data. Click between characters to add split marks (|).
+                            Watch as the system tokenizes ~70% automatically, then you'll complete the rest!
                     </div>
                     
                     <div class="hint-section" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(251, 191, 36, 0.05)); padding: 12px;">
@@ -452,7 +467,7 @@ window.phase1 = {
                         <h4 style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">✅ Validated tokens:</h4>
                         <div id="tokenProgressBar" style="display: flex; flex-wrap: wrap; gap: 5px; padding: 10px; 
                                                           background: rgba(0, 0, 0, 0.3); border-radius: 8px; max-height: 180px; overflow-y: auto;
-                                                          align-items: center; align-content: flex-start; min-height: 60px;">
+                                                          align-items: center; align-content: flex-start; min-height: 60px; scroll-behavior: smooth;">
                             ${this.validatedTokens.length === 0 ? '<div style="color: rgba(255, 255, 255, 0.3); font-size: 11px;">No tokens yet...</div>' : 
                               this.validatedTokens.map(t => {
                                 const color = this.getTokenColor(t);
@@ -467,29 +482,32 @@ window.phase1 = {
                 <div class="phase-content">
                     <div style="width: 100%; max-width: 900px;">
                         
-                        <div id="feedbackMessage" style="min-height: 35px; margin-bottom: 12px; text-align: center; font-size: 13px;"></div>
+                        <div id="feedbackMessage" style="min-height: 35px; margin-bottom: 12px; text-align: center; font-size: 13px;">
+                            ${!this.autoDemoComplete ? '<div style="color: var(--primary); font-weight: 600;">👀 Watch how tokenization works...</div>' : ''}
+                        </div>
                         
                         ${this.showTutorial ? `
-                            <div id="tutorialHint" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(251, 191, 36, 0.1)); 
-                                                         border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 10px; padding: 12px 16px; 
-                                                         margin-bottom: 14px; animation: pulse 2s ease-in-out infinite;">
-                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                                    <span style="font-size: 20px;">👆</span>
-                                    <h4 style="color: #fbbf24; font-size: 14px; margin: 0; font-weight: 700;">How to tokenize:</h4>
-                                </div>
-                                <ol style="margin: 0; padding-left: 22px; color: rgba(255, 255, 255, 0.9); font-size: 12px; line-height: 1.6;">
-                                    <li style="margin-bottom: 5px;"><strong style="color: #fbbf24;">Hover</strong> between characters to see the <span style="color: var(--primary);">blue indicator</span></li>
-                                    <li style="margin-bottom: 5px;"><strong style="color: #fbbf24;">Click</strong> the indicator where you want to end the token</li>
-                                    <li style="margin-bottom: 5px;"><strong style="color: #fbbf24;">Spaces</strong> are highlighted in yellow - they're separate tokens!</li>
-                                    <li style="margin: 0;">Start with the first token: "<strong style="color: var(--primary);">A</strong>"</li>
-                                </ol>
-                                <button onclick="phase1.dismissTutorial()" 
-                                        style="margin-top: 10px; padding: 6px 16px; background: rgba(251, 191, 36, 0.2); 
-                                               border: 1px solid rgba(251, 191, 36, 0.5); border-radius: 8px; 
-                                               color: #fbbf24; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
-                                    Got it! ✓
-                                </button>
+                        <div id="tutorialHint" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(251, 191, 36, 0.1)); 
+                                                     border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 10px; padding: 12px 16px; 
+                                                     margin-bottom: 14px; animation: pulse 2s ease-in-out infinite;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <span style="font-size: 20px;">👆</span>
+                                <h4 style="color: #fbbf24; font-size: 14px; margin: 0; font-weight: 700;">How to tokenize:</h4>
                             </div>
+                            <ol style="margin: 0; padding-left: 22px; color: rgba(255, 255, 255, 0.9); font-size: 12px; line-height: 1.6;">
+                                <li style="margin-bottom: 5px;"><strong style="color: var(--primary);">Drag to select</strong> from start to end of each token</li>
+                                <li style="margin-bottom: 5px;">Selection shows in <strong style="color: var(--primary);">blue</strong></li>
+                                <li style="margin-bottom: 5px;"><strong style="color: #22c55e;">Green flash</strong> = correct, <strong style="color: #ef4444;">red flash</strong> = wrong</li>
+                                <li style="margin-bottom: 5px;"><strong style="color: #fbbf24;">Don't forget spaces</strong> - they're separate tokens!</li>
+                                <li style="margin: 0;">Next token is: "<strong style="color: var(--primary);">${this.correctTokens[this.validatedTokens.length] === ' ' ? '␣' : this.correctTokens[this.validatedTokens.length]}</strong>"</li>
+                            </ol>
+                            <button onclick="phase1.dismissTutorial()" 
+                                    style="margin-top: 10px; padding: 6px 16px; background: rgba(251, 191, 36, 0.2); 
+                                           border: 1px solid rgba(251, 191, 36, 0.5); border-radius: 8px; 
+                                           color: #fbbf24; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                                Got it! ✓
+                            </button>
+                        </div>
                         ` : ''}
                         
                         <div id="interactiveText" style="font-size: 18px; line-height: 1.8; font-weight: 500; 
@@ -515,6 +533,11 @@ window.phase1 = {
                 </div>
             </div>
         `;
+        
+        // Start auto-demo if not done yet
+        if (!this.autoDemoComplete && !this.autoDemoInProgress && this.validatedTokens.length === 0) {
+            setTimeout(() => this.startAutoDemo(), 1000);
+        }
     },
     
     makeClickableText(text) {
@@ -522,36 +545,363 @@ window.phase1 = {
             return '<div style="color: rgba(255, 255, 255, 0.3); text-align: center; font-size: 14px;">All text tokenized! 🎉</div>';
         }
         
-        let html = '';
-        const startIdx = this.userSplits.length > 0 ? this.userSplits[0] : 0;
+        let html = '<span style="user-select: none;">';
         
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
-            const idx = i;
             
-            // Add the character itself with highlight if in selection
-            const isInSelection = this.userSplits.length > 0 && idx >= startIdx;
-            const isSpace = char === ' ';
-            const spaceHighlight = this.showTutorial && isSpace ? 'background: rgba(255, 193, 7, 0.3); border: 2px dashed #fbbf24; border-radius: 4px; padding: 2px;' : '';
-            html += `<span class="token-char" style="display: inline; ${isInSelection ? 'background: rgba(0, 245, 255, 0.15); border-radius: 3px;' : ''} ${spaceHighlight}">${char === ' ' ? '&nbsp;' : char}</span>`;
-            
-            // Add clickable boundary AFTER this character (end boundary)
-            const boundaryIdx = idx + 1;
-            const isActive = this.userSplits.includes(boundaryIdx);
-            html += `<span class="token-boundary" onclick="phase1.selectEndBoundary(${boundaryIdx})" 
-                           style="display: inline-block; width: ${isActive ? '12px' : '4px'}; height: 24px; cursor: pointer; 
-                                  background: ${isActive ? 'rgba(0, 245, 255, 0.5)' : 'transparent'}; 
-                                  border-left: ${isActive ? '3px solid var(--primary)' : '1px dashed rgba(0, 245, 255, 0.2)'}; 
-                                  margin: 0 1px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); position: relative; top: 2px; vertical-align: middle;
-                                  box-shadow: ${isActive ? '0 0 15px rgba(0, 245, 255, 0.6)' : 'none'};"
-                           onmouseover="this.style.background='rgba(0, 245, 255, 0.6)'; this.style.borderLeft='4px solid var(--primary)'; this.style.width='16px'; this.style.cursor='pointer'; this.style.boxShadow='0 0 20px rgba(0, 245, 255, 0.8)'; this.style.transform='scaleY(1.2)';" 
-                           onmouseout="this.style.background='${isActive ? 'rgba(0, 245, 255, 0.5)' : 'transparent'}'; 
-                                      this.style.borderLeft='${isActive ? '3px solid var(--primary)' : '1px dashed rgba(0, 245, 255, 0.2)'}';
-                                      this.style.width='${isActive ? '12px' : '4px'}'; 
-                                      this.style.boxShadow='${isActive ? '0 0 15px rgba(0, 245, 255, 0.6)' : 'none'}'; this.style.transform='scaleY(1)'"></span>`;
+            html += `<span class="token-char" data-idx="${i}" 
+                           onmousedown="phase1.startSelection(${i})" 
+                           onmouseenter="phase1.updateSelection(${i})" 
+                           onmouseup="phase1.endSelection(${i})"
+                           style="display: inline-block; cursor: text; 
+                                  padding: 2px 1px; border-radius: 3px;
+                                  transition: background 0.1s ease;">${char === ' ' ? '&nbsp;' : char}</span>`;
         }
         
+        html += '</span>';
         return html;
+    },
+    
+    startAutoDemo() {
+        // Don't start if already in progress or user already started
+        if (this.autoDemoInProgress || this.autoDemoComplete) return;
+        
+        this.autoDemoInProgress = true;
+        
+        // Calculate how many tokens to auto-complete (70%)
+        const totalTokens = this.correctTokens.length;
+        const autoTokenCount = Math.ceil(totalTokens * 0.7);
+        
+        // Auto-tokenize with delays
+        this.autoTokenizeNext(0, autoTokenCount);
+    },
+    
+    autoTokenizeNext(currentIndex, targetCount) {
+        if (currentIndex >= targetCount || this.currentText.trim().length === 0) {
+            // Auto-demo complete!
+            this.autoDemoComplete = true;
+            this.autoDemoInProgress = false;
+            
+            const feedback = document.getElementById('feedbackMessage');
+            if (feedback) {
+                feedback.innerHTML = `
+                    <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(191, 0, 255, 0.1)); 
+                               border: 2px solid rgba(0, 212, 255, 0.4); border-radius: 10px; padding: 12px; 
+                               animation: pulse 2s ease-in-out infinite;">
+                        <div style="color: var(--primary); font-weight: 700; font-size: 14px; margin-bottom: 4px;">
+                            ✨ Now it's your turn!
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 12px;">
+                            Drag to select the remaining ${this.correctTokens.length} tokens
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Show tutorial after demo
+            this.showTutorial = true;
+            
+            // Create and insert tutorial box
+            const interactiveText = document.getElementById('interactiveText');
+            if (interactiveText && !document.getElementById('tutorialHint')) {
+                const tutorialBox = document.createElement('div');
+                tutorialBox.id = 'tutorialHint';
+                tutorialBox.style.cssText = `background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(251, 191, 36, 0.1)); 
+                                             border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 10px; padding: 12px 16px; 
+                                             margin-bottom: 14px; animation: pulse 2s ease-in-out infinite;`;
+                tutorialBox.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <span style="font-size: 20px;">👆</span>
+                        <h4 style="color: #fbbf24; font-size: 14px; margin: 0; font-weight: 700;">How to tokenize:</h4>
+                    </div>
+                    <ol style="margin: 0; padding-left: 22px; color: rgba(255, 255, 255, 0.9); font-size: 12px; line-height: 1.6;">
+                        <li style="margin-bottom: 5px;"><strong style="color: var(--primary);">Drag to select</strong> from start to end of each token</li>
+                        <li style="margin-bottom: 5px;">Selection shows in <strong style="color: var(--primary);">blue</strong></li>
+                        <li style="margin-bottom: 5px;"><strong style="color: #22c55e;">Green flash</strong> = correct, <strong style="color: #ef4444;">red flash</strong> = wrong</li>
+                        <li style="margin-bottom: 5px;"><strong style="color: #fbbf24;">Don't forget spaces</strong> - they're separate tokens!</li>
+                        <li style="margin: 0;">Next token is: "<strong style="color: var(--primary);">${this.correctTokens[this.validatedTokens.length] === ' ' ? '␣' : this.correctTokens[this.validatedTokens.length]}</strong>"</li>
+                    </ol>
+                    <button onclick="phase1.dismissTutorial()" 
+                            style="margin-top: 10px; padding: 6px 16px; background: rgba(251, 191, 36, 0.2); 
+                                   border: 1px solid rgba(251, 191, 36, 0.5); border-radius: 8px; 
+                                   color: #fbbf24; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                        Got it! ✓
+                    </button>
+                `;
+                interactiveText.parentNode.insertBefore(tutorialBox, interactiveText);
+            }
+            
+            return;
+        }
+        
+        // Exponential speed increase every 10%
+        // 0-10%: base speed
+        // 10-20%: 2x faster
+        // 20-30%: 3x faster
+        // 30-40%: 4x faster
+        // And so on...
+        let highlightDelay, flashDelay, nextDelay;
+        
+        const percentComplete = (currentIndex / targetCount) * 100;
+        
+        if (currentIndex === 0) {
+            // First token - slowest to show what's happening
+            highlightDelay = 700;
+            flashDelay = 400;
+            nextDelay = 500;
+        } else {
+            // Calculate speed multiplier based on percentage
+            // Every 10% = +1 speed multiplier (2x, 3x, 4x, etc.)
+            const speedMultiplier = Math.floor(percentComplete / 10) + 1;
+            
+            // Base speeds for learning phase
+            const baseHighlight = 500;
+            const baseFlash = 300;
+            const baseNext = 400;
+            
+            // Divide by multiplier to increase speed
+            highlightDelay = Math.max(50, baseHighlight / speedMultiplier);
+            flashDelay = Math.max(40, baseFlash / speedMultiplier);
+            nextDelay = Math.max(50, baseNext / speedMultiplier);
+        }
+        
+        // Get the next correct token
+        const token = this.correctTokens[currentIndex];
+        const tokenLength = token.length;
+        
+        // Highlight characters being tokenized
+        const chars = document.querySelectorAll('.token-char');
+        for (let i = 0; i < tokenLength; i++) {
+            if (chars[i]) {
+                chars[i].style.background = 'rgba(0, 212, 255, 0.4)';
+                chars[i].style.transform = 'scale(1.1)';
+                chars[i].style.transition = 'all 0.2s ease';
+            }
+        }
+        
+        SoundManager.play('click');
+        
+        setTimeout(() => {
+            // Flash green
+            for (let i = 0; i < tokenLength; i++) {
+                if (chars[i]) {
+                    chars[i].style.background = 'rgba(34, 197, 94, 0.6)';
+                }
+            }
+            
+            SoundManager.play('success');
+            
+            setTimeout(() => {
+                // Add to validated tokens
+                this.validatedTokens.push(token);
+                this.currentText = this.currentText.substring(tokenLength);
+                
+                // Update displays
+                const tokenCount = document.getElementById('yourTokensCount');
+                if (tokenCount) {
+                    tokenCount.textContent = this.validatedTokens.length;
+                }
+                
+                const progressBar = document.getElementById('tokenProgressBar');
+                if (progressBar) {
+                    const color = this.getTokenColor(token);
+                    const displayToken = token === ' ' ? '␣' : token;
+                    const tokenBadge = `<span style="background: ${color}80; padding: 3px 8px; border-radius: 5px; 
+                                                  font-size: 10px; font-weight: 600; color: white; border: 1px solid ${color}cc;">${displayToken}</span>`;
+                    
+                    if (this.validatedTokens.length === 1) {
+                        progressBar.innerHTML = tokenBadge;
+        } else {
+                        progressBar.innerHTML += tokenBadge;
+                    }
+                    
+                    // Auto-scroll to bottom when new token added
+                    progressBar.scrollTop = progressBar.scrollHeight;
+                }
+                
+                // Re-render text and continue
+                const interactiveText = document.getElementById('interactiveText');
+                if (interactiveText) {
+                    interactiveText.innerHTML = this.makeClickableText(this.currentText);
+                }
+                
+                // Continue with next token after delay
+                setTimeout(() => {
+                    this.autoTokenizeNext(currentIndex + 1, targetCount);
+                }, nextDelay);
+                
+            }, flashDelay);
+        }, highlightDelay);
+    },
+    
+    startSelection(idx) {
+        // Don't allow interaction during auto-demo
+        if (this.autoDemoInProgress) return;
+        
+        this.selectionStart = idx;
+        this.selectionEnd = idx;
+        this.isSelecting = true;
+        this.updateSelectionDisplay();
+        
+        // Dismiss tutorial on first interaction
+        if (this.showTutorial) {
+            this.dismissTutorial();
+        }
+        
+        // Mark auto-demo as complete if user interacts
+        if (!this.autoDemoComplete) {
+            this.autoDemoComplete = true;
+        }
+    },
+    
+    updateSelection(idx) {
+        if (!this.isSelecting || this.autoDemoInProgress) return;
+        this.selectionEnd = idx;
+        this.updateSelectionDisplay();
+    },
+    
+    endSelection(idx) {
+        if (!this.isSelecting || this.autoDemoInProgress) return;
+        this.isSelecting = false;
+        this.selectionEnd = idx;
+        
+        // Validate the selection
+        this.validateSelection();
+    },
+    
+    updateSelectionDisplay() {
+        if (this.selectionStart === null || this.selectionEnd === null) return;
+        
+        const start = Math.min(this.selectionStart, this.selectionEnd);
+        const end = Math.max(this.selectionStart, this.selectionEnd) + 1;
+        
+        const chars = document.querySelectorAll('.token-char');
+        chars.forEach((char, idx) => {
+            if (idx >= start && idx < end) {
+                char.style.background = 'rgba(0, 212, 255, 0.4)';
+                char.style.borderRadius = '3px';
+            } else {
+                char.style.background = 'transparent';
+            }
+        });
+    },
+    
+    validateSelection() {
+        if (this.selectionStart === null || this.selectionEnd === null) return;
+        
+        const start = Math.min(this.selectionStart, this.selectionEnd);
+        const end = Math.max(this.selectionStart, this.selectionEnd) + 1;
+        
+        // Selection must start at 0 (beginning of remaining text)
+        if (start !== 0) {
+            this.showFeedback('⚠️ Start from the beginning of the text!', 'error');
+            this.clearSelection();
+            SoundManager.play('error');
+            return;
+        }
+        
+        const userToken = this.currentText.substring(start, end);
+        const nextExpectedToken = this.correctTokens[this.validatedTokens.length];
+        const isCorrect = userToken === nextExpectedToken;
+        
+        // Visual feedback
+        const chars = document.querySelectorAll('.token-char');
+        const color = isCorrect ? 'rgba(34, 197, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)';
+        
+        for (let i = start; i < end; i++) {
+            if (chars[i]) {
+                chars[i].style.background = color;
+                chars[i].style.transition = 'background 0.3s ease';
+            }
+        }
+        
+        if (isCorrect) {
+            this.correctAnswers++;
+            this.showFeedback('✓ Correct!', 'success');
+            SoundManager.play('success');
+            Game.addScore(10);
+            
+            setTimeout(() => {
+                // Add to validated tokens
+            this.validatedTokens.push(userToken);
+                this.currentText = this.currentText.substring(end);
+                
+                // Update display
+                const tokenCount = document.getElementById('yourTokensCount');
+                if (tokenCount) {
+                    tokenCount.textContent = this.validatedTokens.length;
+                }
+                
+                // Update token progress bar
+                const progressBar = document.getElementById('tokenProgressBar');
+                if (progressBar) {
+                    const color = this.getTokenColor(userToken);
+                    const displayToken = userToken === ' ' ? '␣' : userToken;
+                    const tokenBadge = `<span style="background: ${color}80; padding: 3px 8px; border-radius: 5px; 
+                                                  font-size: 10px; font-weight: 600; color: white; border: 1px solid ${color}cc;">${displayToken}</span>`;
+                    
+                    if (this.validatedTokens.length === 1) {
+                        progressBar.innerHTML = tokenBadge;
+                    } else {
+                        progressBar.innerHTML += tokenBadge;
+                    }
+                    
+                    // Auto-scroll to bottom when new token added
+                    progressBar.scrollTop = progressBar.scrollHeight;
+                }
+                
+                // Check if done
+                if (this.currentText.trim().length === 0) {
+                    this.finishTokenization();
+        } else {
+                    // Re-render for next token
+                    const interactiveText = document.getElementById('interactiveText');
+                    if (interactiveText) {
+                        interactiveText.innerHTML = this.makeClickableText(this.currentText);
+                    }
+                    this.clearSelection();
+                }
+            }, 500);
+        } else {
+            this.wrongAnswers++;
+            this.showFeedback(`✗ Wrong! Expected: "${nextExpectedToken === ' ' ? '␣' : nextExpectedToken}"`, 'error');
+            SoundManager.play('error');
+            Game.addScore(-10); // Penalty for wrong answer
+            
+            setTimeout(() => {
+                this.clearSelection();
+                const interactiveText = document.getElementById('interactiveText');
+                if (interactiveText) {
+                    interactiveText.innerHTML = this.makeClickableText(this.currentText);
+                }
+            }, 1200);
+        }
+    },
+    
+    clearSelection() {
+        this.selectionStart = null;
+        this.selectionEnd = null;
+        this.isSelecting = false;
+        
+        const chars = document.querySelectorAll('.token-char');
+        chars.forEach((char) => {
+            char.style.background = 'transparent';
+        });
+    },
+    
+    showFeedback(message, type) {
+        const feedback = document.getElementById('feedbackMessage');
+        if (!feedback) return;
+        
+        const color = type === 'success' ? '#22c55e' : '#ef4444';
+        feedback.innerHTML = `<div style="color: ${color}; font-weight: 600;">${message}</div>`;
+        
+        if (type === 'success') {
+            setTimeout(() => {
+                feedback.innerHTML = '';
+            }, 1500);
+        }
     },
     
     dismissTutorial() {
@@ -560,103 +910,8 @@ window.phase1 = {
         if (tutorial) {
             tutorial.style.animation = 'fadeOut 0.3s ease';
             setTimeout(() => {
-                tutorial.style.display = 'none';
+                tutorial.remove();
             }, 300);
-        }
-    },
-    
-    selectEndBoundary(idx) {
-        SoundManager.play('click');
-        
-        // Dismiss tutorial on first interaction
-        if (this.showTutorial) {
-            this.dismissTutorial();
-        }
-        
-        // Start is always 0, user selects the end
-        const start = 0;
-        const end = idx;
-        
-        if (end <= start) return;
-        
-        const userToken = this.currentText.substring(start, end);
-        const nextExpectedToken = this.correctTokens[this.validatedTokens.length];
-        const isCorrect = userToken === nextExpectedToken;
-        
-        const feedback = document.getElementById('feedbackMessage');
-        
-        if (isCorrect) {
-            // Success!
-            SoundManager.play('success');
-            Game.addScore(10);
-            
-            this.validatedTokens.push(userToken);
-            
-            feedback.innerHTML = `<div style="color: #22c55e; font-weight: 600; padding: 8px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; display: inline-block;">✓ Correct! "${userToken === ' ' ? '␣' : userToken}" +10 points</div>`;
-            
-            // Remove the validated part from text and reset splits
-            this.currentText = this.currentText.substring(end);
-            this.userSplits = [];
-            
-            // Update only the necessary parts without full re-render
-            setTimeout(() => {
-                const textContainer = document.getElementById('interactiveText');
-                const progressBar = document.getElementById('tokenProgressBar');
-                const yourTokensCount = document.getElementById('yourTokensCount');
-                
-                if (textContainer) {
-                    textContainer.innerHTML = this.makeClickableText(this.currentText);
-                }
-                if (progressBar) {
-                    progressBar.innerHTML = this.validatedTokens.map(t => {
-                        const color = this.getTokenColor(t);
-                        return `<span style="background: ${color}80; padding: 3px 8px; border-radius: 5px; 
-                                       font-size: 10px; font-weight: 600; color: white; border: 1px solid ${color}cc;">${t === ' ' ? '␣' : t}</span>`;
-                    }).join('');
-                }
-                if (yourTokensCount) {
-                    yourTokensCount.textContent = this.validatedTokens.length;
-                }
-                feedback.innerHTML = '';
-                
-                // Check if completed
-                if (this.validatedTokens.length >= this.correctTokens.length) {
-                    setTimeout(() => {
-                        this.finishTokenization();
-                    }, 800);
-                }
-            }, 500);
-            
-        } else {
-            // Error!
-            SoundManager.play('error');
-            Game.addScore(-5);
-            
-            feedback.innerHTML = `<div style="color: #ef4444; font-weight: 600; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; display: inline-block;">✗ Expected "${nextExpectedToken === ' ' ? '␣' : nextExpectedToken}" but got "${userToken === ' ' ? '␣' : userToken}". Try again! -5 points</div>`;
-            
-            // Just update the text display with error highlight
-            const textContainer = document.getElementById('interactiveText');
-            if (textContainer) {
-                const beforeText = '';
-                const highlightedText = this.currentText.substring(start, end);
-                const afterText = this.currentText.substring(end);
-                
-                textContainer.innerHTML = `
-                    ${beforeText}
-                    <span style="background: rgba(239, 68, 68, 0.3); color: #ef4444; padding: 2px 4px; border-radius: 4px; border: 2px solid #ef4444;">${highlightedText === ' ' ? '␣' : highlightedText}</span>
-                    ${afterText}
-                `;
-            }
-            
-            // Clear after 2 seconds
-            setTimeout(() => {
-                this.userSplits = [];
-                feedback.innerHTML = '';
-                const container = document.getElementById('interactiveText');
-                if (container) {
-                    container.innerHTML = this.makeClickableText(this.currentText);
-                }
-            }, 2000);
         }
     },
     
@@ -748,6 +1003,94 @@ window.phase1 = {
     },
     
     // INFO & RECAP (keeping them simple)
+    renderCheckpoint1(container) {
+        container.innerHTML = `
+            <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 30px;">
+                <div style="max-width: 800px; width: 100%; text-align: center;">
+                    
+                    <!-- Progress Indicator -->
+                    <div style="margin-bottom: 32px;">
+                        <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); 
+                                       display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;
+                                       box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);">✓</div>
+                            <div style="width: 60px; height: 3px; background: linear-gradient(90deg, #22c55e, var(--primary));"></div>
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                       display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;
+                                       box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4); animation: pulse 2s ease-in-out infinite;">2</div>
+                            <div style="width: 60px; height: 3px; background: rgba(255, 255, 255, 0.2);"></div>
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); 
+                                       display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.4); font-weight: 700; font-size: 18px;">3</div>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">
+                            <strong style="color: #22c55e;">Tokenize</strong> → <strong style="color: var(--primary);">Convert to Numbers</strong> → Embeddings
+                        </div>
+                    </div>
+                    
+                    <h1 style="font-size: 36px; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                               -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        🎯 Journey Checkpoint
+                    </h1>
+                    
+                    <p style="font-size: 16px; color: var(--text-secondary); margin-bottom: 40px; line-height: 1.6;">
+                        Let's pause and understand what you just accomplished
+                    </p>
+                    
+                    <!-- Journey Details -->
+                    <div style="display: grid; gap: 14px; margin-bottom: 32px;">
+                        <div style="padding: 16px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #22c55e; border-radius: 6px; text-align: left;">
+                            <div style="font-size: 13px; font-weight: 600; color: #22c55e; margin-bottom: 6px;">📍 Where You Are</div>
+                            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                Your raw text is now <strong>tokenized</strong>! You've broken it into ${Game.state.tokens.length} meaningful pieces that capture the structure of language.
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 16px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--primary); border-radius: 6px; text-align: left;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 6px;">✅ What You Did</div>
+                            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 10px;">
+                                You split text using BPE-like rules: common endings ("ed", "ing"), spaces as tokens, etc. 
+                                This creates <strong>reusable pieces</strong> that help the model learn efficiently.
+                            </div>
+                            <div style="background: rgba(0, 0, 0, 0.3); padding: 10px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; 
+                                       font-size: 11px; display: flex; flex-wrap: wrap; gap: 4px; max-height: 80px; overflow-y: auto;">
+                                ${Game.state.tokens.slice(0, 15).map(token => {
+                                    const color = this.getTokenColor(token);
+                                    return `<span style="background: ${color}60; padding: 3px 6px; border-radius: 4px; border: 1px solid ${color}aa; color: white; white-space: nowrap;">${token === ' ' ? '␣' : token}</span>`;
+                                }).join('')}
+                                ${Game.state.tokens.length > 15 ? '<span style="color: rgba(255, 255, 255, 0.4);">...</span>' : ''}
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 16px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--secondary); border-radius: 6px; text-align: left;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px;">🎯 What's Next</div>
+                            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                <strong>Token IDs:</strong> Convert each token to a number. "cat" → 42, "dog" → 87, etc. 
+                                Neural networks only understand numbers, so this numerical mapping is essential for all future steps.
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 16px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #fbbf24; border-radius: 6px; text-align: left;">
+                            <div style="font-size: 13px; font-weight: 600; color: #fbbf24; margin-bottom: 6px;">💡 Why It Matters</div>
+                            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                Tokenization is the FIRST step of every LLM! Without it, AI can't process text. 
+                                Good tokenization = efficient learning. GPT uses ~50K tokens to handle all of English + code + multilingual text!
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="phase1.nextStep()" 
+                            style="padding: 16px 48px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                   border: none; border-radius: 12px; color: white; font-size: 17px; font-weight: 700; 
+                                   cursor: pointer; box-shadow: 0 6px 25px rgba(0, 212, 255, 0.4); transition: all 0.3s;
+                                   transform: scale(1); animation: pulse 2s ease-in-out infinite;">
+                        Continue: Convert to Numbers →
+                    </button>
+                    
+                </div>
+            </div>
+        `;
+    },
+    
     renderInfoStep1(container) {
         container.innerHTML = `
             <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px;">
@@ -789,14 +1132,20 @@ window.phase1 = {
                             <h3 style="font-size: 15px; color: #ef4444; margin: 0; font-weight: 700;">Reality Check: How Real LLMs Assign IDs</h3>
                         </div>
                         <div style="font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
-                            <p style="margin-bottom: 8px;">
+                            <p style="margin-bottom: 12px;">
                                 This game assigns IDs sequentially (1, 2, 3...). <strong style="color: #ef4444;">Real LLMs use a pre-built vocabulary</strong> created during training:
                             </p>
-                            <p style="margin: 0;">
-                                • Each unique token gets a fixed ID (e.g., "the" might always be ID 257)<br>
-                                • IDs are <strong>NOT</strong> based on UTF-8 or ASCII codes<br>
-                                • The vocabulary is learned from training data using algorithms like <strong>Byte-Pair Encoding (BPE)</strong><br>
-                                • Example: GPT uses a vocabulary file mapping tokens → IDs
+                            <div style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                                <div style="font-size: 11px; line-height: 1.8;">
+                                    • <strong style="color: #fbbf24;">Fixed vocabulary:</strong> Each unique token gets a permanent ID (e.g., "the" = 257, "cat" = 4892)<br>
+                                    • <strong style="color: #fbbf24;">Byte-Pair Encoding (BPE):</strong> Algorithm that learns common subwords from massive training data<br>
+                                    • <strong style="color: #fbbf24;">Example:</strong> GPT models have a vocabulary file mapping tokens → IDs<br>
+                                    • <strong style="color: #fbbf24;">Why subwords?</strong> Handles rare words efficiently: "unbelievable" → ["un", "believ", "able"]
+                                </div>
+                            </div>
+                            <p style="margin: 0; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border-left: 3px solid #fbbf24;">
+                                💡 <strong>Key Insight:</strong> The vocabulary is frozen after training. The model can't learn new token IDs - 
+                                it only learns relationships between existing tokens through billions of parameters!
                             </p>
                         </div>
                     </div>
@@ -966,7 +1315,14 @@ window.phase1 = {
                     // Mark phase 1 as complete before advancing
                     if (!Game.state.phaseCompleted[1]) {
                         Game.state.phaseCompleted[1] = true;
-                        Game.addScore(100); // Bonus for completing tokenization
+                        
+                        // Calculate accuracy-based completion bonus
+                        const totalAttempts = this.correctAnswers + this.wrongAnswers;
+                        const accuracy = totalAttempts > 0 ? (this.correctAnswers / totalAttempts) : 1;
+                        const baseBonus = 100;
+                        const accuracyBonus = Math.floor(baseBonus * accuracy); // 70% accuracy = 70 points, 100% = 100 points
+                        
+                        Game.addScore(accuracyBonus);
                         Game.saveState();
                     }
                     Game.nextPhase();
@@ -976,7 +1332,7 @@ window.phase1 = {
     },
     
     nextStep() {
-        const steps = ['concept1', 'concept2', 'examples', 'yourdata', 'info1', 'info2', 'recap'];
+        const steps = ['concept1', 'concept2', 'examples', 'yourdata', 'checkpoint1', 'info1', 'info2', 'recap'];
         const currentIndex = steps.indexOf(this.currentStep);
         if (currentIndex < steps.length - 1) {
             this.currentStep = steps[currentIndex + 1];

@@ -1,12 +1,16 @@
 // Phase 4: Training - BUILD BIGRAM MODEL (CRYSTAL CLEAR)
 window.phase4 = {
-    currentStep: 'intro', // 'intro' -> 'build' -> 'recap'
+    currentStep: 'intro', // 'intro' -> 'practice' -> 'build' -> 'recap'
     bigramCounts: {},
     bigramProbs: {},
+    practiceTarget: null,
+    userCounts: {},
     
     render(container) {
         if (this.currentStep === 'intro') {
             this.renderIntro(container);
+        } else if (this.currentStep === 'practice') {
+            this.renderPractice(container);
         } else if (this.currentStep === 'build') {
             this.renderBuild(container);
         } else if (this.currentStep === 'recap') {
@@ -76,10 +80,210 @@ window.phase4 = {
     },
     
     startTraining() {
-        this.currentStep = 'build';
-        this.buildBigramModel();
+        // Start with practice step
+        this.currentStep = 'practice';
+        this.setupPractice();
         SoundManager.play('click');
         this.render(document.getElementById('phaseContainer'));
+    },
+    
+    setupPractice() {
+        // Pick a common word from tokens to practice counting
+        const tokens = Game.state.tokens.filter(t => t.trim() && !/^[.,!?]$/.test(t));
+        const wordCounts = {};
+        tokens.forEach(t => {
+            wordCounts[t] = (wordCounts[t] || 0) + 1;
+        });
+        
+        // Find a word that appears at least 3 times
+        const candidates = Object.entries(wordCounts)
+            .filter(([word, count]) => count >= 3 && word.length > 2)
+            .sort((a, b) => b[1] - a[1]);
+        
+        this.practiceTarget = candidates[0] ? candidates[0][0] : tokens[0];
+        this.userCounts = {};
+    },
+    
+    renderPractice(container) {
+        const tokens = Game.state.tokens.filter(t => t.trim() && !/^[.,!?]$/.test(t));
+        const target = this.practiceTarget;
+        
+        // Find where target appears and what comes after
+        const followingWords = [];
+        for (let i = 0; i < tokens.length - 1; i++) {
+            if (tokens[i] === target) {
+                followingWords.push(tokens[i + 1]);
+            }
+        }
+        
+        const uniqueFollowing = [...new Set(followingWords)];
+        
+        container.innerHTML = `
+            <div class="phase">
+                <div class="phase-sidebar">
+                    <div>
+                        <h2 class="phase-title">Practice Counting</h2>
+                        <p class="phase-subtitle">Learn the pattern</p>
+                    </div>
+                    
+                    <div class="phase-description">
+                        Find the word "<strong>${target}</strong>" in the text. Count how many times each word follows it!
+                    </div>
+                    
+                    <div class="hint-section">
+                        <h4>💡 How to Count</h4>
+                        <p>Read through the training data. Every time you see "<strong>${target}</strong>", look at what word comes next. Tally it up!</p>
+                    </div>
+                </div>
+                
+                <div class="phase-content">
+                    <div style="width: 100%; max-width: 700px;">
+                        
+                        <!-- Training Text with Highlighting -->
+                        <div style="padding: 20px; background: rgba(0, 212, 255, 0.08); border-radius: 12px; margin-bottom: 24px; max-height: 200px; overflow-y: auto;">
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">📚 Your Training Data:</div>
+                            <div style="font-size: 14px; font-family: 'JetBrains Mono', monospace; color: white; line-height: 1.8;">
+                                ${this.highlightTrainingText(tokens, target)}
+                            </div>
+                        </div>
+                        
+                        <!-- Counting Interface -->
+                        <div style="padding: 20px; background: rgba(255, 255, 255, 0.02); border-radius: 12px; margin-bottom: 24px;">
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                                After "<strong style="color: var(--primary);">${target}</strong>", count occurrences:
+                            </div>
+                            ${uniqueFollowing.map(word => `
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 12px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
+                                    <div style="flex: 1; font-size: 14px; font-family: 'JetBrains Mono', monospace; color: white;">"${word}"</div>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <button onclick="phase4.decrementCount('${word}')" 
+                                                style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; 
+                                                       border-radius: 6px; color: #ef4444; font-size: 18px; cursor: pointer; display: flex; 
+                                                       align-items: center; justify-content: center;">
+                                            −
+                                        </button>
+                                        <div id="count-${word}" style="min-width: 40px; text-align: center; font-size: 18px; font-weight: 700; color: var(--primary);">
+                                            0
+                                        </div>
+                                        <button onclick="phase4.incrementCount('${word}')" 
+                                                style="width: 32px; height: 32px; background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; 
+                                                       border-radius: 6px; color: #22c55e; font-size: 18px; cursor: pointer; display: flex; 
+                                                       align-items: center; justify-content: center;">
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <button class="btn-primary" onclick="phase4.checkCounts()" style="width: 100%;">
+                            ✓ Check My Counts
+                        </button>
+                        
+                        <div id="feedback" style="display: none; margin-top: 16px; padding: 16px; border-radius: 10px;"></div>
+                        
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Initialize counts display
+        uniqueFollowing.forEach(word => {
+            this.userCounts[word] = 0;
+        });
+    },
+    
+    highlightTrainingText(tokens, target) {
+        let html = '';
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i];
+            if (token === target) {
+                html += `<span style="background: rgba(191, 0, 255, 0.4); padding: 2px 6px; border-radius: 4px; font-weight: 700;">${token}</span> `;
+            } else {
+                html += `${token} `;
+            }
+        }
+        return html;
+    },
+    
+    incrementCount(word) {
+        this.userCounts[word] = (this.userCounts[word] || 0) + 1;
+        const el = document.getElementById(`count-${word}`);
+        if (el) {
+            el.textContent = this.userCounts[word];
+        }
+        SoundManager.play('click');
+    },
+    
+    decrementCount(word) {
+        if (this.userCounts[word] > 0) {
+            this.userCounts[word]--;
+            const el = document.getElementById(`count-${word}`);
+            if (el) {
+                el.textContent = this.userCounts[word];
+            }
+            SoundManager.play('click');
+        }
+    },
+    
+    checkCounts() {
+        const tokens = Game.state.tokens.filter(t => t.trim() && !/^[.,!?]$/.test(t));
+        const target = this.practiceTarget;
+        
+        // Calculate actual counts
+        const actualCounts = {};
+        for (let i = 0; i < tokens.length - 1; i++) {
+            if (tokens[i] === target) {
+                const next = tokens[i + 1];
+                actualCounts[next] = (actualCounts[next] || 0) + 1;
+            }
+        }
+        
+        // Check user counts
+        let allCorrect = true;
+        let errors = [];
+        
+        Object.keys(this.userCounts).forEach(word => {
+            const userCount = this.userCounts[word];
+            const actualCount = actualCounts[word] || 0;
+            if (userCount !== actualCount) {
+                allCorrect = false;
+                errors.push(`"${word}": you counted ${userCount}, actual is ${actualCount}`);
+            }
+        });
+        
+        const feedback = document.getElementById('feedback');
+        feedback.style.display = 'block';
+        
+        if (allCorrect) {
+            feedback.style.background = 'rgba(34, 197, 94, 0.1)';
+            feedback.style.border = '2px solid rgba(34, 197, 94, 0.3)';
+            feedback.innerHTML = `
+                <div style="font-size: 16px; color: #22c55e; font-weight: 700; margin-bottom: 8px;">✓ Perfect Counting!</div>
+                <div style="font-size: 13px; color: var(--text-secondary);">
+                    You correctly counted all the patterns. Now let's build the full model!
+                </div>
+            `;
+            SoundManager.play('success');
+            Game.addScore(100);
+            
+            setTimeout(() => {
+                this.currentStep = 'build';
+                this.buildBigramModel();
+                this.render(document.getElementById('phaseContainer'));
+            }, 2000);
+        } else {
+            feedback.style.background = 'rgba(239, 68, 68, 0.1)';
+            feedback.style.border = '2px solid rgba(239, 68, 68, 0.3)';
+            feedback.innerHTML = `
+                <div style="font-size: 16px; color: #ef4444; font-weight: 700; margin-bottom: 8px;">Not quite right!</div>
+                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                    ${errors.slice(0, 2).map(e => `• ${e}`).join('<br>')}
+                    <br><br>💡 Tip: Read carefully through the training text above
+                </div>
+            `;
+            SoundManager.play('error');
+        }
     },
     
     buildBigramModel() {
@@ -237,13 +441,47 @@ window.phase4 = {
                         </ul>
                     </div>
                     
-                    <!-- What's Next -->
-                    <div style="padding: 20px; background: linear-gradient(135deg, rgba(191, 0, 255, 0.08), rgba(0, 212, 255, 0.05)); 
-                               border: 2px solid rgba(191, 0, 255, 0.25); border-radius: 12px; margin-bottom: 32px;">
-                        <h3 style="font-size: 16px; color: var(--secondary); margin-bottom: 12px;">🔜 Next: Text Generation</h3>
-                        <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">
-                            Now comes the magic! Use your trained model to <strong>generate NEW text</strong> - picking words based on probabilities you learned. Watch your AI create sentences!
-                        </p>
+                    <!-- Journey Checkpoint -->
+                    <div style="padding: 24px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.08)); 
+                               border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 14px; margin-bottom: 32px;">
+                        <div style="text-align: center; margin-bottom: 16px;">
+                            <span style="font-size: 32px;">🗺️</span>
+                            <h3 style="font-size: 18px; color: #fbbf24; margin: 8px 0 0 0; font-weight: 700;">Journey Checkpoint</h3>
+                        </div>
+                        
+                        <div style="display: grid; gap: 14px;">
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #22c55e; border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: #22c55e; margin-bottom: 6px;">📍 Where You Are</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    Your model is <strong>trained</strong>! It now knows the probability of every word following every other word, based on your training data.
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--primary); border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 6px;">✅ What You Did</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    You built a bigram model by counting word pairs: "chef"→"cooked" (3 times), "chef"→"loves" (2 times), etc. 
+                                    Then calculated probabilities: 60% "cooked", 40% "loves". Pure statistics from ${totalPatterns} patterns!
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--secondary); border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px;">🎯 What's Next</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    <strong>Text Generation:</strong> Use your trained probabilities to generate NEW sentences! 
+                                    Start with a word, pick the next based on learned odds, repeat. Watch your AI write!
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #fbbf24; border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: #fbbf24; margin-bottom: 6px;">💡 Why It Matters</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    This IS the "AI"! There's no magic - just counting and probabilities. 
+                                    The model doesn't "know" that chefs cook. It just learned that "chef" is often followed by "cooked" in the training data. 
+                                    Scale this to trillions of examples, and you get GPT-4!
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <button class="btn-primary" onclick="phase4.completePhase()" style="width: 100%; font-size: 17px; padding: 14px;">
