@@ -287,6 +287,12 @@ body {
     overflow-y: auto;
 }
 
+.phase-sidebar {
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 245, 255, 0.3) transparent;
+}
+
 .phase-sidebar::-webkit-scrollbar {
     width: 4px;
 }
@@ -330,6 +336,12 @@ body {
     align-items: center;
     overflow-y: auto;
     overflow-x: hidden;
+}
+
+.phase-content {
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 245, 255, 0.3) transparent;
 }
 
 .phase-content::-webkit-scrollbar {

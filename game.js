@@ -34,9 +34,11 @@ const Game = {
     },
     
     setupEventListeners() {
-        // Navigation buttons
-        document.getElementById('nextBtn').addEventListener('click', () => this.nextPhase());
-        document.getElementById('prevBtn').addEventListener('click', () => this.prevPhase());
+        // Navigation buttons (hidden, but keep listeners for compatibility)
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        if (nextBtn) nextBtn.addEventListener('click', () => this.nextPhase());
+        if (prevBtn) prevBtn.addEventListener('click', () => this.prevPhase());
         
         // Reset button
         document.getElementById('resetBtn').addEventListener('click', () => this.confirmReset());
@@ -295,27 +297,10 @@ const Game = {
         document.getElementById('phaseIndicator').textContent = 
             `Phase ${this.state.currentPhase} of ${this.state.totalPhases - 1}`;
         
-        // Navigation section
+        // Navigation section - Hide completely (each phase has its own internal navigation)
         const phaseNav = document.querySelector('.phase-nav');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        
-        // Hide navigation during Phase 0 and Phase 6 (they have their own internal flow)
-        if (this.state.currentPhase === 0 || this.state.currentPhase === 6) {
-            if (phaseNav) phaseNav.style.display = 'none';
-        } else {
-            if (phaseNav) phaseNav.style.display = 'flex';
-            
-            // Update navigation buttons
-            prevBtn.disabled = this.state.currentPhase <= 1; // Can't go back past phase 1
-            
-            if (this.state.currentPhase === this.state.totalPhases - 1) {
-                nextBtn.textContent = 'Finish';
-                nextBtn.disabled = true;
-            } else {
-                nextBtn.textContent = 'Next →';
-                nextBtn.disabled = !this.state.phaseCompleted[this.state.currentPhase];
-            }
+        if (phaseNav) {
+            phaseNav.style.display = 'none';
         }
     },
     

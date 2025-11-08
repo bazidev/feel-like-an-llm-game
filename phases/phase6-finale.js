@@ -7,10 +7,21 @@ window.phase6 = {
         const currentIndex = steps.indexOf(this.currentStep);
         if (currentIndex < steps.length - 1) {
             this.currentStep = steps[currentIndex + 1];
-            const container = document.querySelector('#game-container > div');
+            const container = document.getElementById('phaseContainer');
             if (container) {
+                console.log(`✅ Moving to step: ${this.currentStep}`);
                 this.render(container);
+                // Scroll to top smoothly
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                // Play click sound
+                if (window.SoundManager) {
+                    SoundManager.play('click');
+                }
+            } else {
+                console.error('❌ Container not found!');
             }
+        } else {
+            console.log('✅ Already at final step');
         }
     },
     
