@@ -44,6 +44,60 @@ const SoundManager = {
             volume: 0.4,
             rate: 1.2
         });
+        
+        this.sounds.correct = new Howl({
+            src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYJGGS75+ajUBELTqXh8LRjHQU2jtfyz3ksBS15yPDckD8IEl+06+qoVRUK'],
+            volume: 0.25,
+            rate: 1.8
+        });
+        
+        this.sounds.wrong = new Howl({
+            src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYJGGS75+ajUBELTqXh8LRjHQU2jtfyz3ksBS15yPDckD8IEl+06+qoVRUK'],
+            volume: 0.2,
+            rate: 0.5
+        });
+        
+        this.sounds.timeout = new Howl({
+            src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYJGGS75+ajUBELTqXh8LRjHQU2jtfyz3ksBS15yPDckD8IEl+06+qoVRUK'],
+            volume: 0.25,
+            rate: 2.0
+        });
+        
+        this.sounds.powerup = new Howl({
+            src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYJGGS75+ajUBELTqXh8LRjHQU2jtfyz3ksBS15yPDckD8IEl+06+qoVRUK'],
+            volume: 0.3,
+            rate: 1.4
+        });
+        
+        this.sounds.coin = new Howl({
+            src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYJGGS75+ajUBELTqXh8LRjHQU2jtfyz3ksBS15yPDckD8IEl+06+qoVRUK'],
+            volume: 0.2,
+            rate: 2.2
+        });
+        
+        this.sounds.notification = new Howl({
+            src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYJGGS75+ajUBELTqXh8LRjHQU2jtfyz3ksBS15yPDckD8IEl+06+qoVRUK'],
+            volume: 0.18,
+            rate: 1.6
+        });
+        
+        this.sounds.warning = new Howl({
+            src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYJGGS75+ajUBELTqXh8LRjHQU2jtfyz3ksBS15yPDckD8IEl+06+qoVRUK'],
+            volume: 0.22,
+            rate: 0.9
+        });
+        
+        this.sounds.hover = new Howl({
+            src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYJGGS75+ajUBELTqXh8LRjHQU2jtfyz3ksBS15yPDckD8IEl+06+qoVRUK'],
+            volume: 0.12,
+            rate: 2.5
+        });
+        
+        this.sounds.victory = new Howl({
+            src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYJGGS75+ajUBELTqXh8LRjHQU2jtfyz3ksBS15yPDckD8IEl+06+qoVRUK'],
+            volume: 0.35,
+            rate: 1.1
+        });
     },
     
     play(soundName) {
@@ -100,6 +154,69 @@ const SoundManager = {
                     type: 'sine', 
                     pattern: [523.25, 659.25, 783.99, 1046.50, 1318.51], // C-E-G-C-E full celebration!
                     volume: 0.15
+                },
+                correct: {
+                    freq: 880.00,
+                    duration: 0.12,
+                    type: 'sine',
+                    pattern: [880.00, 1046.50], // A-C quick chirp
+                    volume: 0.14
+                },
+                wrong: {
+                    freq: 220.00,
+                    duration: 0.30,
+                    type: 'sawtooth',
+                    pattern: [220.00, 185.00], // Buzzer descend
+                    volume: 0.10
+                },
+                timeout: {
+                    freq: 1760.00,
+                    duration: 0.08,
+                    type: 'square',
+                    pattern: [1760.00, 1760.00, 1760.00], // Urgent triple beep
+                    volume: 0.12
+                },
+                powerup: {
+                    freq: 440.00,
+                    duration: 0.10,
+                    type: 'sine',
+                    pattern: [440.00, 554.37, 659.25, 880.00], // A-C#-E-A rising whoosh
+                    volume: 0.14
+                },
+                coin: {
+                    freq: 987.77,
+                    duration: 0.08,
+                    type: 'square',
+                    pattern: [987.77, 1318.51], // B-E pickup
+                    volume: 0.12
+                },
+                notification: {
+                    freq: 783.99,
+                    duration: 0.15,
+                    type: 'sine',
+                    pattern: [783.99, 1046.50], // G-C gentle bell
+                    volume: 0.10
+                },
+                warning: {
+                    freq: 493.88,
+                    duration: 0.20,
+                    type: 'triangle',
+                    pattern: [493.88, 523.25], // B-C alert
+                    volume: 0.12
+                },
+                hover: {
+                    freq: 1046.50,
+                    duration: 0.03,
+                    type: 'sine',
+                    pattern: [1046.50], // Quick high C
+                    volume: 0.08
+                },
+                victory: {
+                    freq: 523.25,
+                    duration: 0.16,
+                    type: 'sine',
+                    pattern: [523.25, 659.25, 783.99, 1046.50, 1318.51, 1046.50], // C-E-G-C-E-C triumph
+                    volume: 0.16
                 }
             };
             

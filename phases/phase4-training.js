@@ -484,6 +484,20 @@ window.phase4 = {
                         </div>
                     </div>
                     
+                    <!-- ANIMATED SCALE COMPARISON -->
+                    <div style="margin: 40px 0; padding: 32px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(239, 68, 68, 0.05)); 
+                               border: 3px solid rgba(245, 158, 11, 0.3); border-radius: 16px;">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <h3 style="font-size: 22px; color: #f59e0b; margin-bottom: 10px; font-weight: 700;">
+                                💫 Parameter Explosion: Your Model vs. Real LLMs
+                            </h3>
+                            <p style="font-size: 14px; color: var(--text-secondary);">
+                                Witness the astronomical gap between your parameters and production models
+                            </p>
+                        </div>
+                        <div id="parameterScaleAnimation" style="min-height: 600px;"></div>
+                    </div>
+                    
                     <button class="btn-primary" onclick="phase4.completePhase()" style="width: 100%; font-size: 17px; padding: 14px;">
                         Continue to Generation →
                     </button>
@@ -491,6 +505,14 @@ window.phase4 = {
                 </div>
             </div>
         `;
+        
+        // Trigger the animation after a short delay
+        setTimeout(() => {
+            if (window.ScaleAnimations && window.ScaleAnimations.animateParameterComparison) {
+                const modelPatterns = Object.keys(Game.state.model.bigrams).length;
+                ScaleAnimations.animateParameterComparison(modelPatterns);
+            }
+        }, 500);
     },
     
     completePhase() {

@@ -263,7 +263,7 @@ window.phase3 = {
                     You correctly identified the important relationships. Moving on!
                 </div>
             `;
-            SoundManager.play('success');
+            SoundManager.play('correct'); // Use 'correct' for quick success
             Game.addScore(30);
             
             setTimeout(() => {
@@ -285,7 +285,7 @@ window.phase3 = {
                     ${message}
                 </div>
             `;
-            SoundManager.play('error');
+            SoundManager.play('wrong'); // Use 'wrong' for incorrect weights
         }
     },
     
@@ -500,12 +500,12 @@ window.phase3 = {
         if (this.currentSentence < this.sentences.length - 1) {
             this.currentSentence++;
             Game.addScore(50);
-            SoundManager.play('success');
+            SoundManager.play('coin'); // Use coin for progress
             this.render(document.getElementById('phaseContainer'));
         } else {
             Game.state.attentionWeights = this.attentionWeights;
             Game.addScore(100);
-            SoundManager.play('levelUp');
+            SoundManager.play('powerup'); // Use powerup for completing all sentences!
             this.currentStep = 'recap';
             this.render(document.getElementById('phaseContainer'));
         }
@@ -592,6 +592,20 @@ window.phase3 = {
                         </div>
                     </div>
                     
+                    <!-- ANIMATED SCALE COMPARISON -->
+                    <div style="margin: 40px 0; padding: 32px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.08), rgba(139, 92, 246, 0.05)); 
+                               border: 3px solid rgba(236, 72, 153, 0.3); border-radius: 16px;">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <h3 style="font-size: 22px; color: #ec4899; margin-bottom: 10px; font-weight: 700;">
+                                🎯 Multi-Head Attention: Single Head vs. Real LLMs
+                            </h3>
+                            <p style="font-size: 14px; color: var(--text-secondary);">
+                                Watch how real LLMs use thousands of attention mechanisms in parallel
+                            </p>
+                        </div>
+                        <div id="attentionScaleAnimation" style="min-height: 600px;"></div>
+                    </div>
+                    
                     <button class="btn-primary" onclick="phase3.completePhase()" style="width: 100%; font-size: 17px; padding: 14px;">
                         Continue to Training →
                     </button>
@@ -599,6 +613,13 @@ window.phase3 = {
                 </div>
             </div>
         `;
+        
+        // Trigger the animation after a short delay
+        setTimeout(() => {
+            if (window.ScaleAnimations && window.ScaleAnimations.animateAttentionComparison) {
+                ScaleAnimations.animateAttentionComparison();
+            }
+        }, 500);
     },
     
     formatSampleWeights() {

@@ -62,6 +62,26 @@ window.phase0 = {
     suffixes: ['GPT', 'LM', 'Mind', 'AI', 'Net', 'Tron', 'Core', 'Forge', 'Max', 'Bot', 'QM', 'XM', 'VM'],
     versions: ['o1', 'o3', 'x1', 'x7', 'v2', 'v5', 'pro', 'ultra', '4o', '3.5', 'turbo', 'mini', 'max'],
     
+    // Generate cryptographically unique username for API scoring
+    generateUniqueUsername() {
+        // Use crypto.randomUUID() if available (modern browsers)
+        if (crypto && crypto.randomUUID) {
+            // Convert UUID to custom format: xxx-xxxxxx-xxxx-xxx
+            const uuid = crypto.randomUUID().replace(/-/g, '');
+            return `${uuid.substring(0, 3)}-${uuid.substring(3, 9)}-${uuid.substring(9, 13)}-${uuid.substring(13, 16)}`;
+        }
+        
+        // Fallback: generate high-entropy random string with timestamp
+        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        const timestamp = Date.now().toString(36);
+        const random1 = Array(3).fill(0).map(() => chars[Math.floor(Math.random() * chars.length)]).join('');
+        const random2 = Array(6).fill(0).map(() => chars[Math.floor(Math.random() * chars.length)]).join('');
+        const random3 = Array(4).fill(0).map(() => chars[Math.floor(Math.random() * chars.length)]).join('');
+        const random4 = Array(3).fill(0).map(() => chars[Math.floor(Math.random() * chars.length)]).join('');
+        
+        return `${random1}-${random2}-${timestamp.substring(0, 4)}-${random3}${random4}`;
+    },
+    
     render(container) {
         if (this.currentStep === 'intro') {
             this.renderIntro(container);
@@ -648,6 +668,11 @@ window.phase0 = {
     confirmIdentity() {
         if (!this.selectedName || !this.selectedAvatar) return;
         
+        // Generate unique username for API scoring (only if not already generated)
+        if (!Game.state.uniqueUserId) {
+            Game.state.uniqueUserId = this.generateUniqueUsername();
+        }
+        
         // Save to game state
         Game.state.modelName = this.selectedName;
         Game.state.avatar = this.selectedAvatar;
@@ -656,9 +681,9 @@ window.phase0 = {
         const avatarObj = this.avatars.find(a => a.id === this.selectedAvatar);
         const avatarIcon = avatarObj ? avatarObj.icon : '🤖';
         
-        // Update header with avatar and name separately
+        // Update header with avatar, name, and unique ID
         document.getElementById('modelAvatar').textContent = avatarIcon;
-        document.getElementById('modelName').textContent = this.selectedName;
+        document.getElementById('modelName').innerHTML = `${this.selectedName} <span style="font-size: 11px; color: var(--text-secondary); font-weight: 400; opacity: 0.7;">(${Game.state.uniqueUserId})</span>`;
         
         // Complete phase and move to next
         SoundManager.play('levelUp');
@@ -738,6 +763,15 @@ window.phase0 = {
                 }
             `;
             document.head.appendChild(style);
+            
+            // Add hover sound listeners to datasets
+            setTimeout(() => {
+                document.querySelectorAll('.dataset-option').forEach(el => {
+                    el.addEventListener('mouseenter', () => {
+                        SoundManager.play('hover');
+                    });
+                });
+            }, 100);
         }
     },
     
@@ -896,6 +930,17 @@ window.phase0 = {
                 }
             `;
             document.head.appendChild(style);
+            
+            // Add hover sound listeners to all avatars after styles are added
+            setTimeout(() => {
+                document.querySelectorAll('.avatar-option').forEach(el => {
+                    el.addEventListener('mouseenter', () => {
+                        if (!el.classList.contains('selected')) {
+                            SoundManager.play('hover');
+                        }
+                    });
+                });
+            }, 100);
         }
     }
 };

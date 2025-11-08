@@ -5,6 +5,7 @@ window.phase1 = {
     
     currentStep: 'concept1', // 'concept1' -> 'concept2' -> 'examples' -> 'yourdata' -> 'info1' -> 'info2' -> 'recap'
     currentExample: 0,
+    challengesShuffled: false, // Track if challenges have been shuffled
     
     // For interactive tokenization
     userSplits: [],
@@ -32,6 +33,17 @@ window.phase1 = {
         '#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', 
         '#ec4899', '#14b8a6', '#f97316', '#06b6d4'
     ],
+    
+    // Shuffle challenge options to randomize answer positions
+    shuffleChallenges() {
+        this.challenges.forEach(challenge => {
+            // Fisher-Yates shuffle
+            for (let i = challenge.options.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [challenge.options[i], challenge.options[j]] = [challenge.options[j], challenge.options[i]];
+            }
+        });
+    },
     
     // V1 CHALLENGES (5 total)
     challenges: [
@@ -275,6 +287,12 @@ window.phase1 = {
     
     // EXAMPLES - V1 DESIGN EXACT REPLICA
     renderExamples(container) {
+        // Shuffle challenges once when first entering examples
+        if (this.currentExample === 0 && !this.challengesShuffled) {
+            this.shuffleChallenges();
+            this.challengesShuffled = true;
+        }
+        
         const challenge = this.challenges[this.currentExample];
         if (!challenge) {
             this.currentStep = 'yourdata';
@@ -384,7 +402,7 @@ window.phase1 = {
             `;
             
             Game.addScore(20);
-            SoundManager.play('success');
+            SoundManager.play('correct'); // Use 'correct' for quick quiz answers
             
             // Move to next challenge
             setTimeout(() => {
@@ -409,7 +427,7 @@ window.phase1 = {
             `;
             
             Game.addScore(-5);
-            SoundManager.play('error');
+            SoundManager.play('wrong'); // Use 'wrong' for quiz mistakes
             
             // Re-enable after delay
             setTimeout(() => {
@@ -433,7 +451,7 @@ window.phase1 = {
             this.validatedTokens = [];
             this.userSplits = [];
             this.tokenColorMap = {}; // Reset color map
-            this.showTutorial = true; // Show tutorial on first visit to this step
+            this.showTutorial = false; // Don't show tutorial until after auto-demo completes
         }
         
         const targetCount = this.correctTokens.length;
@@ -489,7 +507,7 @@ window.phase1 = {
                         ${this.showTutorial ? `
                         <div id="tutorialHint" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(251, 191, 36, 0.1)); 
                                                      border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 10px; padding: 12px 16px; 
-                                                     margin-bottom: 14px; animation: pulse 2s ease-in-out infinite;">
+                                                     margin-bottom: 14px; animation: slideInFromTop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);">
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                                 <span style="font-size: 20px;">👆</span>
                                 <h4 style="color: #fbbf24; font-size: 14px; margin: 0; font-weight: 700;">How to tokenize:</h4>
@@ -550,13 +568,36 @@ window.phase1 = {
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
             
-            html += `<span class="token-char" data-idx="${i}" 
+            // Make spaces and dots more clickable with larger hit areas
+            if (char === ' ') {
+                html += `<span class="token-char" data-idx="${i}" 
+                           onmousedown="phase1.startSelection(${i})" 
+                           onmouseenter="phase1.updateSelection(${i})" 
+                           onmouseup="phase1.endSelection(${i})"
+                           style="display: inline-block; cursor: pointer; 
+                                  padding: 4px 8px; border-radius: 4px; min-width: 16px;
+                                  background: rgba(251, 191, 36, 0.15); 
+                                  border: 1px dashed rgba(251, 191, 36, 0.3);
+                                  transition: all 0.1s ease;">&nbsp;</span>`;
+            } else if ('.!?,'.includes(char)) {
+                html += `<span class="token-char" data-idx="${i}" 
+                           onmousedown="phase1.startSelection(${i})" 
+                           onmouseenter="phase1.updateSelection(${i})" 
+                           onmouseup="phase1.endSelection(${i})"
+                           style="display: inline-block; cursor: pointer; 
+                                  padding: 4px 8px; border-radius: 4px;
+                                  background: rgba(139, 92, 246, 0.15);
+                                  border: 1px solid rgba(139, 92, 246, 0.3);
+                                  transition: all 0.1s ease; font-weight: 700;">${char}</span>`;
+            } else {
+                html += `<span class="token-char" data-idx="${i}" 
                            onmousedown="phase1.startSelection(${i})" 
                            onmouseenter="phase1.updateSelection(${i})" 
                            onmouseup="phase1.endSelection(${i})"
                            style="display: inline-block; cursor: text; 
                                   padding: 2px 1px; border-radius: 3px;
-                                  transition: background 0.1s ease;">${char === ' ' ? '&nbsp;' : char}</span>`;
+                                  transition: background 0.1s ease;">${char}</span>`;
+            }
         }
         
         html += '</span>';
@@ -569,9 +610,9 @@ window.phase1 = {
         
         this.autoDemoInProgress = true;
         
-        // Calculate how many tokens to auto-complete (70%)
+        // Calculate how many tokens to auto-complete (90%)
         const totalTokens = this.correctTokens.length;
-        const autoTokenCount = Math.ceil(totalTokens * 0.7);
+        const autoTokenCount = Math.ceil(totalTokens * 0.9);
         
         // Auto-tokenize with delays
         this.autoTokenizeNext(0, autoTokenCount);
@@ -582,6 +623,9 @@ window.phase1 = {
             // Auto-demo complete!
             this.autoDemoComplete = true;
             this.autoDemoInProgress = false;
+            
+            // Play notification sound for demo completion
+            SoundManager.play('notification');
             
             const feedback = document.getElementById('feedbackMessage');
             if (feedback) {
@@ -609,7 +653,7 @@ window.phase1 = {
                 tutorialBox.id = 'tutorialHint';
                 tutorialBox.style.cssText = `background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(251, 191, 36, 0.1)); 
                                              border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 10px; padding: 12px 16px; 
-                                             margin-bottom: 14px; animation: pulse 2s ease-in-out infinite;`;
+                                             margin-bottom: 14px; animation: slideInFromTop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);`;
                 tutorialBox.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                         <span style="font-size: 20px;">👆</span>
@@ -635,12 +679,12 @@ window.phase1 = {
             return;
         }
         
-        // Exponential speed increase every 10%
+        // Exponential speed increase every 10%, with DOUBLE speed from 70% to 90%
         // 0-10%: base speed
         // 10-20%: 2x faster
         // 20-30%: 3x faster
-        // 30-40%: 4x faster
-        // And so on...
+        // ...
+        // 70-90%: DOUBLE the speed (extra fast!)
         let highlightDelay, flashDelay, nextDelay;
         
         const percentComplete = (currentIndex / targetCount) * 100;
@@ -653,7 +697,12 @@ window.phase1 = {
         } else {
             // Calculate speed multiplier based on percentage
             // Every 10% = +1 speed multiplier (2x, 3x, 4x, etc.)
-            const speedMultiplier = Math.floor(percentComplete / 10) + 1;
+            let speedMultiplier = Math.floor(percentComplete / 10) + 1;
+            
+            // DOUBLE the speed from 70% to 90%
+            if (percentComplete >= 70) {
+                speedMultiplier = speedMultiplier * 2;
+            }
             
             // Base speeds for learning phase
             const baseHighlight = 500;
@@ -690,7 +739,7 @@ window.phase1 = {
                 }
             }
             
-            SoundManager.play('success');
+            SoundManager.play('coin'); // Use coin for auto-token collection
             
             setTimeout(() => {
                 // Add to validated tokens
@@ -797,7 +846,7 @@ window.phase1 = {
         if (start !== 0) {
             this.showFeedback('⚠️ Start from the beginning of the text!', 'error');
             this.clearSelection();
-            SoundManager.play('error');
+            SoundManager.play('warning'); // Use warning for rule violations
             return;
         }
         
@@ -819,7 +868,7 @@ window.phase1 = {
         if (isCorrect) {
             this.correctAnswers++;
             this.showFeedback('✓ Correct!', 'success');
-            SoundManager.play('success');
+            SoundManager.play('coin'); // Use coin for token collection!
             Game.addScore(10);
             
             setTimeout(() => {
@@ -866,7 +915,7 @@ window.phase1 = {
         } else {
             this.wrongAnswers++;
             this.showFeedback(`✗ Wrong! Expected: "${nextExpectedToken === ' ' ? '␣' : nextExpectedToken}"`, 'error');
-            SoundManager.play('error');
+            SoundManager.play('wrong'); // Use 'wrong' for wrong answers
             Game.addScore(-10); // Penalty for wrong answer
             
             setTimeout(() => {
@@ -938,12 +987,69 @@ window.phase1 = {
     },
     
     finishTokenization() {
+        // Show fun completion message about boring tokenization 😄
+        const phaseContainer = document.getElementById('phaseContainer');
+        if (phaseContainer) {
+            phaseContainer.innerHTML = `
+                <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                    <div style="max-width: 700px; width: 100%; text-align: center; animation: slideInFromTop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                        
+                        <div style="font-size: 64px; margin-bottom: 20px; animation: float 2s ease-in-out infinite;">🎉</div>
+                        
+                        <h2 style="font-size: 32px; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                   -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            Tokenization Complete!
+                        </h2>
+                        
+                        <div style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(239, 68, 68, 0.1)); 
+                                   border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 14px; padding: 24px; 
+                                   margin: 32px 0; text-align: left;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                <span style="font-size: 36px;">😅</span>
+                                <h3 style="font-size: 20px; color: #fbbf24; margin: 0; font-weight: 700;">See How Boring That Was?</h3>
+                            </div>
+                            <p style="font-size: 15px; color: rgba(255, 255, 255, 0.9); line-height: 1.7; margin-bottom: 16px;">
+                                You just experienced one of the most <strong style="color: #fbbf24;">tedious, repetitive, and mind-numbing</strong> tasks 
+                                that computers do for us <strong style="color: var(--primary);">billions of times a day</strong>! 
+                            </p>
+                            <p style="font-size: 15px; color: rgba(255, 255, 255, 0.9); line-height: 1.7; margin-bottom: 16px;">
+                                Imagine having to manually split <strong style="color: #ef4444;">every single word, space, and punctuation mark</strong> 
+                                in every text message, email, and document you process. That's what LLMs do automatically - 
+                                <strong style="color: var(--secondary);">trillions of times</strong>, without complaining! 😂
+                            </p>
+                            <div style="background: rgba(0, 0, 0, 0.3); padding: 16px; border-radius: 10px; border-left: 4px solid #22c55e;">
+                                <p style="font-size: 14px; color: rgba(255, 255, 255, 0.9); margin: 0; line-height: 1.6;">
+                                    <strong style="color: #22c55e;">💡 The Point:</strong> Tokenization might be boring for humans, 
+                                    but it's <strong>essential</strong> for AI. It's the foundation that lets computers understand 
+                                    and process language at incredible speed. Pretty cool for such a "boring" task! 🚀
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <button onclick="phase1.continueAfterCompletion()" 
+                                style="padding: 16px 48px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                       border: none; border-radius: 12px; color: white; font-size: 17px; font-weight: 700; 
+                                       cursor: pointer; box-shadow: 0 6px 25px rgba(0, 212, 255, 0.4); transition: all 0.3s;
+                                       animation: pulse 2s ease-in-out infinite;">
+                            Continue: Let's Move On! →
+                        </button>
+                        
+                    </div>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                SoundManager.play('levelUp');
+            }, 300);
+        }
+    },
+    
+    continueAfterCompletion() {
         Game.state.tokens = this.validatedTokens;
         Game.saveState();
         this.currentStep = 'info1';
         const phaseContainer = document.getElementById('phaseContainer');
         this.render(phaseContainer);
-        SoundManager.play('levelUp');
     },
     
     calculateCorrectTokens(text) {
@@ -1294,6 +1400,20 @@ window.phase1 = {
                         
                     </div>
                     
+                    <!-- ANIMATED SCALE COMPARISON -->
+                    <div style="margin: 40px 0; padding: 32px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.05)); 
+                               border: 3px solid rgba(139, 92, 246, 0.3); border-radius: 16px;">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <h3 style="font-size: 22px; color: #a855f7; margin-bottom: 10px; font-weight: 700;">
+                                🔬 Scale Comparison: Your Model vs. Real LLMs
+                            </h3>
+                            <p style="font-size: 14px; color: var(--text-secondary);">
+                                Watch your vocabulary shrink as we compare it to production models
+                            </p>
+                        </div>
+                        <div id="tokenScaleAnimation" style="min-height: 500px;"></div>
+                    </div>
+                    
                     <div style="text-align: center;">
                         <button id="continueToEmbeddingsBtn"
                                 style="padding: 14px 42px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
@@ -1306,6 +1426,13 @@ window.phase1 = {
                 </div>
             </div>
         `;
+        
+        // Trigger the animation after a short delay
+        setTimeout(() => {
+            if (window.ScaleAnimations && window.ScaleAnimations.animateTokenComparison) {
+                ScaleAnimations.animateTokenComparison(Game.state.tokens);
+            }
+        }, 500);
         
         // Add event listener after rendering
         setTimeout(() => {

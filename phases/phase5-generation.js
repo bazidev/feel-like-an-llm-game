@@ -352,8 +352,8 @@ window.phase5 = {
                             <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--secondary); border-radius: 6px;">
                                 <div style="font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px;">🔬 What's Next</div>
                                 <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    See your <strong>complete journey summary</strong> and understand how your mini-LLM compares to real models like GPT-4. 
-                                    The principles are identical - only the scale differs!
+                                    Learn about <strong>Sampling Parameters</strong>: Temperature, Top-p, Repetition Penalty, and Presence Penalty. 
+                                    These control HOW the model picks tokens to generate more creative or focused output!
                                 </div>
                             </div>
                             
@@ -367,13 +367,35 @@ window.phase5 = {
                         </div>
                     </div>
                     
+                    <!-- ANIMATED SCALE COMPARISON -->
+                    <div style="margin: 40px 0; padding: 32px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(20, 184, 166, 0.05)); 
+                               border: 3px solid rgba(34, 197, 94, 0.3); border-radius: 16px;">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <h3 style="font-size: 22px; color: #22c55e; margin-bottom: 10px; font-weight: 700;">
+                                📖 Context Window: Your Sequence vs. Real LLMs
+                            </h3>
+                            <p style="font-size: 14px; color: var(--text-secondary);">
+                                See how much text production models can process at once
+                            </p>
+                        </div>
+                        <div id="contextScaleAnimation" style="min-height: 600px;"></div>
+                    </div>
+                    
                     <button class="btn-primary" onclick="phase5.completePhase()" style="width: 100%; font-size: 17px; padding: 14px;">
-                        View Final Summary →
+                        Continue to Sampling Parameters →
                     </button>
                     
                 </div>
             </div>
         `;
+        
+        // Trigger the animation after a short delay
+        const generatedLength = generated.split(/\s+/).filter(w => w.length > 0).length;
+        setTimeout(() => {
+            if (window.ScaleAnimations && window.ScaleAnimations.animateContextComparison) {
+                ScaleAnimations.animateContextComparison(generatedLength);
+            }
+        }, 500);
     },
     
     completePhase() {

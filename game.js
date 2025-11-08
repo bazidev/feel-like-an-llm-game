@@ -2,11 +2,12 @@
 const Game = {
     state: {
         currentPhase: 0,
-        totalPhases: 7,
+        totalPhases: 8, // Updated to 8 to include sampling phase
         score: 0,
         tokensProcessed: 0,
         modelName: 'Unnamed Model',
         avatar: null,
+        uniqueUserId: null, // Unique username for API scoring (generated on first play)
         phaseScores: {},
         phaseCompleted: {},
         startTime: null,
@@ -17,6 +18,7 @@ const Game = {
         embeddings: {},       // Filled in Phase 2 (Embeddings)
         attentionWeights: {}, // Filled in Phase 3 (Attention)
         model: null,          // Filled in Phase 4 (Training)
+        generatedText: '',    // Filled in Phase 5 (Generation)
         
         // Training data from user input (optional future feature)
         userTrainingText: null
@@ -91,11 +93,12 @@ const Game = {
             localStorage.removeItem('gameState');
             this.state = {
                 currentPhase: 0,
-                totalPhases: 7,
+                totalPhases: 8, // Updated to 8
                 score: 0,
                 tokensProcessed: 0,
                 modelName: 'Unnamed Model',
                 avatar: null,
+                uniqueUserId: null, // Will be regenerated on next play
                 phaseScores: {},
                 phaseCompleted: {},
                 startTime: null,
@@ -106,6 +109,7 @@ const Game = {
                 embeddings: {},
                 attentionWeights: {},
                 model: null,
+                generatedText: '',
                 userTrainingText: null
             };
             
@@ -126,7 +130,47 @@ const Game = {
                 window.phase1.colorIndex = 0;
                 window.phase1.currentText = '';
                 window.phase1.correctTokens = [];
+                window.phase1.correctAnswers = 0;
+                window.phase1.wrongAnswers = 0;
             }
+            
+            // Reset phase2 (embeddings)
+            if (window.phase2) {
+                window.phase2.currentStep = 'concept1';
+                window.phase2.currentExample = 0;
+                window.phase2.tokenGroups = {};
+                window.phase2.targetGroups = {};
+                window.phase2.groupingAttempts = 0;
+                window.phase2.groupingCorrect = 0;
+            }
+            
+            // Reset phase3 (attention)
+            if (window.phase3) {
+                window.phase3.currentStep = 'intro';
+                window.phase3.currentExample = 0;
+                window.phase3.sentences = [];
+                window.phase3.currentSentence = 0;
+                window.phase3.attentionWeights = {};
+            }
+            
+            // Reset phase4 (training)
+            if (window.phase4) {
+                window.phase4.currentStep = 'intro';
+                window.phase4.bigramCounts = {};
+                window.phase4.bigramProbs = {};
+                window.phase4.practiceTarget = null;
+                window.phase4.userCounts = {};
+            }
+            
+            // Reset phase5 (generation)
+            if (window.phase5) {
+                window.phase5.currentStep = 'intro';
+                window.phase5.generatedSequence = [];
+            }
+            
+            // Reset phase6 (finale) - no persistent state
+            
+            // Reset phase-sampling - will be added when implemented
             
             // Clear avatar display
             document.getElementById('modelAvatar').textContent = '';
@@ -278,7 +322,15 @@ const Game = {
         // Update header stats
         document.getElementById('scoreValue').textContent = this.state.score;
         document.getElementById('tokensValue').textContent = this.state.tokensProcessed.toLocaleString();
-        document.getElementById('modelName').textContent = this.state.modelName;
+        
+        // Update model name with unique ID if exists
+        const modelNameEl = document.getElementById('modelName');
+        if (this.state.uniqueUserId) {
+            modelNameEl.innerHTML = `${this.state.modelName} <span style="font-size: 11px; color: var(--text-secondary); font-weight: 400; opacity: 0.7;">(${this.state.uniqueUserId})</span>`;
+        } else {
+            modelNameEl.textContent = this.state.modelName;
+        }
+        
         this.updateTimerDisplay();
         
         // Update avatar if exists
@@ -322,9 +374,17 @@ const Game = {
         const container = document.getElementById('phaseContainer');
         container.innerHTML = '';
         
-        // Call the appropriate phase render function
-        const phaseName = `phase${this.state.currentPhase}`;
-        console.log(`🎮 Rendering phase: ${phaseName}`);
+        // Map phase numbers to phase names (Sampling phase is between 5 and 6)
+        let phaseName;
+        if (this.state.currentPhase <= 5) {
+            phaseName = `phase${this.state.currentPhase}`;
+        } else if (this.state.currentPhase === 6) {
+            phaseName = 'phaseSampling';
+        } else if (this.state.currentPhase === 7) {
+            phaseName = 'phase6'; // Finale
+        }
+        
+        console.log(`🎮 Rendering phase: ${phaseName} (currentPhase: ${this.state.currentPhase})`);
         console.log(`🔍 Phase object exists:`, typeof window[phaseName] !== 'undefined');
         console.log(`🔍 Render function exists:`, window[phaseName] && typeof window[phaseName].render === 'function');
         
@@ -539,93 +599,201 @@ const Game = {
         return {grade: 'D', color: '#ef4444', label: 'Needs Practice'};
     },
     
-    showScoreboard() {
-        const records = this.getScoreboardRecords();
+    async showScoreboard() {
         const modal = document.getElementById('scoreboardModal');
         const content = document.getElementById('scoreboardContent');
         
-        if (records.length === 0) {
+        // Show loading state
+        content.innerHTML = `
+            <div style="text-align: center; padding: 60px 20px;">
+                <div style="font-size: 64px; margin-bottom: 20px; opacity: 0.7;">🏆</div>
+                <h3 style="font-size: 20px; color: var(--primary); margin-bottom: 12px;">Loading leaderboard...</h3>
+                <p style="font-size: 14px; color: var(--text-secondary); opacity: 0.7;">
+                    Fetching top scores from the server
+                </p>
+            </div>
+        `;
+        
+        modal.classList.add('active');
+        SoundManager.play('click');
+        
+        // Fetch leaderboard from API
+        const result = await ScoreboardAPI.getLeaderboard(200);
+        
+        if (!result.success) {
+            // Show error with fallback to local records
+            console.error('Failed to load leaderboard from API, showing local records');
+            const localRecords = this.getScoreboardRecords();
+            
+            if (localRecords.length === 0) {
+                content.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px;">
+                        <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;">⚠️</div>
+                        <h3 style="font-size: 18px; color: var(--error); margin-bottom: 12px;">Issue connecting to scoreboard</h3>
+                        <p style="font-size: 13px; color: var(--text-secondary); opacity: 0.8; margin-bottom: 16px;">
+                            ${result.error || 'Unable to reach the server'}
+                        </p>
+                        <p style="font-size: 13px; color: var(--text-secondary); opacity: 0.6;">
+                            Complete the game to save your score locally.
+                        </p>
+                    </div>
+                `;
+            } else {
+                // Show local records with warning
+                content.innerHTML = `
+                    <div style="margin-bottom: 16px; padding: 12px; background: rgba(245, 158, 11, 0.1); 
+                               border: 2px solid rgba(245, 158, 11, 0.3); border-radius: 12px;">
+                        <div style="font-size: 12px; color: #f59e0b; line-height: 1.6;">
+                            ⚠️ <strong>Offline Mode</strong> - Showing your local scores only
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        ${localRecords.map((record, index) => {
+                            const ratingData = this.getRatingGrade(record.rating);
+                            const avatarData = window.phase0 && window.phase0.avatars 
+                                ? window.phase0.avatars.find(a => a.id === record.avatar)
+                                : null;
+                            
+                            return `
+                                <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(191, 0, 255, 0.02)); 
+                                           border: 2px solid rgba(0, 212, 255, 0.2); border-radius: 12px; padding: 16px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="display: flex; gap: 12px; align-items: center;">
+                                            <div style="font-size: 32px;">${avatarData ? avatarData.icon : '🤖'}</div>
+                                            <div>
+                                                <div style="font-size: 14px; font-weight: 600; color: white;">${record.name}</div>
+                                                <div style="font-size: 11px; color: var(--text-secondary);">${new Date(record.date).toLocaleDateString()}</div>
+                                            </div>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${record.score}</div>
+                                            <div style="font-size: 11px; color: ${ratingData.color};">${ratingData.label}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }
+            return;
+        }
+        
+        // Show API leaderboard
+        const leaderboard = result.data;
+        
+        // Find current user in leaderboard
+        const currentUserId = this.state.uniqueUserId;
+        const currentUserIndex = leaderboard.findIndex(entry => entry.user_name === currentUserId);
+        const currentUserInTop200 = currentUserIndex !== -1;
+        
+        if (leaderboard.length === 0) {
             content.innerHTML = `
                 <div style="text-align: center; padding: 60px 20px;">
                     <div style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;">🏆</div>
-                    <h3 style="font-size: 20px; color: var(--text-secondary); margin-bottom: 12px;">No records yet!</h3>
+                    <h3 style="font-size: 20px; color: var(--text-secondary); margin-bottom: 12px;">No scores yet!</h3>
                     <p style="font-size: 14px; color: var(--text-secondary); opacity: 0.7;">
-                        Complete the game to see your scores here.
+                        Be the first to complete the game and claim the top spot!
                     </p>
                 </div>
             `;
         } else {
             content.innerHTML = `
-                <div style="margin-bottom: 20px; padding: 16px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(191, 0, 255, 0.05)); 
-                           border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 12px;">
-                    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.7;">
-                        <strong style="color: var(--primary);">Performance Ranking</strong>
-                        <br>
-                        <span style="opacity: 0.8;">Based on your score, accuracy, and completion time.</span>
+                ${!currentUserInTop200 && currentUserId ? `
+                    <div style="margin-bottom: 20px; padding: 16px; background: linear-gradient(135deg, rgba(0, 245, 255, 0.15), rgba(0, 212, 255, 0.08)); 
+                               border: 2px solid rgba(0, 245, 255, 0.5); border-radius: 12px; 
+                               box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: #00f5ff; font-weight: 600; margin-bottom: 8px;">📍 Your Ranking</div>
+                            <div style="font-size: 12px; color: rgba(148, 163, 184, 0.9);">
+                                ${this.state.phaseCompleted[6] 
+                                    ? "You're not in the top 200 yet. Keep playing to improve your score!" 
+                                    : "Complete the game to get your score on the leaderboard! 🎮"
+                                }
+                            </div>
+                        </div>
                     </div>
-                </div>
+                ` : ''}
                 
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    ${records.map((record, index) => {
-                        const ratingData = this.getRatingGrade(record.rating);
-                        const avatarData = window.phase0 && window.phase0.avatars 
-                            ? window.phase0.avatars.find(a => a.id === record.avatar) 
-                            : null;
-                        const avatarIcon = avatarData ? avatarData.icon : '🤖';
+                <div id="leaderboardList" style="display: flex; flex-direction: column; gap: 14px; max-height: 500px; overflow-y: auto; padding-right: 8px; scroll-behavior: smooth;">
+                    ${leaderboard.map((entry, index) => {
+                        const isTopThree = index < 3;
+                        const medals = ['🥇', '🥈', '🥉'];
+                        const medal = isTopThree ? medals[index] : `#${index + 1}`;
+                        const isCurrentUser = entry.user_name === currentUserId;
+                        
+                        // Handle null values with fallbacks
+                        const displayName = entry.name || 'Anonymous';
+                        const displayScore = entry.totale_score || entry.score || 0;
+                        const displayTime = entry.counter_time || 0;
+                        const displayUserId = entry.user_name || 'unknown';
+                        
+                        // Get avatar icon - use 🎮 for users without avatar
+                        let avatarIcon = '🎮'; // Gaming controller for anonymous
+                        if (entry.avatar_code && window.phase0 && window.phase0.avatars) {
+                            const avatarData = window.phase0.avatars.find(a => a.id === entry.avatar_code);
+                            if (avatarData) {
+                                avatarIcon = avatarData.icon;
+                            }
+                        }
+                        
+                        // Format date nicely
+                        const dateStr = entry.playedAt ? new Date(entry.playedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+                        const timeStr = entry.playedAt ? new Date(entry.playedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '';
+                        
+                        // Adjust name font size based on length
+                        const nameFontSize = displayName.length > 15 ? '11px' : (displayName.length > 10 ? '13px' : '14px');
+                        
+                        // Determine background and border for current user
+                        let background, borderColor, boxShadow, animation;
+                        if (isCurrentUser) {
+                            background = 'linear-gradient(135deg, rgba(0, 245, 255, 0.25), rgba(0, 212, 255, 0.15))';
+                            borderColor = 'rgba(0, 245, 255, 0.8)';
+                            boxShadow = '0 0 20px rgba(0, 245, 255, 0.6)';
+                            animation = 'currentUserGlow 2s ease-in-out infinite';
+                        } else if (isTopThree) {
+                            background = 'linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.08))';
+                            borderColor = 'rgba(251, 191, 36, 0.5)';
+                            boxShadow = '0 4px 20px rgba(251, 191, 36, 0.3)';
+                            animation = 'none';
+                        } else {
+                            background = 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6))';
+                            borderColor = 'rgba(100, 116, 139, 0.4)';
+                            boxShadow = '0 2px 10px rgba(0, 0, 0, 0.3)';
+                            animation = 'none';
+                        }
                         
                         return `
-                            <div style="padding: 20px; background: ${index === 0 ? 'linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.1))' : 'rgba(15, 23, 42, 0.6)'};
-                                       border: 2px solid ${index === 0 ? 'rgba(251, 191, 36, 0.5)' : 'rgba(0, 245, 255, 0.2)'}; 
-                                       border-radius: 12px; position: relative;">
-                                
-                                ${index === 0 ? '<div style="position: absolute; top: -10px; right: 20px; background: linear-gradient(135deg, #fbbf24, #f59e0b); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #000;">👑 TOP</div>' : ''}
-                                
-                                <div style="display: grid; grid-template-columns: 50px 1fr auto; gap: 16px; align-items: center;">
+                            <div id="${isCurrentUser ? 'currentUserEntry' : ''}" style="background: ${background}; 
+                                       border: 2px solid ${borderColor}; 
+                                       border-radius: 12px; padding: 18px; 
+                                       box-shadow: ${boxShadow};
+                                       animation: ${animation};
+                                       transition: all 0.3s;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; gap: 20px;">
                                     
-                                    <!-- Rank -->
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 28px; font-weight: 700; color: ${index === 0 ? '#fbbf24' : index === 1 ? '#c0c0c0' : index === 2 ? '#cd7f32' : 'var(--primary)'};">
-                                            #${index + 1}
+                                    <!-- Left: Avatar + Name (Left-aligned) -->
+                                    <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-start;">
+                                        <div style="font-size: 32px; flex-shrink: 0;">${avatarIcon}</div>
+                                        <div style="overflow: hidden;">
+                                            <div style="font-size: ${nameFontSize}; font-weight: 700; color: ${isCurrentUser ? '#00f5ff' : (isTopThree ? '#fbbf24' : '#e2e8f0')}; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left;">${displayName}</div>
+                                            <div style="font-size: 10px; color: ${isCurrentUser ? 'rgba(0, 245, 255, 0.8)' : (isTopThree ? 'rgba(251, 191, 36, 0.7)' : 'rgba(148, 163, 184, 0.8)')}; font-family: monospace; text-align: left;">${displayUserId}</div>
                                         </div>
                                     </div>
                                     
-                                    <!-- Info -->
-                                    <div>
-                                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                                            <span style="font-size: 24px;">${avatarIcon}</span>
-                                            <span style="font-size: 18px; font-weight: 700; color: white;">${record.modelName}</span>
-                                        </div>
-                                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 12px; color: var(--text-secondary);">
-                                            <div>
-                                                <span style="color: var(--primary);">Score:</span> 
-                                                <strong style="color: white;">${record.score}</strong>
-                                            </div>
-                                            <div>
-                                                <span style="color: var(--secondary);">Time:</span> 
-                                                <strong style="color: white;">${record.timeFormatted}</strong>
-                                            </div>
-                                            <div>
-                                                <span style="color: #f59e0b;">Tokens:</span> 
-                                                <strong style="color: white;">${record.tokens}</strong>
-                                            </div>
-                                        </div>
-                                        <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.7; margin-top: 6px;">
-                                            ${record.date}
-                                        </div>
+                                    <!-- Center: Time + Score (100% Centered) -->
+                                    <div style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                        <div style="font-size: 16px; font-weight: 600; color: #a78bfa; margin-bottom: 4px;">⏱️ ${Math.floor(displayTime / 60)}:${(displayTime % 60).toString().padStart(2, '0')}</div>
+                                        <div style="font-size: 11px; color: rgba(148, 163, 184, 0.8);">score: ${(entry.score || 0).toLocaleString()}</div>
                                     </div>
                                     
-                                    <!-- Rating -->
-                                    <div style="text-align: center; padding: 12px 20px; background: rgba(0, 0, 0, 0.4); border-radius: 10px; 
-                                               border: 2px solid ${ratingData.color};">
-                                        <div style="font-size: 28px; font-weight: 700; color: ${ratingData.color};">
-                                            ${ratingData.grade}
+                                    <!-- Right: Total Score + Date (Right-aligned) -->
+                                    <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; justify-content: center;">
+                                        <div style="font-size: 24px; font-weight: 700; color: ${isCurrentUser ? '#00f5ff' : (isTopThree ? '#fbbf24' : '#00f5ff')}; text-shadow: 0 2px 10px ${isCurrentUser ? 'rgba(0, 245, 255, 0.6)' : (isTopThree ? 'rgba(251, 191, 36, 0.4)' : 'rgba(0, 212, 255, 0.3)')}; margin-bottom: 4px;">
+                                            ${isTopThree ? medals[index] + ' ' : ''}${displayScore.toLocaleString()}
                                         </div>
-                                        <div style="font-size: 11px; color: ${ratingData.color}; font-weight: 600; margin-top: 4px;">
-                                            ${ratingData.label}
-                                        </div>
-                                        <div style="font-size: 16px; color: white; font-weight: 600; margin-top: 6px;">
-                                            ${record.rating}
-                                        </div>
+                                        ${dateStr ? `<div style="font-size: 10px; color: rgba(148, 163, 184, 0.6);">${dateStr} ${timeStr}</div>` : ''}
                                     </div>
                                     
                                 </div>
@@ -634,10 +802,32 @@ const Game = {
                     }).join('')}
                 </div>
             `;
+            
+            // Auto-scroll to current user's entry after rendering completes
+            if (currentUserInTop200) {
+                setTimeout(() => {
+                    const currentUserElement = document.getElementById('currentUserEntry');
+                    const leaderboardList = document.getElementById('leaderboardList');
+                    
+                    if (currentUserElement && leaderboardList) {
+                        // Get the positions
+                        const listRect = leaderboardList.getBoundingClientRect();
+                        const elementRect = currentUserElement.getBoundingClientRect();
+                        
+                        // Calculate scroll position to center the element
+                        const currentScroll = leaderboardList.scrollTop;
+                        const elementRelativeTop = elementRect.top - listRect.top;
+                        const scrollTo = currentScroll + elementRelativeTop - (listRect.height / 2) + (elementRect.height / 2);
+                        
+                        // Scroll smoothly
+                        leaderboardList.scrollTo({
+                            top: scrollTo,
+                            behavior: 'smooth'
+                        });
+                    }
+                }, 300);
+            }
         }
-        
-        modal.classList.add('active');
-        SoundManager.play('click');
-    }
+    },
 };
 

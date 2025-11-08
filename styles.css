@@ -25,7 +25,7 @@ body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
     color: var(--text-primary);
-    overflow: hidden;
+    overflow: hidden; /* Prevent body scroll, phase-content handles it */
     line-height: 1.5;
     height: 100vh;
     margin: 0;
@@ -147,7 +147,6 @@ body {
     letter-spacing: 0.5px;
     position: relative;
     overflow: hidden;
-    margin-right: 12px;
 }
 
 .scoreboard-btn::before {
@@ -264,7 +263,7 @@ body {
     height: 100%;
     display: grid;
     grid-template-columns: 380px 1fr;
-    gap: 24px;
+    gap: 20px;
     animation: fadeIn 0.4s ease;
     min-height: 0; /* Allow proper scrolling in children */
 }
@@ -334,8 +333,9 @@ body {
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    overflow-y: auto;
+    overflow-y: auto !important; /* CRITICAL: Always allow scroll */
     overflow-x: hidden;
+    max-height: 100%; /* Ensure container respects parent bounds */
 }
 
 .phase-content {
@@ -659,6 +659,57 @@ button {
         opacity: 0;
         transform: translateY(-10px);
     }
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes currentUserGlow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(0, 245, 255, 0.6), 0 0 40px rgba(0, 245, 255, 0.4), 0 4px 20px rgba(0, 0, 0, 0.3);
+        border-color: rgba(0, 245, 255, 0.8);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(0, 245, 255, 0.8), 0 0 60px rgba(0, 245, 255, 0.6), 0 4px 20px rgba(0, 0, 0, 0.3);
+        border-color: rgba(0, 245, 255, 1);
+    }
+}
+
+/* Custom Scrollbar for Leaderboard */
+#leaderboardList::-webkit-scrollbar {
+    width: 8px;
+}
+
+#leaderboardList::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 245, 255, 0.1);
+}
+
+#leaderboardList::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(0, 245, 255, 0.6), rgba(0, 212, 255, 0.4));
+    border-radius: 10px;
+    border: 1px solid rgba(0, 245, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+#leaderboardList::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(0, 245, 255, 0.8), rgba(0, 212, 255, 0.6));
+    box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+
+/* Firefox scrollbar */
+#leaderboardList {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 245, 255, 0.6) rgba(15, 23, 42, 0.6);
 }
 
 .pulse {

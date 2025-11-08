@@ -43,10 +43,31 @@ window.phase6 = {
         // Reset to first step
         this.currentStep = 'celebration';
         
-        // Save to scoreboard on first step
+        // 🎉 PLAY VICTORY SOUND FOR GAME COMPLETION!
+        SoundManager.play('victory');
+        
+        // Save to local scoreboard
         const scoreboardResult = Game.saveToScoreboard();
         const ratingData = Game.getRatingGrade(scoreboardResult.record.rating);
         const generatedText = Game.state.generatedText;
+        
+        // Save to API asynchronously (non-blocking)
+        if (window.ScoreboardAPI) {
+            ScoreboardAPI.saveScore().then(result => {
+                if (result.success) {
+                    if (result.isHighScore) {
+                        ScoreboardAPI.showSuccess(`🎉 New high score saved! ${Game.state.score} points`);
+                        // Play powerup for high score!
+                        SoundManager.play('powerup');
+                    } else {
+                        console.log('ℹ️ Score submitted but not a new high score');
+                    }
+                } else {
+                    console.warn('⚠️ Score not saved to API:', result.error);
+                    ScoreboardAPI.showError(`⚠️ Issue connecting to scoreboard: ${result.error}`);
+                }
+            });
+        }
         
         container.innerHTML = `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100%; padding: 30px 20px;">
