@@ -1,6 +1,5 @@
 // Phase 2: Embeddings - USER GROUPS TOKENS (DRAG & DROP)
 window.phase2 = {
-    DEV_MODE: true, // Set to false in production
     currentStep: 'concept1', // 'concept1' -> 'concept2' -> 'examples' -> 'group' -> 'recap'
     currentExample: 0,
     tokenGroups: {},
@@ -156,13 +155,6 @@ window.phase2 = {
                                        cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
                             Next →
                         </button>
-                        ${this.DEV_MODE ? `
-                        <button onclick="phase2.devSkipPhase()" 
-                                style="margin-left: 12px; padding: 12px 24px; background: linear-gradient(135deg, #ef4444, #dc2626); 
-                                       border: none; border-radius: 12px; color: white; font-size: 13px; font-weight: 600; 
-                                       cursor: pointer; opacity: 0.7;">
-                            ⚡ DEV: Skip Phase
-                        </button>` : ''}
                     </div>
                     
                 </div>
@@ -1494,38 +1486,18 @@ window.phase2 = {
         // Mark phase complete with fixed transition bonus
         if (!Game.state.phaseCompleted[2]) {
             Game.state.phaseCompleted[2] = true;
-            Game.addScore(100); // Phase transition bonus (fixed)
+            Game.saveState();
         }
-        Game.saveState();
+        
+        // Award transition bonus only once
+        if (!Game.state.pointsAwarded['phase2_transition']) {
+            Game.addScore(100); // Phase transition bonus (fixed)
+            Game.state.pointsAwarded['phase2_transition'] = true;
+            Game.saveState();
+        }
+        
         SoundManager.play('success');
         setTimeout(() => Game.nextPhase(), 500);
-    },
-    
-    // DEV SKIP FUNCTION
-    devSkipPhase() {
-        console.log('⚡ DEV: Skipping entire phase 2');
-        if (!this.DEV_MODE) return;
-        
-        // Generate dummy embeddings
-        Game.state.embeddings = this.generateDummyEmbeddings();
-        Game.addScore(150);
-        SoundManager.play('click');
-        this.completePhase();
-    },
-    
-    generateDummyEmbeddings() {
-        const embeddings = {};
-        const tokens = Game.state.tokens;
-        const uniqueTokens = [...new Set(tokens)].slice(0, 10);
-        
-        uniqueTokens.forEach((token, idx) => {
-            embeddings[token] = [
-                Math.random() * 100,
-                Math.random() * 100
-            ];
-        });
-        
-        return embeddings;
     }
 };
 

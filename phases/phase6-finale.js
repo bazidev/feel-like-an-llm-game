@@ -2,11 +2,25 @@
 window.phase6 = {
     currentStep: 'celebration',
     
+    // Initialize step from saved state if available
+    init() {
+        // Load saved finale step if it exists (for page refresh)
+        if (Game.state.finaleStep) {
+            this.currentStep = Game.state.finaleStep;
+            console.log(`🔄 Restored finale step: ${this.currentStep}`);
+        }
+    },
+    
     nextStep() {
         const steps = ['celebration', 'journey', 'comparison', 'resources'];
         const currentIndex = steps.indexOf(this.currentStep);
         if (currentIndex < steps.length - 1) {
             this.currentStep = steps[currentIndex + 1];
+            
+            // Save the current step to game state for page refresh
+            Game.state.finaleStep = this.currentStep;
+            Game.saveState();
+            
             const container = document.getElementById('phaseContainer');
             if (container) {
                 console.log(`✅ Moving to step: ${this.currentStep}`);
@@ -26,6 +40,9 @@ window.phase6 = {
     },
     
     render(container) {
+        // Initialize step from saved state on first render
+        this.init();
+        
         const step = this.currentStep;
         
         if (step === 'celebration') {
@@ -40,8 +57,12 @@ window.phase6 = {
     },
     
     renderCelebration(container) {
-        // Reset to first step
+        // Set to celebration step (first step)
         this.currentStep = 'celebration';
+        
+        // Save the current step to game state for page refresh
+        Game.state.finaleStep = this.currentStep;
+        Game.saveState();
         
         // 🎉 PLAY VICTORY SOUND FOR GAME COMPLETION!
         SoundManager.play('victory');
@@ -52,14 +73,20 @@ window.phase6 = {
         // Award game completion bonus - NEW SCORING SYSTEM
         if (!Game.state.phaseCompleted[7]) {
             Game.state.phaseCompleted[7] = true;
+            Game.saveState();
+        }
+        
+        // Award completion bonus only once
+        if (!Game.state.pointsAwarded['game_completion']) {
             Game.addScore(500); // Game completion bonus!
+            Game.state.pointsAwarded['game_completion'] = true;
             Game.saveState();
         }
         
         // Save to local scoreboard
         const scoreboardResult = Game.saveToScoreboard();
         const ratingData = Game.getRatingGrade(scoreboardResult.record.rating);
-        const generatedText = Game.state.generatedText;
+        const generatedText = Game.state.generatedText || '(Generation phase not completed)';
         
         // Save to API asynchronously (non-blocking)
         if (window.ScoreboardAPI) {
@@ -501,107 +528,92 @@ window.phase6 = {
                     <!-- Learning Resources -->
                     <div style="padding: 32px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(191, 0, 255, 0.06)); 
                                border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 16px; margin-bottom: 36px;">
-                        <div style="text-align: center; margin-bottom: 28px;">
-                            <h2 style="font-size: 32px; color: var(--primary); margin: 0 0 12px 0;">
+                        <div style="text-align: center; margin-bottom: 24px;">
+                            <h2 style="font-size: 18px; color: var(--primary); margin: 0 0 8px 0;">
                                 🎓 Ready to Go Deeper?
                             </h2>
-                            <p style="font-size: 16px; color: var(--text-secondary); margin: 0;">
+                            <p style="font-size: 14px; color: var(--text-secondary); margin: 0;">
                                 Continue your LLM learning journey with these world-class resources
                             </p>
                         </div>
                         
-                        <div style="display: grid; gap: 18px;">
-                            <!-- Andrej Karpathy - Intro to LLMs -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 800px; margin: 0 auto;">
+                            <!-- Video 1 -->
                             <a href="https://www.youtube.com/watch?v=zjkBMFhNj_g" target="_blank" 
-                               style="display: block; background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(0, 212, 255, 0.3); 
-                                      border-radius: 12px; text-decoration: none; transition: all 0.3s; cursor: pointer; overflow: hidden;"
-                               onmouseover="this.style.borderColor='rgba(0, 212, 255, 0.6)'; this.style.transform='translateY(-2px)';"
-                               onmouseout="this.style.borderColor='rgba(0, 212, 255, 0.3)'; this.style.transform='translateY(0)';">
-                                <div style="display: flex; gap: 16px;">
-                                    <!-- Video Thumbnail -->
-                                    <div style="width: 240px; height: 135px; background: linear-gradient(135deg, #0ea5e9, #06b6d4); 
-                                               flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative;">
-                                        <div style="position: absolute; width: 60px; height: 60px; background: rgba(255, 255, 255, 0.95); 
-                                                   border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                            <div style="width: 0; height: 0; border-left: 20px solid #0ea5e9; 
-                                                       border-top: 12px solid transparent; border-bottom: 12px solid transparent; margin-left: 4px;"></div>
-                                        </div>
-                                        <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); 
-                                                   padding: 2px 6px; border-radius: 4px; font-size: 11px; color: white; font-weight: 600;">1:00:00</div>
+                               class="resource-link"
+                               style="display: flex; align-items: center; gap: 10px; padding: 10px; height: 60px;
+                                      background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(0, 212, 255, 0.4); 
+                                      border-radius: 6px; text-decoration: none; transition: all 0.2s;"
+                               onmouseover="this.style.borderColor='var(--primary)'; this.style.background='rgba(0, 212, 255, 0.1)';"
+                               onmouseout="this.style.borderColor='rgba(0, 212, 255, 0.4)'; this.style.background='rgba(0, 0, 0, 0.2)';">
+                                <div style="font-size: 24px; flex-shrink: 0;">🎥</div>
+                                <div style="flex: 1; min-width: 0; overflow: hidden;">
+                                    <div style="font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 3px; line-height: 1.2; 
+                                                overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                        [1hr Talk] Intro to Large Language Models
                                     </div>
-                                    <!-- Content -->
-                                    <div style="flex: 1; padding: 16px 20px 16px 0; display: flex; flex-direction: column; justify-content: center;">
-                                        <div style="font-size: 17px; font-weight: 600; color: var(--primary); margin-bottom: 8px;">
-                                            Intro to Large Language Models
-                                        </div>
-                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
-                                            By Andrej Karpathy • Comprehensive overview of modern LLMs
-                                        </div>
-                                        <div style="font-size: 12px; color: rgba(0, 212, 255, 0.8);">
-                                            🎥 Video • Learn the fundamentals
-                                        </div>
+                                    <div style="font-size: 10px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        Andrej Karpathy • 1:00:00
                                     </div>
                                 </div>
                             </a>
                             
-                            <!-- Andrej Karpathy - Let's build GPT -->
-                            <a href="https://www.youtube.com/watch?v=kCc8FmEb1nY" target="_blank" 
-                               style="display: block; background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(191, 0, 255, 0.3); 
-                                      border-radius: 12px; text-decoration: none; transition: all 0.3s; cursor: pointer; overflow: hidden;"
-                               onmouseover="this.style.borderColor='rgba(191, 0, 255, 0.6)'; this.style.transform='translateY(-2px)';"
-                               onmouseout="this.style.borderColor='rgba(191, 0, 255, 0.3)'; this.style.transform='translateY(0)';">
-                                <div style="display: flex; gap: 16px;">
-                                    <!-- Video Thumbnail -->
-                                    <div style="width: 240px; height: 135px; background: linear-gradient(135deg, #a855f7, #bf00ff); 
-                                               flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative;">
-                                        <div style="position: absolute; width: 60px; height: 60px; background: rgba(255, 255, 255, 0.95); 
-                                                   border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                            <div style="width: 0; height: 0; border-left: 20px solid #a855f7; 
-                                                       border-top: 12px solid transparent; border-bottom: 12px solid transparent; margin-left: 4px;"></div>
-                                        </div>
-                                        <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); 
-                                                   padding: 2px 6px; border-radius: 4px; font-size: 11px; color: white; font-weight: 600;">2:00:00</div>
+                            <!-- Video 2 -->
+                            <a href="https://youtu.be/7xTGNNLPyMI?si=77uOx9iHp-Le3wvU" target="_blank" 
+                               class="resource-link"
+                               style="display: flex; align-items: center; gap: 10px; padding: 10px; height: 60px;
+                                      background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(191, 0, 255, 0.4); 
+                                      border-radius: 6px; text-decoration: none; transition: all 0.2s;"
+                               onmouseover="this.style.borderColor='var(--secondary)'; this.style.background='rgba(191, 0, 255, 0.1)';"
+                               onmouseout="this.style.borderColor='rgba(191, 0, 255, 0.4)'; this.style.background='rgba(0, 0, 0, 0.2)';">
+                                <div style="font-size: 24px; flex-shrink: 0;">🎥</div>
+                                <div style="flex: 1; min-width: 0; overflow: hidden;">
+                                    <div style="font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 3px; line-height: 1.2;
+                                                overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                        Deep Dive into LLMs like ChatGPT
                                     </div>
-                                    <!-- Content -->
-                                    <div style="flex: 1; padding: 16px 20px 16px 0; display: flex; flex-direction: column; justify-content: center;">
-                                        <div style="font-size: 17px; font-weight: 600; color: var(--secondary); margin-bottom: 8px;">
-                                            Let's build GPT: from scratch, in code, spelled out
-                                        </div>
-                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
-                                            By Andrej Karpathy • Hands-on GPT implementation
-                                        </div>
-                                        <div style="font-size: 12px; color: rgba(191, 0, 255, 0.8);">
-                                            🎥 Video • Build your own GPT
-                                        </div>
+                                    <div style="font-size: 10px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        Andrej Karpathy • 2:00:00
                                     </div>
                                 </div>
                             </a>
                             
-                            <!-- Attention Is All You Need Paper -->
+                            <!-- Video 3 -->
+                            <a href="https://www.youtube.com/watch?v=bSvTVREwSNw" target="_blank" 
+                               class="resource-link"
+                               style="display: flex; align-items: center; gap: 10px; padding: 10px; height: 60px;
+                                      background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(34, 197, 94, 0.4); 
+                                      border-radius: 6px; text-decoration: none; transition: all 0.2s;"
+                               onmouseover="this.style.borderColor='#22c55e'; this.style.background='rgba(34, 197, 94, 0.1)';"
+                               onmouseout="this.style.borderColor='rgba(34, 197, 94, 0.4)'; this.style.background='rgba(0, 0, 0, 0.2)';">
+                                <div style="font-size: 24px; flex-shrink: 0;">🎥</div>
+                                <div style="flex: 1; min-width: 0; overflow: hidden;">
+                                    <div style="font-size: 13px; font-weight: 600; color: #22c55e; margin-bottom: 3px; line-height: 1.2;
+                                                overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                        How ChatGPT Works Technically | ChatGPT Architecture
+                                    </div>
+                                    <div style="font-size: 10px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        StatQuest • 27:14
+                                    </div>
+                                </div>
+                            </a>
+                            
+                            <!-- Paper -->
                             <a href="https://arxiv.org/abs/1706.03762" target="_blank" 
-                               style="display: block; background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(251, 191, 36, 0.3); 
-                                      border-radius: 12px; text-decoration: none; transition: all 0.3s; cursor: pointer; overflow: hidden;"
-                               onmouseover="this.style.borderColor='rgba(251, 191, 36, 0.6)'; this.style.transform='translateY(-2px)';"
-                               onmouseout="this.style.borderColor='rgba(251, 191, 36, 0.3)'; this.style.transform='translateY(0)';">
-                                <div style="display: flex; gap: 16px;">
-                                    <!-- Paper Preview -->
-                                    <div style="width: 240px; height: 135px; background: linear-gradient(135deg, #fbbf24, #f59e0b); 
-                                               flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; padding: 20px;">
-                                        <div style="font-size: 64px;">📄</div>
-                                        <div style="position: absolute; top: 8px; right: 8px; background: rgba(0, 0, 0, 0.7); 
-                                                   padding: 3px 8px; border-radius: 4px; font-size: 10px; color: white; font-weight: 600;">2017</div>
+                               class="resource-link"
+                               style="display: flex; align-items: center; gap: 10px; padding: 10px; height: 60px;
+                                      background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(251, 191, 36, 0.4); 
+                                      border-radius: 6px; text-decoration: none; transition: all 0.2s;"
+                               onmouseover="this.style.borderColor='#fbbf24'; this.style.background='rgba(251, 191, 36, 0.1)';"
+                               onmouseout="this.style.borderColor='rgba(251, 191, 36, 0.4)'; this.style.background='rgba(0, 0, 0, 0.2)';">
+                                <div style="font-size: 24px; flex-shrink: 0;">📄</div>
+                                <div style="flex: 1; min-width: 0; overflow: hidden;">
+                                    <div style="font-size: 13px; font-weight: 600; color: #fbbf24; margin-bottom: 3px; line-height: 1.2;
+                                                overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                        "Attention Is All You Need"
                                     </div>
-                                    <!-- Content -->
-                                    <div style="flex: 1; padding: 16px 20px 16px 0; display: flex; flex-direction: column; justify-content: center;">
-                                        <div style="font-size: 17px; font-weight: 600; color: #fbbf24; margin-bottom: 8px;">
-                                            "Attention Is All You Need"
-                                        </div>
-                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
-                                            Foundational paper that introduced the Transformer architecture
-                                        </div>
-                                        <div style="font-size: 12px; color: rgba(251, 191, 36, 0.8);">
-                                            📄 Research Paper • The architecture behind modern LLMs
-                                        </div>
+                                    <div style="font-size: 10px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        Foundational Transformer Paper • 2017
                                     </div>
                                 </div>
                             </a>

@@ -70,6 +70,7 @@
                 <div class="header-actions">
                     <button class="scoreboard-btn" id="scoreboardBtn">🏆 Scoreboard</button>
                     <button class="settings-btn" id="settingsBtn">⚙️ Settings</button>
+                    <button class="end-game-btn" id="endGameBtn">🏁 End Game</button>
                     <button class="reset-btn" id="resetBtn">❌ Reset</button>
                 </div>
             </div>
@@ -103,6 +104,19 @@
             <p>You've completed your journey from data to intelligence!</p>
             <div class="final-stats" id="finalStats"></div>
             <button class="btn-primary" id="playAgainBtn">Play Again</button>
+        </div>
+    </div>
+
+    <div class="modal" id="endGameModal">
+        <div class="modal-content">
+            <h2>🏁 End Game Early?</h2>
+            <p>Are you sure you want to end the game now?</p>
+            <p style="margin-top: 12px;">Your current score of <strong style="color: var(--primary);"><span id="endGameScoreDisplay">0</span> points</strong> will be submitted to the leaderboard.</p>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-top: 16px;">You'll be taken to the final summary where you can review what you've learned and explore additional resources.</p>
+            <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
+                <button class="btn-secondary" id="cancelEndGameBtn">Cancel</button>
+                <button class="btn-primary" id="confirmEndGameBtn" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">confirm</button>
+            </div>
         </div>
     </div>
 

@@ -1,6 +1,5 @@
 // Phase: Sampling Parameters - INTERACTIVE PARAMETER CONTROL
 window.phaseSampling = {
-    DEV_MODE: true,
     currentStep: 'intro', // 'intro' -> 'temperature' -> 'top_p' -> 'repetition' -> 'presence' -> 'challenge' -> 'recap'
     
     // Game state
@@ -125,13 +124,6 @@ window.phaseSampling = {
                                        cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
                             Explore Parameters →
                         </button>
-                        ${this.DEV_MODE ? `
-                        <button onclick="phaseSampling.devSkipPhase()" 
-                                style="margin-left: 12px; padding: 12px 24px; background: linear-gradient(135deg, #ef4444, #dc2626); 
-                                       border: none; border-radius: 12px; color: white; font-size: 13px; font-weight: 600; 
-                                       cursor: pointer; opacity: 0.7;">
-                            ⚡ DEV: Skip Phase
-                        </button>` : ''}
                     </div>
                     
                 </div>
@@ -1053,7 +1045,14 @@ window.phaseSampling = {
             const container = document.getElementById('phaseContainer');
             this.render(container);
             SoundManager.play('click');
-            Game.addScore(40); // Parameter demos: +40 per completed
+            
+            // Award points only once per step
+            const stepKey = `sampling_step_${currentIndex}`;
+            if (!Game.state.pointsAwarded[stepKey]) {
+                Game.addScore(40); // Parameter demos: +40 per completed
+                Game.state.pointsAwarded[stepKey] = true;
+                Game.saveState();
+            }
         }
     },
     
@@ -1061,20 +1060,22 @@ window.phaseSampling = {
         // Mark phase complete with fixed transition bonus (phase 6 = sampling phase)
         if (!Game.state.phaseCompleted[6]) {
             Game.state.phaseCompleted[6] = true;
-            Game.addScore(100); // Phase transition bonus (fixed)
+            Game.saveState();
         }
-        Game.saveState();
+        
+        // Award transition bonus only once
+        if (!Game.state.pointsAwarded['phase6_transition']) {
+            Game.addScore(100); // Phase transition bonus (fixed)
+            Game.state.pointsAwarded['phase6_transition'] = true;
+            Game.saveState();
+        }
+        
         SoundManager.play('levelUp');
         
         // Move to next phase after a delay
         setTimeout(() => {
             Game.nextPhase();
         }, 500);
-    },
-    
-    devSkipPhase() {
-        if (!this.DEV_MODE) return;
-        this.completePhase();
     }
 };
 

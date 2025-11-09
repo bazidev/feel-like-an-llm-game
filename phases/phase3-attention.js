@@ -1099,9 +1099,16 @@ window.phase3 = {
         // Mark phase complete with fixed transition bonus
         if (!Game.state.phaseCompleted[3]) {
             Game.state.phaseCompleted[3] = true;
-            Game.addScore(100); // Phase transition bonus (fixed)
+            Game.saveState();
         }
-        Game.saveState();
+        
+        // Award transition bonus only once
+        if (!Game.state.pointsAwarded['phase3_transition']) {
+            Game.addScore(100); // Phase transition bonus (fixed)
+            Game.state.pointsAwarded['phase3_transition'] = true;
+            Game.saveState();
+        }
+        
         SoundManager.play('success');
         setTimeout(() => Game.nextPhase(), 500);
     }

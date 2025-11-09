@@ -1,8 +1,5 @@
 // Phase 1: Tokenization - V1 DESIGN RESTORED
 window.phase1 = {
-    // ⚙️ DEVELOPMENT FLAG - Set to true to enable skip button
-    DEV_MODE: true,
-    
     currentStep: 'concept1', // 'concept1' -> 'concept2' -> 'examples' -> 'yourdata' -> 'info1' -> 'info2' -> 'recap'
     currentExample: 0,
     challengesShuffled: false, // Track if challenges have been shuffled
@@ -101,6 +98,14 @@ window.phase1 = {
     ],
     
     render(container) {
+        // Award +50 points for completing Phase 0 setup when Phase 1 first loads
+        // Only award once when Phase 1 renders for the first time
+        if (Game.state.phaseCompleted[0] && !Game.state.pointsAwarded['phase1_setup']) {
+            Game.addScore(50); // Setup completion bonus
+            Game.state.pointsAwarded['phase1_setup'] = true;
+            Game.saveState();
+        }
+        
         if (this.currentStep === 'concept1') {
             this.renderConcept1(container);
         } else if (this.currentStep === 'concept2') {
@@ -183,13 +188,6 @@ window.phase1 = {
                                        cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
                             Next →
                         </button>
-                        ${this.DEV_MODE ? `
-                        <button onclick="phase1.devSkipPhase()" 
-                                style="margin-left: 12px; padding: 12px 24px; background: linear-gradient(135deg, #ef4444, #dc2626); 
-                                       border: none; border-radius: 12px; color: white; font-size: 13px; font-weight: 600; 
-                                       cursor: pointer; opacity: 0.7;">
-                            ⚡ DEV: Skip Phase
-                        </button>` : ''}
                     </div>
                     
                 </div>
@@ -245,9 +243,6 @@ window.phase1 = {
                             <h3 style="font-size: 15px; color: #ef4444; margin: 0;">Reality check: How real LLMs actually tokenize</h3>
                         </div>
                         <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary);">
-                            <p style="margin-bottom: 8px;">
-                                <strong style="color: #ef4444;">NO FIXED RULES!</strong> Real LLMs like GPT use <strong>BPE (Byte-Pair Encoding)</strong> which learns tokenization from data patterns:
-                            </p>
                             <ul style="margin: 0; padding-left: 20px; list-style: none;">
                                 <li style="margin-bottom: 5px; padding-left: 16px; position: relative;">
                                     <span style="position: absolute; left: 0; color: #ef4444;">•</span>
@@ -266,9 +261,6 @@ window.phase1 = {
                                     <strong style="color: #ef4444;">Subword units:</strong> Rare words split into pieces: "tokenization" → ["token", "ization"]
                                 </li>
                             </ul>
-                            <p style="margin-top: 10px; font-style: italic; color: rgba(239, 68, 68, 0.8); font-size: 11px;">
-                                For this game, we use simple rules to teach the concept. Real LLMs are smarter! 🧠
-                            </p>
                         </div>
                     </div>
                     
@@ -1084,18 +1076,6 @@ window.phase1 = {
     },
     
     
-    devSkipPhase() {
-        // DEV ONLY: Skip entire phase 1
-        if (!this.DEV_MODE) return;
-        
-        // Set all correct tokens as validated
-        this.validatedTokens = [...this.correctTokens];
-        this.currentText = '';
-        
-        // Finish immediately
-        this.finishTokenization();
-    },
-    
     finishTokenization() {
         // Show fun completion message about boring tokenization 😄
         const phaseContainer = document.getElementById('phaseContainer');
@@ -1576,11 +1556,16 @@ window.phase1 = {
                     // Mark phase 1 as complete before advancing
                     if (!Game.state.phaseCompleted[1]) {
                         Game.state.phaseCompleted[1] = true;
-                        
-                        // Fixed transition bonus: +100 points
-                        Game.addScore(100); // Phase transition bonus
                         Game.saveState();
                     }
+                    
+                    // Award transition bonus only once
+                    if (!Game.state.pointsAwarded['phase1_transition']) {
+                        Game.addScore(100); // Phase transition bonus
+                        Game.state.pointsAwarded['phase1_transition'] = true;
+                        Game.saveState();
+                    }
+                    
                     Game.nextPhase();
                 });
             }

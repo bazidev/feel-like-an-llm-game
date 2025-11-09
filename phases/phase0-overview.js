@@ -702,12 +702,7 @@ window.phase0 = {
         // Complete phase and move to next
         SoundManager.play('levelUp');
         
-        // Award points for completing setup - NEW SCORING
-        if (!Game.state.phaseCompleted[0]) {
-            Game.addScore(50); // Setup completion bonus
-        }
-        
-        // Mark phase 0 as complete
+        // Mark phase 0 as complete (NO POINTS YET - points awarded when Phase 1 is shown)
         Game.state.phaseCompleted[0] = true;
         Game.saveState();
         

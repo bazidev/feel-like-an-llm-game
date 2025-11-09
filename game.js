@@ -10,7 +10,9 @@ const Game = {
         uniqueUserId: null, // Unique username for API scoring (generated on first play)
         phaseScores: {},
         phaseCompleted: {},
+        pointsAwarded: {}, // Track which points have been awarded (setup, transition, etc.)
         startTime: null,
+        finaleStep: null, // Track which step of finale phase user is on (for page refresh)
         
         // Training Data - Connected Journey (expanded for richer patterns)
         trainingText: "A cat sat on the mat. The dog played with the ball. The cat likes fish. The dog likes bones.",
@@ -111,6 +113,9 @@ const Game = {
     setupEventListeners() {
         // Old navigation buttons removed - phases now flow organically
         
+        // End Game button
+        document.getElementById('endGameBtn').addEventListener('click', () => this.confirmEndGame());
+        
         // Reset button
         document.getElementById('resetBtn').addEventListener('click', () => this.confirmReset());
         
@@ -128,6 +133,8 @@ const Game = {
         document.getElementById('playAgainBtn').addEventListener('click', () => this.reset());
         document.getElementById('cancelResetBtn').addEventListener('click', () => this.closeModal('resetConfirmModal'));
         document.getElementById('confirmResetBtn').addEventListener('click', () => this.performReset());
+        document.getElementById('cancelEndGameBtn').addEventListener('click', () => this.closeModal('endGameModal'));
+        document.getElementById('confirmEndGameBtn').addEventListener('click', () => this.performEndGame());
     },
     
     // LocalStorage management
@@ -153,6 +160,60 @@ const Game = {
         SoundManager.play('click');
     },
     
+    confirmEndGame() {
+        // Only allow ending game if user has started (phase > 0)
+        if (this.state.currentPhase === 0) {
+            // If on phase 0, just show a message
+            SoundManager.play('error');
+            return;
+        }
+        
+        // Update the score display in the modal
+        document.getElementById('endGameScoreDisplay').textContent = this.state.score;
+        
+        // Show confirmation modal
+        document.getElementById('endGameModal').classList.add('active');
+        SoundManager.play('click');
+    },
+    
+    performEndGame() {
+        // Close modal first
+        this.closeModal('endGameModal');
+        
+        // Stop the timer
+        this.stopTimer();
+        
+        // Play success sound
+        SoundManager.play('success');
+        
+        // Jump directly to phase 6 (finale) and specifically to the 'resources' step
+        // This way users can see the summary and read more resources
+        setTimeout(() => {
+            this.state.currentPhase = 7; // Set to finale phase
+            this.state.finaleStep = 'resources'; // Save the step for page refresh
+            
+            // Mark all phases as completed to allow full finale access
+            for (let i = 0; i <= 7; i++) {
+                if (!this.state.phaseCompleted[i]) {
+                    this.state.phaseCompleted[i] = true;
+                }
+            }
+            
+            this.saveState();
+            this.updateUI();
+            
+            // Set phase6 to show resources step directly
+            if (window.phase6) {
+                phase6.currentStep = 'resources';
+            }
+            
+            this.renderCurrentPhase();
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 300);
+    },
+    
     performReset() {
         // Close modal first
         this.closeModal('resetConfirmModal');
@@ -173,6 +234,7 @@ const Game = {
                 uniqueUserId: null, // Will be regenerated on next play
                 phaseScores: {},
                 phaseCompleted: {},
+                pointsAwarded: {}, // Reset points tracking
                 startTime: null,
                 elapsedTimeBeforePause: 0, // Reset pause tracking
                 
@@ -410,8 +472,37 @@ const Game = {
         this.saveState();
     },
     
+    // Show/hide buttons based on phase (centralized logic)
+    updateButtonVisibility() {
+        const resetBtn = document.getElementById('resetBtn');
+        const endGameBtn = document.getElementById('endGameBtn');
+        
+        // Simple rule: Both buttons visible ONLY when game is in progress (Phase 1-6)
+        const showButtons = this.state.currentPhase >= 1 && this.state.currentPhase <= 6;
+        
+        if (resetBtn) {
+            resetBtn.style.display = showButtons ? 'inline-flex' : 'none';
+        }
+        
+        if (endGameBtn) {
+            endGameBtn.style.display = showButtons ? 'inline-flex' : 'none';
+        }
+    },
+    
+    // Legacy functions - redirect to centralized function
+    updateResetButtonVisibility() {
+        this.updateButtonVisibility();
+    },
+    
+    updateEndGameButtonVisibility() {
+        this.updateButtonVisibility();
+    },
+    
     // UI updates
     updateUI() {
+        // Update button visibility first
+        this.updateButtonVisibility();
+        
         // Update header stats (no journey tracker anymore)
         document.getElementById('scoreValue').textContent = this.state.score;
         document.getElementById('tokensValue').textContent = this.state.tokensProcessed.toLocaleString();
@@ -1028,6 +1119,8 @@ const Game = {
             statsContainer.style.pointerEvents = 'auto';
         }
         
+        // DON'T show buttons here - they'll be shown after phase advances to 1
+        
         const headerStatsElements = document.querySelectorAll('.stat');
         console.log(`📊 Found ${headerStatsElements.length} header stat elements`);
         
@@ -1070,6 +1163,9 @@ const Game = {
             // Advance phase first
             Game.state.currentPhase++;
             Game.saveState();
+            
+            // NOW show the buttons (after phase is advanced)
+            Game.updateButtonVisibility();
             
             // Preload phase 1 in background (without animation)
             const container = document.getElementById('phaseContainer');
