@@ -6,6 +6,8 @@ class ParticleSystem {
         this.particles = [];
         this.particleCount = 80;
         this.connections = [];
+        this.animationId = null;
+        this.enabled = true;
         
         this.resize();
         this.init();
@@ -33,6 +35,8 @@ class ParticleSystem {
     }
     
     draw() {
+        if (!this.enabled) return;
+        
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Update and draw particles
@@ -75,7 +79,27 @@ class ParticleSystem {
     
     animate() {
         this.draw();
-        requestAnimationFrame(() => this.animate());
+        this.animationId = requestAnimationFrame(() => this.animate());
+    }
+    
+    show() {
+        this.enabled = true;
+        this.canvas.style.display = 'block';
+    }
+    
+    hide() {
+        this.enabled = false;
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.canvas.style.display = 'none';
+    }
+    
+    toggle() {
+        if (this.enabled) {
+            this.hide();
+        } else {
+            this.show();
+        }
+        return this.enabled;
     }
 }
 
@@ -97,11 +121,29 @@ window.Particles = {
 };
 
 // Initialize when DOM is loaded
+let globalParticleSystem = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('particles');
     if (canvas) {
-        const particleSystem = new ParticleSystem(canvas);
-        particleSystem.animate();
+        globalParticleSystem = new ParticleSystem(canvas);
+        
+        // Check if particles should be enabled (default: true)
+        const particlesEnabled = localStorage.getItem('particlesEnabled') !== 'false';
+        if (particlesEnabled) {
+            globalParticleSystem.show();
+        } else {
+            globalParticleSystem.hide();
+        }
+        
+        globalParticleSystem.animate();
     }
 });
+
+// Export for global access
+window.ParticleSystem = {
+    get instance() {
+        return globalParticleSystem;
+    }
+};
 

@@ -2,10 +2,15 @@
 const SoundManager = {
     sounds: {},
     muted: false,
+    volume: 0.1, // Default volume (10%)
     
     init() {
         // Check if user has sound preference saved
         this.muted = localStorage.getItem('soundMuted') === 'true';
+        
+        // Load saved volume or use default
+        const savedVolume = localStorage.getItem('soundVolume');
+        this.volume = savedVolume ? parseFloat(savedVolume) : 0.1;
         
         // Create simple synthesized sounds using Web Audio API fallback
         // These will work even without external audio files
@@ -75,6 +80,13 @@ const SoundManager = {
             rate: 2.2
         });
         
+        // Whoosh sound for super fast tokenization
+        this.sounds.whoosh = new Howl({
+            src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYJGGS75+ajUBELTqXh8LRjHQU2jtfyz3ksBS15yPDckD8IEl+06+qoVRUK'],
+            volume: 0.35,
+            rate: 2.5 // Very fast pitch for whoosh effect
+        });
+        
         this.sounds.notification = new Howl({
             src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYJGGS75+ajUBELTqXh8LRjHQU2jtfyz3ksBS15yPDckD8IEl+06+qoVRUK'],
             volume: 0.18,
@@ -103,13 +115,74 @@ const SoundManager = {
     play(soundName) {
         if (this.muted) return;
         
+        // Special handling for counterStart with sequential beeps
+        if (soundName === 'counterStart') {
+            this.playCountdownSequence();
+            return;
+        }
+        
         if (this.useWebAudioFallback) {
             this.playWebAudioTone(soundName);
             return;
         }
         
         if (this.sounds[soundName]) {
+            // Apply current volume to the sound
+            this.sounds[soundName].volume(this.volume);
             this.sounds[soundName].play();
+        }
+    },
+    
+    // TikTok-style countdown with beeps
+    playCountdownSequence() {
+        if (this.muted) return;
+        
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Create 3 countdown beeps + final "GO!" sound
+            const beeps = [
+                { freq: 800, time: 0, duration: 0.12, volume: 0.15 },      // Beep 1
+                { freq: 900, time: 0.4, duration: 0.12, volume: 0.18 },    // Beep 2
+                { freq: 1000, time: 0.8, duration: 0.12, volume: 0.20 },   // Beep 3
+                // Final "GO!" - multi-layered rising chord
+                { freq: 523.25, time: 1.3, duration: 0.35, volume: 0.22 }, // C
+                { freq: 659.25, time: 1.32, duration: 0.35, volume: 0.20 }, // E
+                { freq: 783.99, time: 1.35, duration: 0.35, volume: 0.18 }, // G
+                { freq: 1046.50, time: 1.38, duration: 0.4, volume: 0.25 }  // High C
+            ];
+            
+            beeps.forEach(beep => {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                const filter = audioContext.createBiquadFilter();
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.frequency.value = beep.freq;
+                osc.type = 'sine';
+                
+                // Smooth filter for warm sound
+                filter.type = 'lowpass';
+                filter.frequency.value = 3000;
+                filter.Q.value = 1;
+                
+                const startTime = audioContext.currentTime + beep.time;
+                const endTime = startTime + beep.duration;
+                
+                // Volume envelope with sharp attack and smooth decay
+                const adjustedVolume = beep.volume * this.volume;
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(adjustedVolume, startTime + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.001, endTime);
+                
+                osc.start(startTime);
+                osc.stop(endTime);
+            });
+        } catch (e) {
+            console.log('Web Audio not supported');
         }
     },
     
@@ -217,6 +290,13 @@ const SoundManager = {
                     type: 'sine',
                     pattern: [523.25, 659.25, 783.99, 1046.50, 1318.51, 1046.50], // C-E-G-C-E-C triumph
                     volume: 0.16
+                },
+                counterStart: {
+                    freq: 880.00,
+                    duration: 0.18,
+                    type: 'sine',
+                    pattern: [440.00, 554.37, 659.25, 880.00, 1046.50], // A-C#-E-A-C epic start!
+                    volume: 0.18
                 }
             };
             
@@ -248,18 +328,20 @@ const SoundManager = {
                     const startTime = audioContext.currentTime + (i * pattern.duration * 0.35);
                     const endTime = startTime + pattern.duration * 1.2;
                     
-                    // Volume envelope with smooth fade
+                    // Volume envelope with smooth fade - APPLY GLOBAL VOLUME
+                    const adjustedVolume = pattern.volume * this.volume;
                     gain.gain.setValueAtTime(0, startTime);
-                    gain.gain.linearRampToValueAtTime(pattern.volume, startTime + 0.01);
+                    gain.gain.linearRampToValueAtTime(adjustedVolume, startTime + 0.01);
                     gain.gain.exponentialRampToValueAtTime(0.001, endTime);
                     
                     osc.start(startTime);
                     osc.stop(endTime);
                 });
             } else {
-                // Single note - crisp and short
+                // Single note - crisp and short - APPLY GLOBAL VOLUME
+                const adjustedVolume = pattern.volume * this.volume;
                 oscillator.frequency.value = pattern.freq;
-                gainNode.gain.setValueAtTime(pattern.volume, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(adjustedVolume, audioContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + pattern.duration);
                 
                 oscillator.start(audioContext.currentTime);
@@ -274,6 +356,24 @@ const SoundManager = {
         this.muted = !this.muted;
         localStorage.setItem('soundMuted', this.muted);
         return this.muted;
+    },
+    
+    getVolume() {
+        return this.volume;
+    },
+    
+    setVolume(vol) {
+        this.volume = Math.max(0, Math.min(1, vol)); // Clamp between 0 and 1
+        localStorage.setItem('soundVolume', this.volume);
+        
+        // Update all Howler sounds if they exist
+        if (typeof Howl !== 'undefined') {
+            Object.values(this.sounds).forEach(sound => {
+                if (sound && sound.volume) {
+                    sound.volume(this.volume);
+                }
+            });
+        }
     }
 };
 

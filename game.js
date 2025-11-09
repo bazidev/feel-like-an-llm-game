@@ -5,7 +5,7 @@ const Game = {
         totalPhases: 8, // Updated to 8 to include sampling phase
         score: 0,
         tokensProcessed: 0,
-        modelName: 'Unnamed Model',
+        modelName: null, // Will be set to creative default if null
         avatar: null,
         uniqueUserId: null, // Unique username for API scoring (generated on first play)
         phaseScores: {},
@@ -24,29 +24,101 @@ const Game = {
         userTrainingText: null
     },
     
+    // Creative default names for models
+    getCreativeDefaultName() {
+        const creativeNames = [
+            'ThinkBot',
+            'BrainWave',
+            'NeuralNinja',
+            'MindMeld',
+            'CodeWhisperer',
+            'DataDreamer',
+            'LogicLlama',
+            'SmartSpark',
+            'ByteBrain',
+            'QuantumQuill',
+            'SynapseBot',
+            'TokenThinker',
+            'PatternPal',
+            'WordWizard',
+            'IdeaEngine'
+        ];
+        return creativeNames[Math.floor(Math.random() * creativeNames.length)];
+    },
+    
+    // Get phase name for display
+    getPhaseName(phaseNum) {
+        const phaseNames = {
+            0: 'Ready',
+            1: 'Tokenization',
+            2: 'Embeddings',
+            3: 'Attention',
+            4: 'Training',
+            5: 'Generation',
+            6: 'Sampling',
+            7: 'Complete'
+        };
+        return phaseNames[phaseNum] || 'In Training';
+    },
+    
     init() {
         this.loadState();
+        // Set creative default name if none exists
+        if (!this.state.modelName) {
+            this.state.modelName = this.getCreativeDefaultName();
+            this.saveState();
+        }
+        
+        // If game already started (phase > 0), make stats visible immediately
+        if (this.state.currentPhase > 0) {
+            const statsContainer = document.getElementById('statsContainer');
+            if (statsContainer) {
+                statsContainer.style.opacity = '1';
+                statsContainer.style.pointerEvents = 'auto';
+            }
+        }
+        
         this.updateUI();
         this.setupEventListeners();
         this.renderCurrentPhase();
-        // Restart timer if game has already started (has startTime)
-        if (this.state.startTime && this.state.currentPhase > 0) {
-            this.startTimer();
+        
+        // Setup visibility listener for pause/resume
+        this.setupVisibilityListener();
+        
+        // Restart timer if game has already started
+        if (this.state.currentPhase > 0 && (this.state.startTime || this.state.elapsedTimeBeforePause)) {
+            console.log('🔄 Page refreshed - resuming timer');
+            
+            // If we had a startTime from before refresh, we need to account for time that passed
+            if (this.state.startTime) {
+                const now = Date.now();
+                const timeSinceLastStart = now - this.state.startTime;
+                
+                // Add the elapsed time to our accumulated time
+                this.state.elapsedTimeBeforePause = (this.state.elapsedTimeBeforePause || 0) + timeSinceLastStart;
+                
+                console.log('⏱️ Added', Math.floor(timeSinceLastStart / 1000), 'seconds to accumulated time');
+                console.log('⏱️ Total accumulated:', Math.floor(this.state.elapsedTimeBeforePause / 1000), 'seconds');
+            }
+            
+            // Now set new startTime and resume
+            this.state.startTime = Date.now();
+            this.saveState();
+            this.actuallyStartTimer();
         }
     },
     
     setupEventListeners() {
-        // Navigation buttons (hidden, but keep listeners for compatibility)
-        const nextBtn = document.getElementById('nextBtn');
-        const prevBtn = document.getElementById('prevBtn');
-        if (nextBtn) nextBtn.addEventListener('click', () => this.nextPhase());
-        if (prevBtn) prevBtn.addEventListener('click', () => this.prevPhase());
+        // Old navigation buttons removed - phases now flow organically
         
         // Reset button
         document.getElementById('resetBtn').addEventListener('click', () => this.confirmReset());
         
         // Scoreboard button
         document.getElementById('scoreboardBtn').addEventListener('click', () => this.showScoreboard());
+        
+        // Settings button
+        document.getElementById('settingsBtn').addEventListener('click', () => this.showSettings());
         
         // Hint toggle
         document.getElementById('hintToggle').addEventListener('click', () => this.toggleHint());
@@ -96,12 +168,13 @@ const Game = {
                 totalPhases: 8, // Updated to 8
                 score: 0,
                 tokensProcessed: 0,
-                modelName: 'Unnamed Model',
+                modelName: null, // Will be regenerated in init
                 avatar: null,
                 uniqueUserId: null, // Will be regenerated on next play
                 phaseScores: {},
                 phaseCompleted: {},
                 startTime: null,
+                elapsedTimeBeforePause: 0, // Reset pause tracking
                 
                 // Reset training data
                 trainingText: "A cat sat on the mat. The dog played with the ball. The cat likes fish. The dog likes bones.",
@@ -174,7 +247,10 @@ const Game = {
             
             // Clear avatar display
             document.getElementById('modelAvatar').textContent = '';
-            document.getElementById('modelName').textContent = 'Unnamed Model';
+            
+            // Generate new creative name
+            this.state.modelName = this.getCreativeDefaultName();
+            document.getElementById('modelName').textContent = this.state.modelName;
             
             // Reset timer display to 00:00
             const timerElement = document.getElementById('gameTimer');
@@ -206,12 +282,19 @@ const Game = {
         // Only allow moving forward if current phase is completed
         if (this.state.currentPhase < this.state.totalPhases - 1 && 
             this.state.phaseCompleted[this.state.currentPhase]) {
-            this.state.currentPhase++;
-            console.log('✅ Advanced to phase:', this.state.currentPhase);
-            this.saveState();
-            this.renderCurrentPhase();
-            this.updateUI();
-            SoundManager.play('click');
+            
+            const fromPhase = this.state.currentPhase;
+            const toPhase = this.state.currentPhase + 1;
+            
+            // Show transition overlay, then advance
+            this.showPhaseTransition(fromPhase, toPhase, () => {
+                this.state.currentPhase = toPhase;
+                console.log('✅ Advanced to phase:', this.state.currentPhase);
+                this.saveState();
+                this.renderCurrentPhase();
+                this.updateUI();
+                SoundManager.play('levelup');
+            });
         } else {
             console.warn('⚠️ Cannot advance phase!');
             console.warn('   Reason: Phase not completed or at end');
@@ -319,16 +402,25 @@ const Game = {
     
     // UI updates
     updateUI() {
-        // Update header stats
+        // Update header stats (no journey tracker anymore)
         document.getElementById('scoreValue').textContent = this.state.score;
         document.getElementById('tokensValue').textContent = this.state.tokensProcessed.toLocaleString();
         
         // Update model name with unique ID if exists
         const modelNameEl = document.getElementById('modelName');
+        const displayName = this.state.modelName || this.getCreativeDefaultName();
+        
         if (this.state.uniqueUserId) {
-            modelNameEl.innerHTML = `${this.state.modelName} <span style="font-size: 11px; color: var(--text-secondary); font-weight: 400; opacity: 0.7;">(${this.state.uniqueUserId})</span>`;
+            modelNameEl.innerHTML = `${displayName} <span style="font-size: 11px; color: var(--text-secondary); font-weight: 400; opacity: 0.7;">(${this.state.uniqueUserId})</span>`;
         } else {
-            modelNameEl.textContent = this.state.modelName;
+            modelNameEl.textContent = displayName;
+        }
+        
+        // Update version with current phase
+        const versionEl = document.getElementById('modelVersion');
+        if (versionEl) {
+            const phaseName = this.getPhaseName(this.state.currentPhase);
+            versionEl.textContent = `v1.0.0 - ${phaseName}`;
         }
         
         this.updateTimerDisplay();
@@ -341,19 +433,86 @@ const Game = {
             }
         }
         
-        // Update progress bar
-        const progress = (this.state.currentPhase / (this.state.totalPhases - 1)) * 100;
-        document.getElementById('progressBar').style.width = `${progress}%`;
+        // Update score/time displays (no progress bar needed)
+        document.getElementById('scoreValue').textContent = this.state.score;
         
-        // Update phase indicator
-        document.getElementById('phaseIndicator').textContent = 
-            `Phase ${this.state.currentPhase} of ${this.state.totalPhases - 1}`;
+        // Update model name and version
+        const modelName = this.state.modelName || this.getCreativeDefaultName();
+        const phaseName = this.getPhaseName(this.state.currentPhase);
         
-        // Navigation section - Hide completely (each phase has its own internal navigation)
-        const phaseNav = document.querySelector('.phase-nav');
-        if (phaseNav) {
-            phaseNav.style.display = 'none';
+        document.getElementById('modelName').innerHTML = this.state.selectedAvatar 
+            ? `${modelName} <span style="font-size: 11px; color: var(--text-secondary); font-weight: 400; opacity: 0.7;">(${this.state.uniqueUserId})</span>`
+            : modelName;
+        document.getElementById('modelVersion').textContent = `v1.0.0 - ${phaseName}`;
+        
+        if (this.state.selectedAvatar) {
+            document.getElementById('modelAvatar').textContent = this.state.selectedAvatar;
         }
+    },
+    
+    showPhaseTransition(fromPhase, toPhase, callback) {
+        // Show beautiful transition overlay explaining the journey
+        const phases = [
+            { icon: '🎯', name: 'Start', subtitle: 'Choose dataset' },
+            { icon: '✂️', name: 'Tokenize', subtitle: 'Break into pieces' },
+            { icon: '🔢', name: 'Embed', subtitle: 'Add meaning' },
+            { icon: '🎯', name: 'Attention', subtitle: 'Find connections' },
+            { icon: '🧠', name: 'Train', subtitle: 'Learn patterns' },
+            { icon: '✨', name: 'Generate', subtitle: 'Create text' },
+            { icon: '🎉', name: 'Complete', subtitle: 'Journey done!' }
+        ];
+        
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'phase-transition-overlay';
+        
+        let pipelineHTML = '';
+        phases.forEach((phase, idx) => {
+            let phaseClass = '';
+            if (idx < fromPhase) phaseClass = 'completed';
+            else if (idx === fromPhase) phaseClass = 'current';
+            else if (idx === toPhase) phaseClass = 'next';
+            
+            pipelineHTML += `
+                <div class="pipeline-phase ${phaseClass}">
+                    <div class="pipeline-icon">${phase.icon}</div>
+                    <div class="pipeline-name">${phase.name}</div>
+                    <div class="pipeline-subtitle">${phase.subtitle}</div>
+                </div>
+            `;
+            
+            if (idx < phases.length - 1) {
+                pipelineHTML += '<div class="pipeline-arrow">→</div>';
+            }
+        });
+        
+        const message = toPhase === 6 
+            ? `🎉 <strong>Congratulations!</strong> You've completed your AI journey!`
+            : `Moving from <strong>${phases[fromPhase].name}</strong> to <strong>${phases[toPhase].name}</strong>`;
+        
+        overlay.innerHTML = `
+            <div class="transition-content">
+                <div class="transition-title">🚀 Your AI Learning Journey</div>
+                <div class="pipeline-flow">
+                    ${pipelineHTML}
+                </div>
+                <div class="transition-message">${message}</div>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        // Animate in
+        setTimeout(() => overlay.classList.add('active'), 50);
+        
+        // Auto-close after 3.5 seconds
+        setTimeout(() => {
+            overlay.classList.remove('active');
+            setTimeout(() => {
+                document.body.removeChild(overlay);
+                if (callback) callback();
+            }, 300);
+        }, 3500);
     },
     
     animateStatChange(elementId, newValue) {
@@ -494,7 +653,25 @@ const Game = {
             clearInterval(this.timerInterval);
         }
         
-        // Set start time if not already set
+        // Check if this is first time starting
+        if (!this.state.startTime) {
+            // DON'T set startTime yet - wait for animation to finish
+            // The animation will call actuallyStartTimer() when ready
+            this.animateStatsIntro();
+        } else {
+            // If resuming (startTime already exists), start counting immediately
+            this.actuallyStartTimer();
+        }
+    },
+    
+    // Actually start the timer interval
+    actuallyStartTimer() {
+        // Clear any existing timer first
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+        }
+        
+        // Set start time NOW (at the moment timer actually begins)
         if (!this.state.startTime) {
             this.state.startTime = Date.now();
             this.saveState();
@@ -511,6 +688,62 @@ const Game = {
         console.log('✅ Timer started at:', new Date(this.state.startTime).toLocaleTimeString());
     },
     
+    // Timer pause/resume on tab visibility change
+    setupVisibilityListener() {
+        let isFirstVisibilityChange = true;
+        
+        document.addEventListener('visibilitychange', () => {
+            // Skip the first visibility change on page load to prevent pausing on refresh
+            if (isFirstVisibilityChange) {
+                isFirstVisibilityChange = false;
+                return;
+            }
+            
+            if (document.hidden) {
+                // Tab is hidden - pause timer
+                this.pauseTimer();
+            } else {
+                // Tab is visible - resume timer
+                this.resumeTimer();
+            }
+        });
+    },
+    
+    pauseTimer() {
+        if (this.timerInterval && this.state.startTime) {
+            // Save elapsed time before pausing
+            const now = Date.now();
+            const elapsed = now - this.state.startTime;
+            this.state.elapsedTimeBeforePause = (this.state.elapsedTimeBeforePause || 0) + elapsed;
+            
+            // Stop the interval
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+            
+            // Clear startTime so we know we're paused
+            this.state.startTime = null;
+            this.saveState();
+            
+            console.log('⏸️ Timer paused - total elapsed:', Math.floor(this.state.elapsedTimeBeforePause / 1000), 'seconds');
+        }
+    },
+    
+    resumeTimer() {
+        // Only resume if we have a game in progress (phase > 0) and timer isn't already running
+        if (!this.timerInterval && this.state.currentPhase > 0) {
+            // Resume timer from where we left off
+            this.state.startTime = Date.now();
+            this.saveState();
+            
+            // Start interval again
+            this.timerInterval = setInterval(() => {
+                this.updateTimerDisplay();
+            }, 1000);
+            
+            console.log('▶️ Timer resumed');
+        }
+    },
+    
     stopTimer() {
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
@@ -520,21 +753,327 @@ const Game = {
     
     updateTimerDisplay() {
         const timerElement = document.getElementById('gameTimer');
-        if (timerElement && this.state.startTime) {
-            const elapsedTime = Math.floor((Date.now() - this.state.startTime) / 1000);
-            const minutes = Math.floor(elapsedTime / 60);
-            const seconds = elapsedTime % 60;
+        if (timerElement) {
+            let totalElapsed = 0;
+            
+            if (this.state.startTime) {
+                // Currently running - add current session to previous pauses
+                const currentSessionElapsed = Date.now() - this.state.startTime;
+                totalElapsed = (this.state.elapsedTimeBeforePause || 0) + currentSessionElapsed;
+            } else if (this.state.elapsedTimeBeforePause) {
+                // Paused - show only accumulated time
+                totalElapsed = this.state.elapsedTimeBeforePause;
+            }
+            
+            const elapsedSeconds = Math.floor(totalElapsed / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
             const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             timerElement.textContent = timeString;
         }
     },
     
     getElapsedTime() {
-        if (!this.state.startTime) return '00:00';
-        const elapsedTime = Math.floor((Date.now() - this.state.startTime) / 1000);
-        const minutes = Math.floor(elapsedTime / 60);
-        const seconds = elapsedTime % 60;
+        if (!this.state.startTime && !this.state.elapsedTimeBeforePause) return '00:00';
+        
+        let totalElapsed = 0;
+        if (this.state.startTime) {
+            const currentSessionElapsed = Date.now() - this.state.startTime;
+            totalElapsed = (this.state.elapsedTimeBeforePause || 0) + currentSessionElapsed;
+        } else if (this.state.elapsedTimeBeforePause) {
+            totalElapsed = this.state.elapsedTimeBeforePause;
+        }
+        
+        const elapsedSeconds = Math.floor(totalElapsed / 1000);
+        const minutes = Math.floor(elapsedSeconds / 60);
+        const seconds = elapsedSeconds % 60;
         return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    },
+    
+    // Animate stats intro on first game start
+    animateStatsIntro() {
+        // Get the model name for the welcome message
+        const modelName = this.state.modelName || 'AI Model';
+        
+        // First show the identity creation message
+        this.showIdentityMessage(modelName, () => {
+            // After identity message, show the stats
+            this.showStatsAnimation();
+        });
+    },
+    
+    // Show identity creation message
+    showIdentityMessage(modelName, callback) {
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.95), rgba(191, 0, 255, 0.95));
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+        
+        // Create message container
+        const messageDiv = document.createElement('div');
+        messageDiv.style.cssText = `
+            text-align: center;
+            opacity: 0;
+            animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        `;
+        messageDiv.innerHTML = `
+            <div style="font-size: 64px; margin-bottom: 20px;">
+                ${this.state.avatar && window.phase0 && window.phase0.avatars ? 
+                    window.phase0.avatars.find(a => a.id === this.state.avatar)?.icon || '🤖' : '🤖'}
+            </div>
+            <div style="font-size: 28px; font-weight: 700; color: white; margin-bottom: 16px; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);">
+                Identity Created!
+            </div>
+            <div style="font-size: 22px; color: rgba(255, 255, 255, 0.95); font-weight: 500;">
+                Welcome, <span style="color: #fff; font-weight: 700;">${modelName}</span>!
+            </div>
+            <div style="font-size: 18px; color: rgba(255, 255, 255, 0.85); margin-top: 16px;">
+                ✨ Start your AI journey! ✨
+            </div>
+        `;
+        
+        overlay.appendChild(messageDiv);
+        
+        // Add animation styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes popIn {
+                0% { transform: scale(0.5); opacity: 0; }
+                70% { transform: scale(1.1); }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            @keyframes popOut {
+                to { transform: scale(0.8); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+        document.body.appendChild(overlay);
+        
+        // After 2 seconds, fade out and show stats
+        setTimeout(() => {
+            messageDiv.style.animation = 'popOut 0.4s ease-out forwards';
+            overlay.style.transition = 'opacity 0.4s ease-out';
+            overlay.style.opacity = '0';
+            
+            setTimeout(() => {
+                overlay.remove();
+                style.remove();
+                callback(); // Show stats animation
+            }, 400);
+        }, 2000);
+    },
+    
+    // Show stats animation
+    showStatsAnimation() {
+        console.log('🎬 [0.0s] Stats animation started');
+        
+        // Create overlay with stats in center
+        const overlay = document.createElement('div');
+        overlay.id = 'statsIntroOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98));
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+        
+        // Create centered stats display
+        const statsDisplay = document.createElement('div');
+        statsDisplay.style.cssText = `
+            display: flex;
+            gap: 80px;
+            align-items: center;
+        `;
+        
+        // Create each stat element (Score and Time only - no Tokens in header)
+        const stats = [
+            { label: 'Score', value: '0', icon: '🎯' },
+            { label: 'Time', value: '00:00', icon: '⏱️' }
+        ];
+        
+        stats.forEach((stat, index) => {
+            const statEl = document.createElement('div');
+            statEl.className = 'intro-stat';
+            statEl.setAttribute('data-stat-type', stat.label.toLowerCase());
+            statEl.style.cssText = `
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+                opacity: 0;
+                transform: scale(0.5) translateY(-30px);
+                animation: statIntroCenter 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+                animation-delay: ${0.2 + index * 0.5}s;
+            `;
+            
+            statEl.innerHTML = `
+                <div style="font-size: 56px;">${stat.icon}</div>
+                <div style="font-size: 16px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">
+                    ${stat.label}
+                </div>
+                <div style="font-size: 48px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--primary);">
+                    ${stat.value}
+                </div>
+            `;
+            
+            statsDisplay.appendChild(statEl);
+        });
+        
+        overlay.appendChild(statsDisplay);
+        
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes statIntroCenter {
+                0% {
+                    opacity: 0;
+                    transform: scale(0.5) translateY(-30px);
+                }
+                60% {
+                    transform: scale(1.15) translateY(0);
+                }
+                100% {
+                    opacity: 1;
+                    transform: scale(1) translateY(0);
+                }
+            }
+            
+            @keyframes glowPulse {
+                0%, 100% {
+                    filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.3));
+                }
+                50% {
+                    filter: drop-shadow(0 0 40px rgba(0, 212, 255, 0.9)) 
+                            drop-shadow(0 0 60px rgba(168, 85, 247, 0.7))
+                            drop-shadow(0 0 80px rgba(191, 0, 255, 0.5));
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        document.body.appendChild(overlay);
+        console.log('📺 [0.0s] Overlay and stats added to DOM');
+        
+        // Play counter start sound
+        SoundManager.play('counterStart');
+        
+        // NO GLOW EFFECT IN CENTER - removed to prevent animation conflicts
+        
+        // After 2 seconds, fade out and show header stats (NO FLYING!)
+        setTimeout(() => {
+            console.log('🌑 [2.0s] Starting overlay fade out');
+            // Fade out overlay
+            overlay.style.transition = 'opacity 0.5s ease-out';
+            overlay.style.opacity = '0';
+            
+            // Remove overlay after fade
+            setTimeout(() => {
+                console.log('🗑️ [2.5s] Removing overlay from DOM');
+                overlay.remove();
+                style.remove();
+                
+                // Show header stats with glow animation
+                console.log('🎯 [2.5s] Showing header stats');
+                this.showHeaderStatsWithGlow();
+            }, 500);
+        }, 2000);
+        
+        console.log('✨ Stats intro animation triggered');
+    },
+    
+    // Show header stats with glow effect (no flying/shrinking)
+    showHeaderStatsWithGlow() {
+        console.log('🔆 Header stats glow function called');
+        
+        // Make stats container visible
+        const statsContainer = document.getElementById('statsContainer');
+        if (statsContainer) {
+            statsContainer.style.opacity = '1';
+            statsContainer.style.pointerEvents = 'auto';
+        }
+        
+        const headerStatsElements = document.querySelectorAll('.stat');
+        console.log(`📊 Found ${headerStatsElements.length} header stat elements`);
+        
+        headerStatsElements.forEach((stat, index) => {
+            // Only animate score and time (skip tokens)
+            const statType = stat.getAttribute('data-stat');
+            console.log(`   - Stat ${index}: type="${statType}"`);
+            if (statType === 'tokens') return;
+            
+            // Start with stats hidden
+            stat.style.opacity = '0';
+            stat.style.transform = 'scale(0.8)';
+            stat.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            
+            // Force browser to process the initial state
+            stat.offsetHeight;
+            
+            // IMMEDIATELY make visible (no setTimeout!)
+            console.log(`💫 [IMMEDIATE] Animating ${statType} stat in header`);
+            stat.style.opacity = '1';
+            stat.style.transform = 'scale(1)';
+            
+            // Add glow effect after animation
+            setTimeout(() => {
+                stat.classList.add('pulse-intro');
+                setTimeout(() => {
+                    stat.classList.remove('pulse-intro');
+                    stat.style.transition = '';
+                }, 2500);
+            }, 500);
+        });
+        
+        // Play success sound
+        SoundManager.play('success');
+        console.log('🔊 Success sound played');
+        
+        // NOW move to Phase 1 IN BACKGROUND (preload it) and start timer
+        setTimeout(() => {
+            console.log('➡️ Moving to Phase 1 in background');
+            // Advance phase first
+            Game.state.currentPhase++;
+            Game.saveState();
+            
+            // Preload phase 1 in background (without animation)
+            const container = document.getElementById('phaseContainer');
+            if (container && window.phase1 && typeof window.phase1.render === 'function') {
+                // Set opacity to 0 first
+                container.style.opacity = '0';
+                container.style.transition = 'none';
+                
+                // Render phase 1
+                window.phase1.render(container);
+                
+                // After rendering, fade in
+                setTimeout(() => {
+                    container.style.transition = 'opacity 0.5s ease';
+                    container.style.opacity = '1';
+                }, 50);
+            }
+            
+            // Start timer after phase is loaded
+            setTimeout(() => {
+                console.log('⏱️ [0.2s] Starting game timer');
+                Game.actuallyStartTimer();
+            }, 200);
+        }, 500);
     },
     
     // Scoreboard System
@@ -546,7 +1085,7 @@ const Game = {
         
         const record = {
             id: Date.now(),
-            modelName: this.state.modelName || 'Unnamed Model',
+            modelName: this.state.modelName || this.getCreativeDefaultName(),
             avatar: this.state.avatar,
             score: this.state.score,
             time: elapsedSeconds,
@@ -827,6 +1366,203 @@ const Game = {
                     }
                 }, 300);
             }
+        }
+    },
+    
+    showSettings() {
+        const modal = document.getElementById('settingsModal');
+        
+        // Get current volume state
+        const currentVolume = SoundManager.getVolume ? SoundManager.getVolume() : 0.5;
+        const isMuted = SoundManager.muted;
+        
+        // Get particles state
+        const particlesEnabled = localStorage.getItem('particlesEnabled') !== 'false';
+        
+        // Update slider and display
+        const slider = document.getElementById('settingsVolumeSlider');
+        const percentDisplay = document.getElementById('settingsVolumePercent');
+        const muteBtn = document.getElementById('settingsMuteBtn');
+        const muteIcon = document.getElementById('settingsMuteIcon');
+        const particlesToggle = document.getElementById('particlesToggle');
+        
+        if (slider) {
+            slider.value = isMuted ? 0 : currentVolume * 100;
+            slider.style.background = `linear-gradient(90deg, 
+                rgba(168, 85, 247, 0.3) 0%, 
+                rgba(168, 85, 247, 0.6) ${isMuted ? 0 : currentVolume * 100}%, 
+                rgba(255, 255, 255, 0.1) ${isMuted ? 0 : currentVolume * 100}%)`;
+        }
+        
+        if (percentDisplay) {
+            percentDisplay.textContent = isMuted ? '0%' : Math.round(currentVolume * 100) + '%';
+        }
+        
+        if (muteBtn && muteIcon) {
+            if (isMuted) {
+                muteBtn.style.background = 'rgba(239, 68, 68, 0.15)';
+                muteBtn.style.borderColor = 'var(--error)';
+                muteBtn.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.3)';
+                muteIcon.textContent = '🔇';
+            } else {
+                muteBtn.style.background = 'rgba(168, 85, 247, 0.15)';
+                muteBtn.style.borderColor = 'var(--secondary)';
+                muteBtn.style.boxShadow = '0 4px 15px rgba(168, 85, 247, 0.2)';
+                muteIcon.textContent = '🔊';
+            }
+        }
+        
+        if (particlesToggle) {
+            particlesToggle.checked = particlesEnabled;
+        }
+        
+        modal.classList.add('active');
+        SoundManager.play('click');
+    },
+    
+    updateVolume(value) {
+        const volume = value / 100;
+        
+        // Update SoundManager volume
+        if (SoundManager.setVolume) {
+            SoundManager.setVolume(volume);
+        }
+        
+        const muteBtn = document.getElementById('settingsMuteBtn');
+        const muteIcon = document.getElementById('settingsMuteIcon');
+        
+        // If volume is 0, show mute icon and style
+        if (volume === 0) {
+            if (muteIcon) muteIcon.textContent = '🔇';
+            if (muteBtn) {
+                muteBtn.style.background = 'rgba(239, 68, 68, 0.15)';
+                muteBtn.style.borderColor = 'var(--error)';
+                muteBtn.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.3)';
+            }
+        }
+        // If volume > 0 and was muted, unmute
+        else if (volume > 0) {
+            if (SoundManager.muted) {
+                SoundManager.muted = false;
+                localStorage.setItem('soundMuted', 'false');
+            }
+            
+            // Update mute button to unmuted state
+            if (muteBtn && muteIcon) {
+                muteBtn.style.background = 'rgba(168, 85, 247, 0.15)';
+                muteBtn.style.borderColor = 'var(--secondary)';
+                muteBtn.style.boxShadow = '0 4px 15px rgba(168, 85, 247, 0.2)';
+                muteIcon.textContent = '🔊';
+            }
+        }
+        
+        // Update slider background gradient
+        const slider = document.getElementById('settingsVolumeSlider');
+        if (slider) {
+            slider.style.background = `linear-gradient(90deg, 
+                rgba(168, 85, 247, 0.3) 0%, 
+                rgba(168, 85, 247, 0.6) ${value}%, 
+                rgba(255, 255, 255, 0.1) ${value}%)`;
+        }
+        
+        // Update percentage display
+        const percentDisplay = document.getElementById('settingsVolumePercent');
+        if (percentDisplay) {
+            percentDisplay.textContent = Math.round(value) + '%';
+        }
+        
+        // Play a sound to preview volume
+        if (!SoundManager.muted && volume > 0) {
+            SoundManager.play('click');
+        }
+    },
+    
+    toggleMute() {
+        const wasMuted = SoundManager.muted;
+        SoundManager.toggle();
+        
+        const muteBtn = document.getElementById('settingsMuteBtn');
+        const muteIcon = document.getElementById('settingsMuteIcon');
+        const slider = document.getElementById('settingsVolumeSlider');
+        const percentDisplay = document.getElementById('settingsVolumePercent');
+        
+        if (SoundManager.muted) {
+            // Muted
+            if (muteIcon) muteIcon.textContent = '🔇';
+            if (muteBtn) {
+                muteBtn.style.background = 'rgba(239, 68, 68, 0.15)';
+                muteBtn.style.borderColor = 'var(--error)';
+                muteBtn.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.3)';
+            }
+            if (slider) {
+                slider.value = 0;
+                slider.style.background = `linear-gradient(90deg, 
+                    rgba(168, 85, 247, 0.3) 0%, 
+                    rgba(168, 85, 247, 0.6) 0%, 
+                    rgba(255, 255, 255, 0.1) 0%)`;
+            }
+            if (percentDisplay) percentDisplay.textContent = '0%';
+            
+            // Animate mute button
+            if (typeof gsap !== 'undefined' && muteBtn) {
+                gsap.fromTo(muteBtn, 
+                    { scale: 1, rotate: 0 },
+                    { scale: 1.15, rotate: -10, duration: 0.2, yoyo: true, repeat: 1, ease: 'power2.inOut' }
+                );
+            }
+        } else {
+            // Unmuted - restore previous volume
+            const currentVolume = SoundManager.getVolume ? SoundManager.getVolume() : 0.5;
+            if (muteIcon) muteIcon.textContent = '🔊';
+            if (muteBtn) {
+                muteBtn.style.background = 'rgba(168, 85, 247, 0.15)';
+                muteBtn.style.borderColor = 'var(--secondary)';
+                muteBtn.style.boxShadow = '0 4px 15px rgba(168, 85, 247, 0.2)';
+            }
+            if (slider) {
+                slider.value = currentVolume * 100;
+                slider.style.background = `linear-gradient(90deg, 
+                    rgba(168, 85, 247, 0.3) 0%, 
+                    rgba(168, 85, 247, 0.6) ${currentVolume * 100}%, 
+                    rgba(255, 255, 255, 0.1) ${currentVolume * 100}%)`;
+            }
+            if (percentDisplay) percentDisplay.textContent = Math.round(currentVolume * 100) + '%';
+            
+            // Animate unmute button and play sound
+            if (typeof gsap !== 'undefined' && muteBtn) {
+                gsap.fromTo(muteBtn, 
+                    { scale: 1, rotate: 0 },
+                    { scale: 1.15, rotate: 10, duration: 0.2, yoyo: true, repeat: 1, ease: 'power2.inOut' }
+                );
+            }
+            
+            // Play sound to confirm unmute
+            SoundManager.play('success');
+        }
+    },
+    
+    toggleParticles() {
+        const particleSystem = window.ParticleSystem?.instance;
+        if (!particleSystem) {
+            console.warn('Particle system not available');
+            return;
+        }
+        
+        const isEnabled = particleSystem.toggle();
+        
+        // Save preference to localStorage
+        localStorage.setItem('particlesEnabled', isEnabled.toString());
+        
+        // Play feedback sound
+        SoundManager.play('click');
+        
+        // Animate toggle with GSAP
+        const toggle = document.getElementById('particlesToggle');
+        if (toggle && typeof gsap !== 'undefined') {
+            gsap.fromTo(toggle.parentElement, 
+                { scale: 1 },
+                { scale: 1.1, duration: 0.1, yoyo: true, repeat: 1, ease: 'power2.inOut' }
+            );
         }
     },
 };

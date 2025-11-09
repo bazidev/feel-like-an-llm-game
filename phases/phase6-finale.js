@@ -423,61 +423,96 @@ window.phase6 = {
                         <div style="display: grid; gap: 18px;">
                             <!-- Andrej Karpathy - Intro to LLMs -->
                             <a href="https://www.youtube.com/watch?v=zjkBMFhNj_g" target="_blank" 
-                               style="display: block; padding: 20px; background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(0, 212, 255, 0.3); 
-                                      border-radius: 12px; text-decoration: none; transition: all 0.3s; cursor: pointer;"
-                               onmouseover="this.style.background='rgba(0, 212, 255, 0.15)'; this.style.borderColor='rgba(0, 212, 255, 0.6)';"
-                               onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.borderColor='rgba(0, 212, 255, 0.3)';">
-                                <div style="display: flex; align-items: center; gap: 16px;">
-                                    <div style="font-size: 36px; flex-shrink: 0;">🎥</div>
-                                    <div style="flex: 1;">
-                                        <div style="font-size: 17px; font-weight: 600; color: var(--primary); margin-bottom: 6px;">
+                               style="display: block; background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(0, 212, 255, 0.3); 
+                                      border-radius: 12px; text-decoration: none; transition: all 0.3s; cursor: pointer; overflow: hidden;"
+                               onmouseover="this.style.borderColor='rgba(0, 212, 255, 0.6)'; this.style.transform='translateY(-2px)';"
+                               onmouseout="this.style.borderColor='rgba(0, 212, 255, 0.3)'; this.style.transform='translateY(0)';">
+                                <div style="display: flex; gap: 16px;">
+                                    <!-- Video Thumbnail -->
+                                    <div style="width: 240px; height: 135px; background: linear-gradient(135deg, #0ea5e9, #06b6d4); 
+                                               flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative;">
+                                        <div style="position: absolute; width: 60px; height: 60px; background: rgba(255, 255, 255, 0.95); 
+                                                   border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                            <div style="width: 0; height: 0; border-left: 20px solid #0ea5e9; 
+                                                       border-top: 12px solid transparent; border-bottom: 12px solid transparent; margin-left: 4px;"></div>
+                                        </div>
+                                        <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); 
+                                                   padding: 2px 6px; border-radius: 4px; font-size: 11px; color: white; font-weight: 600;">1:00:00</div>
+                                    </div>
+                                    <!-- Content -->
+                                    <div style="flex: 1; padding: 16px 20px 16px 0; display: flex; flex-direction: column; justify-content: center;">
+                                        <div style="font-size: 17px; font-weight: 600; color: var(--primary); margin-bottom: 8px;">
                                             Intro to Large Language Models
                                         </div>
-                                        <div style="font-size: 14px; color: var(--text-secondary);">
-                                            By Andrej Karpathy • 1 hour comprehensive overview of modern LLMs
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
+                                            By Andrej Karpathy • Comprehensive overview of modern LLMs
+                                        </div>
+                                        <div style="font-size: 12px; color: rgba(0, 212, 255, 0.8);">
+                                            🎥 Video • Learn the fundamentals
                                         </div>
                                     </div>
-                                    <div style="font-size: 24px; color: var(--primary); flex-shrink: 0;">→</div>
                                 </div>
                             </a>
                             
                             <!-- Andrej Karpathy - Let's build GPT -->
                             <a href="https://www.youtube.com/watch?v=kCc8FmEb1nY" target="_blank" 
-                               style="display: block; padding: 20px; background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(191, 0, 255, 0.3); 
-                                      border-radius: 12px; text-decoration: none; transition: all 0.3s; cursor: pointer;"
-                               onmouseover="this.style.background='rgba(191, 0, 255, 0.15)'; this.style.borderColor='rgba(191, 0, 255, 0.6)';"
-                               onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.borderColor='rgba(191, 0, 255, 0.3)';">
-                                <div style="display: flex; align-items: center; gap: 16px;">
-                                    <div style="font-size: 36px; flex-shrink: 0;">🔨</div>
-                                    <div style="flex: 1;">
-                                        <div style="font-size: 17px; font-weight: 600; color: var(--secondary); margin-bottom: 6px;">
+                               style="display: block; background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(191, 0, 255, 0.3); 
+                                      border-radius: 12px; text-decoration: none; transition: all 0.3s; cursor: pointer; overflow: hidden;"
+                               onmouseover="this.style.borderColor='rgba(191, 0, 255, 0.6)'; this.style.transform='translateY(-2px)';"
+                               onmouseout="this.style.borderColor='rgba(191, 0, 255, 0.3)'; this.style.transform='translateY(0)';">
+                                <div style="display: flex; gap: 16px;">
+                                    <!-- Video Thumbnail -->
+                                    <div style="width: 240px; height: 135px; background: linear-gradient(135deg, #a855f7, #bf00ff); 
+                                               flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative;">
+                                        <div style="position: absolute; width: 60px; height: 60px; background: rgba(255, 255, 255, 0.95); 
+                                                   border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                            <div style="width: 0; height: 0; border-left: 20px solid #a855f7; 
+                                                       border-top: 12px solid transparent; border-bottom: 12px solid transparent; margin-left: 4px;"></div>
+                                        </div>
+                                        <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); 
+                                                   padding: 2px 6px; border-radius: 4px; font-size: 11px; color: white; font-weight: 600;">2:00:00</div>
+                                    </div>
+                                    <!-- Content -->
+                                    <div style="flex: 1; padding: 16px 20px 16px 0; display: flex; flex-direction: column; justify-content: center;">
+                                        <div style="font-size: 17px; font-weight: 600; color: var(--secondary); margin-bottom: 8px;">
                                             Let's build GPT: from scratch, in code, spelled out
                                         </div>
-                                        <div style="font-size: 14px; color: var(--text-secondary);">
-                                            By Andrej Karpathy • 2 hours of hands-on GPT implementation
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
+                                            By Andrej Karpathy • Hands-on GPT implementation
+                                        </div>
+                                        <div style="font-size: 12px; color: rgba(191, 0, 255, 0.8);">
+                                            🎥 Video • Build your own GPT
                                         </div>
                                     </div>
-                                    <div style="font-size: 24px; color: var(--secondary); flex-shrink: 0;">→</div>
                                 </div>
                             </a>
                             
                             <!-- Attention Is All You Need Paper -->
                             <a href="https://arxiv.org/abs/1706.03762" target="_blank" 
-                               style="display: block; padding: 20px; background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(251, 191, 36, 0.3); 
-                                      border-radius: 12px; text-decoration: none; transition: all 0.3s; cursor: pointer;"
-                               onmouseover="this.style.background='rgba(251, 191, 36, 0.15)'; this.style.borderColor='rgba(251, 191, 36, 0.6)';"
-                               onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.borderColor='rgba(251, 191, 36, 0.3)';">
-                                <div style="display: flex; align-items: center; gap: 16px;">
-                                    <div style="font-size: 36px; flex-shrink: 0;">📄</div>
-                                    <div style="flex: 1;">
-                                        <div style="font-size: 17px; font-weight: 600; color: #fbbf24; margin-bottom: 6px;">
-                                            "Attention Is All You Need" (2017)
+                               style="display: block; background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(251, 191, 36, 0.3); 
+                                      border-radius: 12px; text-decoration: none; transition: all 0.3s; cursor: pointer; overflow: hidden;"
+                               onmouseover="this.style.borderColor='rgba(251, 191, 36, 0.6)'; this.style.transform='translateY(-2px)';"
+                               onmouseout="this.style.borderColor='rgba(251, 191, 36, 0.3)'; this.style.transform='translateY(0)';">
+                                <div style="display: flex; gap: 16px;">
+                                    <!-- Paper Preview -->
+                                    <div style="width: 240px; height: 135px; background: linear-gradient(135deg, #fbbf24, #f59e0b); 
+                                               flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; padding: 20px;">
+                                        <div style="font-size: 64px;">📄</div>
+                                        <div style="position: absolute; top: 8px; right: 8px; background: rgba(0, 0, 0, 0.7); 
+                                                   padding: 3px 8px; border-radius: 4px; font-size: 10px; color: white; font-weight: 600;">2017</div>
+                                    </div>
+                                    <!-- Content -->
+                                    <div style="flex: 1; padding: 16px 20px 16px 0; display: flex; flex-direction: column; justify-content: center;">
+                                        <div style="font-size: 17px; font-weight: 600; color: #fbbf24; margin-bottom: 8px;">
+                                            "Attention Is All You Need"
                                         </div>
-                                        <div style="font-size: 14px; color: var(--text-secondary);">
-                                            The foundational paper that introduced the Transformer architecture
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
+                                            Foundational paper that introduced the Transformer architecture
+                                        </div>
+                                        <div style="font-size: 12px; color: rgba(251, 191, 36, 0.8);">
+                                            📄 Research Paper • The architecture behind modern LLMs
                                         </div>
                                     </div>
-                                    <div style="font-size: 24px; color: #fbbf24; flex-shrink: 0;">→</div>
                                 </div>
                             </a>
                         </div>

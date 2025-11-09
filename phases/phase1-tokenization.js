@@ -19,6 +19,7 @@ window.phase1 = {
     // Auto-demo tracking
     autoDemoInProgress: false,
     autoDemoComplete: false,
+    userClickedStart: false, // Track if user manually started
     
     // Selection tracking
     selectionStart: null,
@@ -481,10 +482,10 @@ window.phase1 = {
                         <p style="color: rgba(255, 255, 255, 0.7); font-size: 11px; margin: 0;">You need approximately <strong style="color: #fbbf24;">${targetCount} tokens</strong> based on the rules.</p>
                     </div>
                     
-                    <div style="margin-top: 16px;">
+                    <div style="margin-top: 16px; flex: 1; display: flex; flex-direction: column; min-height: 0;">
                         <h4 style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">✅ Validated tokens:</h4>
                         <div id="tokenProgressBar" style="display: flex; flex-wrap: wrap; gap: 5px; padding: 10px; 
-                                                          background: rgba(0, 0, 0, 0.3); border-radius: 8px; max-height: 180px; overflow-y: auto;
+                                                          background: rgba(0, 0, 0, 0.3); border-radius: 8px; max-height: 500px; overflow-y: auto;
                                                           align-items: center; align-content: flex-start; min-height: 60px; scroll-behavior: smooth;">
                             ${this.validatedTokens.length === 0 ? '<div style="color: rgba(255, 255, 255, 0.3); font-size: 11px;">No tokens yet...</div>' : 
                               this.validatedTokens.map(t => {
@@ -498,40 +499,69 @@ window.phase1 = {
                 
                 <!-- Right Content Area -->
                 <div class="phase-content">
+                    
+                    <!-- Play Button Overlay (shown before auto-demo) -->
+                    ${!this.userClickedStart && !this.autoDemoInProgress && !this.autoDemoComplete ? `
+                    <div id="startOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                                                   background: rgba(0, 0, 0, 0.9); z-index: 10000; 
+                                                   display: flex; align-items: center; justify-content: center;
+                                                   backdrop-filter: blur(10px);">
+                        <div style="text-align: center; animation: fadeInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); max-width: 500px;">
+                            <h2 style="font-size: 32px; margin-bottom: 12px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                       -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">
+                                Ready to Tokenize?
+                            </h2>
+                            <p style="font-size: 16px; color: var(--text-secondary); margin-bottom: 32px; line-height: 1.6;">
+                                Watch as the AI automatically tokenizes your text,<br>then you'll finish the rest!
+                            </p>
+                            
+                            <button onclick="phase1.startTokenization()" 
+                                    style="padding: 16px 48px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                           border: none; border-radius: 12px; color: white; font-size: 17px; font-weight: 700; 
+                                           cursor: pointer; box-shadow: 0 6px 25px rgba(0, 212, 255, 0.4); 
+                                           transition: all 0.3s; animation: pulse 2s ease-in-out infinite;">
+                                Start Tokenization →
+                            </button>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
                     <div style="width: 100%; max-width: 900px;">
                         
                         <div id="feedbackMessage" style="min-height: 35px; margin-bottom: 12px; text-align: center; font-size: 13px;">
-                            ${!this.autoDemoComplete ? '<div style="color: var(--primary); font-weight: 600;">👀 Watch how tokenization works...</div>' : ''}
+                            ${this.autoDemoInProgress ? '<div style="color: var(--primary); font-weight: 600;">👀 Watch how tokenization works...</div>' : ''}
                         </div>
                         
                         ${this.showTutorial ? `
                         <div id="tutorialHint" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(251, 191, 36, 0.1)); 
                                                      border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 10px; padding: 12px 16px; 
-                                                     margin-bottom: 14px; animation: slideInFromTop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                                                     margin-bottom: 14px; animation: slideInFromTop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+                                                     position: relative;">
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                                <span style="font-size: 20px;">👆</span>
-                                <h4 style="color: #fbbf24; font-size: 14px; margin: 0; font-weight: 700;">How to tokenize:</h4>
+                                <span style="font-size: 20px;">✨</span>
+                                <h4 style="color: #fbbf24; font-size: 15px; margin: 0; font-weight: 700;">Now it's your turn!</h4>
                             </div>
-                            <ol style="margin: 0; padding-left: 22px; color: rgba(255, 255, 255, 0.9); font-size: 12px; line-height: 1.6;">
-                                <li style="margin-bottom: 5px;"><strong style="color: var(--primary);">Drag to select</strong> from start to end of each token</li>
-                                <li style="margin-bottom: 5px;">Selection shows in <strong style="color: var(--primary);">blue</strong></li>
-                                <li style="margin-bottom: 5px;"><strong style="color: #22c55e;">Green flash</strong> = correct, <strong style="color: #ef4444;">red flash</strong> = wrong</li>
-                                <li style="margin-bottom: 5px;"><strong style="color: #fbbf24;">Don't forget spaces</strong> - they're separate tokens!</li>
-                                <li style="margin: 0;">Next token is: "<strong style="color: var(--primary);">${this.correctTokens[this.validatedTokens.length] === ' ' ? '␣' : this.correctTokens[this.validatedTokens.length]}</strong>"</li>
-                            </ol>
-                            <button onclick="phase1.dismissTutorial()" 
-                                    style="margin-top: 10px; padding: 6px 16px; background: rgba(251, 191, 36, 0.2); 
-                                           border: 1px solid rgba(251, 191, 36, 0.5); border-radius: 8px; 
-                                           color: #fbbf24; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
-                                Got it! ✓
-                            </button>
+                            <p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 13px; line-height: 1.6;">
+                                Drag to select the remaining <strong style="color: #fbbf24;">${this.correctTokens.length - this.validatedTokens.length} tokens</strong>
+                            </p>
+                            <p style="margin: 8px 0 0 0; color: #fbbf24; font-size: 12px; font-style: italic;">
+                                💡 Don't forget spaces - they're separate tokens!
+                            </p>
                         </div>
                         ` : ''}
                         
                         <div id="interactiveText" style="font-size: 18px; line-height: 1.8; font-weight: 500; 
                                                        color: white; text-align: left; font-family: 'JetBrains Mono', monospace; 
                                                        padding: 20px; background: rgba(0, 245, 255, 0.05); border-radius: 10px; 
-                                                       border: 1px solid rgba(0, 245, 255, 0.2); margin-bottom: 14px; min-height: 160px;">
+                                                       border: 1px solid rgba(0, 245, 255, 0.2); margin-bottom: 14px; min-height: 160px;
+                                                       position: relative;">
+                            <!-- Pointer positioned to point at first word in text -->
+                            ${this.showTutorial ? `
+                            <div id="tutorialPointer" style="position: absolute; left: 10px; top: 18px; 
+                                       animation: pointerBounce 1.5s ease-in-out infinite; z-index: 1000;">
+                                <span style="font-size: 48px;">👉</span>
+                            </div>
+                            ` : ''}
                             ${this.makeClickableText(this.currentText)}
                         </div>
                         
@@ -552,9 +582,24 @@ window.phase1 = {
             </div>
         `;
         
-        // Start auto-demo if not done yet
-        if (!this.autoDemoComplete && !this.autoDemoInProgress && this.validatedTokens.length === 0) {
-            setTimeout(() => this.startAutoDemo(), 1000);
+        // DON'T auto-start demo - wait for user to click play button
+    },
+    
+    startTokenization() {
+        // User clicked the play button
+        this.userClickedStart = true;
+        
+        // Remove overlay
+        const overlay = document.getElementById('startOverlay');
+        if (overlay) {
+            overlay.style.animation = 'fadeOut 0.4s ease';
+            setTimeout(() => {
+                overlay.remove();
+                // Start auto-demo after overlay is gone
+                this.startAutoDemo();
+            }, 400);
+        } else {
+            this.startAutoDemo();
         }
     },
     
@@ -568,27 +613,15 @@ window.phase1 = {
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
             
-            // Make spaces and dots more clickable with larger hit areas
+            // Clean, uniform design for all characters (no ugly borders!)
             if (char === ' ') {
                 html += `<span class="token-char" data-idx="${i}" 
                            onmousedown="phase1.startSelection(${i})" 
                            onmouseenter="phase1.updateSelection(${i})" 
                            onmouseup="phase1.endSelection(${i})"
                            style="display: inline-block; cursor: pointer; 
-                                  padding: 4px 8px; border-radius: 4px; min-width: 16px;
-                                  background: rgba(251, 191, 36, 0.15); 
-                                  border: 1px dashed rgba(251, 191, 36, 0.3);
+                                  padding: 2px 4px; border-radius: 3px; min-width: 10px;
                                   transition: all 0.1s ease;">&nbsp;</span>`;
-            } else if ('.!?,'.includes(char)) {
-                html += `<span class="token-char" data-idx="${i}" 
-                           onmousedown="phase1.startSelection(${i})" 
-                           onmouseenter="phase1.updateSelection(${i})" 
-                           onmouseup="phase1.endSelection(${i})"
-                           style="display: inline-block; cursor: pointer; 
-                                  padding: 4px 8px; border-radius: 4px;
-                                  background: rgba(139, 92, 246, 0.15);
-                                  border: 1px solid rgba(139, 92, 246, 0.3);
-                                  transition: all 0.1s ease; font-weight: 700;">${char}</span>`;
             } else {
                 html += `<span class="token-char" data-idx="${i}" 
                            onmousedown="phase1.startSelection(${i})" 
@@ -627,64 +660,57 @@ window.phase1 = {
             // Play notification sound for demo completion
             SoundManager.play('notification');
             
+            // Clear the feedback message (no duplicate box!)
             const feedback = document.getElementById('feedbackMessage');
             if (feedback) {
-                feedback.innerHTML = `
-                    <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(191, 0, 255, 0.1)); 
-                               border: 2px solid rgba(0, 212, 255, 0.4); border-radius: 10px; padding: 12px; 
-                               animation: pulse 2s ease-in-out infinite;">
-                        <div style="color: var(--primary); font-weight: 700; font-size: 14px; margin-bottom: 4px;">
-                            ✨ Now it's your turn!
-                        </div>
-                        <div style="color: var(--text-secondary); font-size: 12px;">
-                            Drag to select the remaining ${this.correctTokens.length} tokens
-                        </div>
-                    </div>
-                `;
+                feedback.innerHTML = '';
             }
             
             // Show tutorial after demo
             this.showTutorial = true;
             
-            // Create and insert tutorial box
+            // Create and insert tutorial box ABOVE the text area
             const interactiveText = document.getElementById('interactiveText');
             if (interactiveText && !document.getElementById('tutorialHint')) {
                 const tutorialBox = document.createElement('div');
                 tutorialBox.id = 'tutorialHint';
                 tutorialBox.style.cssText = `background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(251, 191, 36, 0.1)); 
                                              border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 10px; padding: 12px 16px; 
-                                             margin-bottom: 14px; animation: slideInFromTop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);`;
+                                             margin-bottom: 14px; animation: slideInFromTop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+                                             position: relative;`;
                 tutorialBox.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                        <span style="font-size: 20px;">👆</span>
-                        <h4 style="color: #fbbf24; font-size: 14px; margin: 0; font-weight: 700;">How to tokenize:</h4>
+                        <span style="font-size: 20px;">✨</span>
+                        <h4 style="color: #fbbf24; font-size: 15px; margin: 0; font-weight: 700;">Now it's your turn!</h4>
                     </div>
-                    <ol style="margin: 0; padding-left: 22px; color: rgba(255, 255, 255, 0.9); font-size: 12px; line-height: 1.6;">
-                        <li style="margin-bottom: 5px;"><strong style="color: var(--primary);">Drag to select</strong> from start to end of each token</li>
-                        <li style="margin-bottom: 5px;">Selection shows in <strong style="color: var(--primary);">blue</strong></li>
-                        <li style="margin-bottom: 5px;"><strong style="color: #22c55e;">Green flash</strong> = correct, <strong style="color: #ef4444;">red flash</strong> = wrong</li>
-                        <li style="margin-bottom: 5px;"><strong style="color: #fbbf24;">Don't forget spaces</strong> - they're separate tokens!</li>
-                        <li style="margin: 0;">Next token is: "<strong style="color: var(--primary);">${this.correctTokens[this.validatedTokens.length] === ' ' ? '␣' : this.correctTokens[this.validatedTokens.length]}</strong>"</li>
-                    </ol>
-                    <button onclick="phase1.dismissTutorial()" 
-                            style="margin-top: 10px; padding: 6px 16px; background: rgba(251, 191, 36, 0.2); 
-                                   border: 1px solid rgba(251, 191, 36, 0.5); border-radius: 8px; 
-                                   color: #fbbf24; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
-                        Got it! ✓
-                    </button>
+                    <p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 13px; line-height: 1.6;">
+                        Drag to select the remaining <strong style="color: #fbbf24;">${this.correctTokens.length - this.validatedTokens.length} tokens</strong>
+                    </p>
+                    <p style="margin: 8px 0 0 0; color: #fbbf24; font-size: 12px; font-style: italic;">
+                        💡 Don't forget spaces - they're separate tokens!
+                    </p>
                 `;
                 interactiveText.parentNode.insertBefore(tutorialBox, interactiveText);
+                
+                // Add pointer to the text area pointing at first word
+                const pointer = document.createElement('div');
+                pointer.id = 'tutorialPointer';
+                pointer.style.cssText = `position: absolute; left: 10px; top: 18px; 
+                                        animation: pointerBounce 1.5s ease-in-out infinite; z-index: 1000;`;
+                pointer.innerHTML = '<span style="font-size: 48px;">👉</span>';
+                interactiveText.appendChild(pointer);
             }
             
             return;
         }
         
-        // Exponential speed increase every 10%, with DOUBLE speed from 70% to 90%
-        // 0-10%: base speed
-        // 10-20%: 2x faster
-        // 20-30%: 3x faster
-        // ...
-        // 70-90%: DOUBLE the speed (extra fast!)
+        // Progressive speed increase with different tiers
+        // 0-10%: Normal (1x)
+        // 10-20%: Fast (3x)
+        // 20-80%: SUPER FAST (instant, no animation)
+        // 80-85%: Fast (3x)
+        // 85-90%: Normal (1x)
+        // 90-100%: User does it!
         let highlightDelay, flashDelay, nextDelay;
         
         const percentComplete = (currentIndex / targetCount) * 100;
@@ -695,36 +721,96 @@ window.phase1 = {
             flashDelay = 400;
             nextDelay = 500;
         } else {
-            // Calculate speed multiplier based on percentage
-            // Every 10% = +1 speed multiplier (2x, 3x, 4x, etc.)
-            let speedMultiplier = Math.floor(percentComplete / 10) + 1;
+            let speedMultiplier;
             
-            // DOUBLE the speed from 70% to 90%
-            if (percentComplete >= 70) {
-                speedMultiplier = speedMultiplier * 2;
+            if (percentComplete < 10) {
+                // 0-10%: Normal
+                speedMultiplier = 1;
+            } else if (percentComplete < 20) {
+                // 10-20%: Fast
+                speedMultiplier = 3;
+            } else if (percentComplete < 80) {
+                // 20-80%: SUPER FAST - will skip animation below
+                speedMultiplier = 100; // Not actually used, just for logging
+            } else if (percentComplete < 85) {
+                // 80-85%: Fast
+                speedMultiplier = 3;
+            } else if (percentComplete < 90) {
+                // 85-90%: Normal
+                speedMultiplier = 1;
+            } else {
+                // 90-100%: User's turn - shouldn't reach here
+                speedMultiplier = 1;
             }
             
-            // Base speeds for learning phase
+            // Base speeds
             const baseHighlight = 500;
             const baseFlash = 300;
             const baseNext = 400;
             
             // Divide by multiplier to increase speed
-            highlightDelay = Math.max(50, baseHighlight / speedMultiplier);
-            flashDelay = Math.max(40, baseFlash / speedMultiplier);
-            nextDelay = Math.max(50, baseNext / speedMultiplier);
+            highlightDelay = Math.max(30, baseHighlight / speedMultiplier);
+            flashDelay = Math.max(20, baseFlash / speedMultiplier);
+            nextDelay = Math.max(30, baseNext / speedMultiplier);
         }
         
         // Get the next correct token
         const token = this.correctTokens[currentIndex];
         const tokenLength = token.length;
         
-        // Highlight characters being tokenized
+        // SUPER FAST MODE (20-80%): Skip animation entirely, just add tokens instantly
+        if (percentComplete >= 20 && percentComplete < 80) {
+            // Play whoosh sound on entering this phase
+            if (percentComplete >= 20 && percentComplete < 20.5) {
+                SoundManager.play('whoosh'); // Fast whoosh sound for super speed!
+            }
+            
+            // Instant token collection - no animation!
+            this.validatedTokens.push(token);
+            this.currentText = this.currentText.substring(tokenLength);
+            
+            // Update displays instantly
+            const tokenCount = document.getElementById('yourTokensCount');
+            if (tokenCount) {
+                tokenCount.textContent = this.validatedTokens.length;
+            }
+            
+            const progressBar = document.getElementById('tokenProgressBar');
+            if (progressBar) {
+                const color = this.getTokenColor(token);
+                const displayToken = token === ' ' ? '␣' : token;
+                const tokenBadge = `<span style="background: ${color}80; padding: 3px 8px; border-radius: 5px; 
+                                              font-size: 10px; font-weight: 600; color: white; border: 1px solid ${color}cc;">${displayToken}</span>`;
+                
+                if (this.validatedTokens.length === 1) {
+                    progressBar.innerHTML = tokenBadge;
+                } else {
+                    progressBar.innerHTML += tokenBadge;
+                }
+                progressBar.scrollTop = progressBar.scrollHeight;
+            }
+            
+            // Re-render text
+            const interactiveText = document.getElementById('interactiveText');
+            if (interactiveText) {
+                interactiveText.innerHTML = this.makeClickableText(this.currentText);
+            }
+            
+            // Continue immediately with next token (just 10ms delay)
+            setTimeout(() => {
+                this.autoTokenizeNext(currentIndex + 1, targetCount);
+            }, 10);
+            
+            return; // Skip the animation below
+        }
+        
+        // Normal animation for non-FLASH zones
+        // Highlight characters being tokenized with selection color
         const chars = document.querySelectorAll('.token-char');
         for (let i = 0; i < tokenLength; i++) {
             if (chars[i]) {
                 chars[i].style.background = 'rgba(0, 212, 255, 0.4)';
-                chars[i].style.transform = 'scale(1.1)';
+                chars[i].style.transform = 'scale(1.05)';
                 chars[i].style.transition = 'all 0.2s ease';
             }
         }
@@ -732,7 +818,7 @@ window.phase1 = {
         SoundManager.play('click');
         
         setTimeout(() => {
-            // Flash green
+            // Keep blue selection color while flashing green
             for (let i = 0; i < tokenLength; i++) {
                 if (chars[i]) {
                     chars[i].style.background = 'rgba(34, 197, 94, 0.6)';
@@ -746,39 +832,49 @@ window.phase1 = {
                 this.validatedTokens.push(token);
                 this.currentText = this.currentText.substring(tokenLength);
                 
-                // Update displays
-                const tokenCount = document.getElementById('yourTokensCount');
-                if (tokenCount) {
-                    tokenCount.textContent = this.validatedTokens.length;
+                // Fade out the validated token with selection color
+                for (let i = 0; i < tokenLength; i++) {
+                    if (chars[i]) {
+                        chars[i].style.opacity = '0';
+                        chars[i].style.transition = 'opacity 0.3s ease';
+                    }
                 }
                 
-                const progressBar = document.getElementById('tokenProgressBar');
-                if (progressBar) {
-                    const color = this.getTokenColor(token);
-                    const displayToken = token === ' ' ? '␣' : token;
-                    const tokenBadge = `<span style="background: ${color}80; padding: 3px 8px; border-radius: 5px; 
-                                                  font-size: 10px; font-weight: 600; color: white; border: 1px solid ${color}cc;">${displayToken}</span>`;
-                    
-                    if (this.validatedTokens.length === 1) {
-                        progressBar.innerHTML = tokenBadge;
-        } else {
-                        progressBar.innerHTML += tokenBadge;
+                setTimeout(() => {
+                    // Update displays after fade
+                    const tokenCount = document.getElementById('yourTokensCount');
+                    if (tokenCount) {
+                        tokenCount.textContent = this.validatedTokens.length;
                     }
                     
-                    // Auto-scroll to bottom when new token added
-                    progressBar.scrollTop = progressBar.scrollHeight;
-                }
-                
-                // Re-render text and continue
-                const interactiveText = document.getElementById('interactiveText');
-                if (interactiveText) {
-                    interactiveText.innerHTML = this.makeClickableText(this.currentText);
-                }
-                
-                // Continue with next token after delay
-                setTimeout(() => {
-                    this.autoTokenizeNext(currentIndex + 1, targetCount);
-                }, nextDelay);
+                    const progressBar = document.getElementById('tokenProgressBar');
+                    if (progressBar) {
+                        const color = this.getTokenColor(token);
+                        const displayToken = token === ' ' ? '␣' : token;
+                        const tokenBadge = `<span style="background: ${color}80; padding: 3px 8px; border-radius: 5px; 
+                                                      font-size: 10px; font-weight: 600; color: white; border: 1px solid ${color}cc;">${displayToken}</span>`;
+                        
+                        if (this.validatedTokens.length === 1) {
+                            progressBar.innerHTML = tokenBadge;
+                        } else {
+                            progressBar.innerHTML += tokenBadge;
+                        }
+                        
+                        // Auto-scroll to bottom when new token added
+                        progressBar.scrollTop = progressBar.scrollHeight;
+                    }
+                    
+                    // Re-render text and continue
+                    const interactiveText = document.getElementById('interactiveText');
+                    if (interactiveText) {
+                        interactiveText.innerHTML = this.makeClickableText(this.currentText);
+                    }
+                    
+                    // Continue with next token after delay
+                    setTimeout(() => {
+                        this.autoTokenizeNext(currentIndex + 1, targetCount);
+                    }, nextDelay);
+                }, 200);
                 
             }, flashDelay);
         }, highlightDelay);
@@ -792,6 +888,15 @@ window.phase1 = {
         this.selectionEnd = idx;
         this.isSelecting = true;
         this.updateSelectionDisplay();
+        
+        // Remove pointer when user starts selecting
+        const pointer = document.getElementById('tutorialPointer');
+        if (pointer) {
+            pointer.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => {
+                pointer.remove();
+            }, 300);
+        }
         
         // Dismiss tutorial on first interaction
         if (this.showTutorial) {

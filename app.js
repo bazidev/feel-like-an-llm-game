@@ -72,12 +72,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const rect = scoreEl.getBoundingClientRect();
         const particle = document.createElement('div');
-        particle.textContent = `+${points}`;
+        
+        // Check if points are positive or negative
+        const isPositive = points > 0;
+        const displayText = isPositive ? `+${points}` : `${points}`;
+        const color = isPositive ? 'var(--success)' : '#ef4444'; // Green for positive, red for negative
+        
+        particle.textContent = displayText;
         particle.style.cssText = `
             position: fixed;
             left: ${rect.left}px;
             top: ${rect.top}px;
-            color: var(--success);
+            color: ${color};
             font-weight: 800;
             font-size: 24px;
             pointer-events: none;

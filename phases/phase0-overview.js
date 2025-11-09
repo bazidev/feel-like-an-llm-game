@@ -108,17 +108,17 @@ window.phase0 = {
                         </h1>
                         <p style="font-size: 15px; color: var(--text-secondary); line-height: 1.6;">
                             Experience how AI learns patterns, builds connections, and generates text.<br>
-                            You'll train a real mini-LLM from scratch!
+                            You'll go through a simplified journey to see how real AI models are built!
                         </p>
                     </div>
 
-                    <!-- Journey Steps - ALL 5 VISIBLE -->
+                    <!-- Journey Steps - ALL 6 VISIBLE -->
                     <div style="margin-bottom: 20px;">
                         <h3 style="text-align: center; font-size: 17px; margin-bottom: 16px; color: var(--primary);">
                             🗺️ Your AI journey
                         </h3>
                         
-                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; max-width: 1000px; margin: 0 auto;">
+                        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; max-width: 1000px; margin: 0 auto;">
                             
                             <div class="journey-step">
                                 <div class="step-number">1</div>
@@ -155,6 +155,13 @@ window.phase0 = {
                                 <div class="step-desc">Make text!</div>
                             </div>
                             
+                            <div class="journey-step">
+                                <div class="step-number">6</div>
+                                <div class="step-icon">🎛️</div>
+                                <div class="step-title">Sampling</div>
+                                <div class="step-desc">Control output</div>
+                            </div>
+                            
                         </div>
                     </div>
 
@@ -167,13 +174,13 @@ window.phase0 = {
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
                             <div style="padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; text-align: center;">
-                                <div style="font-size: 12px; color: var(--text-secondary);">Connected pipeline</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Same concepts as GPT models</div>
                             </div>
                             <div style="padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; text-align: center;">
-                                <div style="font-size: 12px; color: var(--text-secondary);">See the math</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Visual Learning</div>
                             </div>
                             <div style="padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; text-align: center;">
-                                <div style="font-size: 12px; color: var(--text-secondary);">Generate real text</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Become AI-Literate</div>
                             </div>
                         </div>
                     </div>
@@ -292,7 +299,7 @@ window.phase0 = {
                         </h1>
                         <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.5;">
                             Experience how AI learns patterns, builds connections, and generates text.<br>
-                            You'll train a real mini-LLM from scratch!
+                            You'll go through a simplified journey to see how real AI models are built!
                         </p>
                     </div>
 
@@ -306,13 +313,13 @@ window.phase0 = {
                     </div>
                 </div>
 
-                    <!-- Journey Steps - ALL 5 VISIBLE -->
+                    <!-- Journey Steps - ALL 6 VISIBLE -->
                     <div style="margin-bottom: 18px;">
                         <h3 style="text-align: center; font-size: 16px; margin-bottom: 14px; color: var(--primary);">
                         🗺️ Your AI Journey
                     </h3>
                         
-                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 950px; margin: 0 auto;">
+                        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; max-width: 950px; margin: 0 auto;">
                             
                         <div class="journey-step">
                             <div class="step-number">1</div>
@@ -347,6 +354,13 @@ window.phase0 = {
                             <div class="step-icon">✨</div>
                             <div class="step-title">Generation</div>
                                 <div class="step-desc">Make text!</div>
+                        </div>
+                        
+                        <div class="journey-step">
+                            <div class="step-number">6</div>
+                            <div class="step-icon">🎛️</div>
+                            <div class="step-title">Sampling</div>
+                                <div class="step-desc">Control output</div>
                         </div>
                         
                     </div>
@@ -688,68 +702,13 @@ window.phase0 = {
         // Complete phase and move to next
         SoundManager.play('levelUp');
         
-        // Mark phase 0 as complete
+        // Mark phase 0 as complete (no score yet - they'll earn it in Phase 1+)
         Game.state.phaseCompleted[0] = true;
-        Game.addScore(50);
         Game.saveState();
         
-        // Show styled success message
-        const messageDiv = document.createElement('div');
-        messageDiv.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.95), rgba(191, 0, 255, 0.95));
-            border: 3px solid var(--primary);
-            border-radius: 20px;
-            padding: 32px 48px;
-            box-shadow: 0 20px 60px rgba(0, 212, 255, 0.5), 0 0 100px rgba(191, 0, 255, 0.3);
-            z-index: 10000;
-            text-align: center;
-            animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        `;
-        messageDiv.innerHTML = `
-            <div style="font-size: 48px; margin-bottom: 16px;">${avatarIcon}</div>
-            <div style="font-size: 24px; font-weight: 700; color: white; margin-bottom: 12px; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);">
-                Identity Created!
-            </div>
-            <div style="font-size: 18px; color: rgba(255, 255, 255, 0.95); font-weight: 500;">
-                Welcome, <span style="color: #fff; font-weight: 700;">${this.selectedName}</span>!
-            </div>
-            <div style="font-size: 16px; color: rgba(255, 255, 255, 0.85); margin-top: 12px;">
-                ✨ Start your AI journey! ✨
-            </div>
-        `;
-        document.body.appendChild(messageDiv);
-        
-        // Add animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes popIn {
-                0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-                70% { transform: translate(-50%, -50%) scale(1.1); }
-                100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // Move to next phase with fadeout
-        setTimeout(() => {
-            messageDiv.style.animation = 'popOut 0.3s ease-out forwards';
-            style.textContent += `
-                @keyframes popOut {
-                    to { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-                }
-            `;
-            setTimeout(() => {
-                messageDiv.remove();
-                style.remove();
-                // Start timer AFTER avatar setup
-                Game.startTimer();
-                Game.nextPhase();
-            }, 300);
-        }, 2000);
+        // DON'T move to next phase yet - show identity + stats animation FIRST
+        // Phase will advance after animation completes
+        Game.startTimer();
     },
     
     addDatasetStyles() {
@@ -767,9 +726,7 @@ window.phase0 = {
             // Add hover sound listeners to datasets
             setTimeout(() => {
                 document.querySelectorAll('.dataset-option').forEach(el => {
-                    el.addEventListener('mouseenter', () => {
-                        SoundManager.play('hover');
-                    });
+                    // Click sound is handled in selectDataset() - hover sounds removed per user request
                 });
             }, 100);
         }
@@ -934,11 +891,7 @@ window.phase0 = {
             // Add hover sound listeners to all avatars after styles are added
             setTimeout(() => {
                 document.querySelectorAll('.avatar-option').forEach(el => {
-                    el.addEventListener('mouseenter', () => {
-                        if (!el.classList.contains('selected')) {
-                            SoundManager.play('hover');
-                        }
-                    });
+                    // Click sound is handled in selectAvatar() - hover sounds removed per user request
                 });
             }, 100);
         }
