@@ -32,9 +32,15 @@ const ScoreboardAPI = {
     
     // Calculate elapsed time from game start
     getElapsedTime() {
-        if (!Game.state.startTime) return 0;
-        const elapsed = Date.now() - Game.state.startTime;
-        return Math.floor(elapsed / 1000); // Convert to seconds
+        // Calculate total elapsed time correctly (including pauses)
+        let totalElapsed = 0;
+        if (Game.state.startTime) {
+            const currentSessionElapsed = Date.now() - Game.state.startTime;
+            totalElapsed = (Game.state.elapsedTimeBeforePause || 0) + currentSessionElapsed;
+        } else if (Game.state.elapsedTimeBeforePause) {
+            totalElapsed = Game.state.elapsedTimeBeforePause;
+        }
+        return Math.floor(totalElapsed / 1000); // Convert to seconds
     },
     
     // Save score to API

@@ -92,8 +92,10 @@ window.phase2 = {
             this.renderExamples(container);
         } else if (this.currentStep === 'group') {
             this.renderGrouping(container);
-        } else if (this.currentStep === 'recap') {
-            this.renderRecap(container);
+        } else if (this.currentStep === 'recap1') {
+            this.renderRecap1(container);
+        } else if (this.currentStep === 'recap2') {
+            this.renderRecap2(container);
         }
     },
     
@@ -226,7 +228,7 @@ window.phase2 = {
                         </div>
                         <div style="font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
                             <p style="margin-bottom: 10px;">
-                                <strong style="color: #a855f7;">GPT-3:</strong> 12,288 dimensions | <strong style="color: #a855f7;">GPT-4:</strong> ~18,000 dimensions (estimated)
+                                <strong style="color: #a855f7;">GPT-3:</strong> 12,288 dimensions | <strong style="color: #a855f7;">GPT-4:</strong> ~18,000 dimensions <em>(estimated)</em>
                             </p>
                             <div style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
                                 <div style="font-size: 11px; line-height: 1.8;">
@@ -704,7 +706,7 @@ window.phase2 = {
                 </div>
             `;
             SoundManager.play('success');
-            Game.addScore(40);
+            Game.addScore(50); // Examples: +50 per correct
             
             setTimeout(() => {
                 if (this.currentExample < this.exampleSets.length - 1) {
@@ -726,76 +728,111 @@ window.phase2 = {
                 </div>
             `;
             SoundManager.play('error');
-            Game.addScore(-10); // Penalty for wrong positioning
+            // NO PENALTY in examples - learning phase!
         }
     },
     
     initializeGroups() {
         const tokens = Game.state.tokens;
         
-        // Separate tokens by type - keep duplicates for spaces/punctuation!
+        // Filter out noise: suffixes, articles, spaces, punctuation, common words
+        const noiseWords = ['ed', 'ing', 's', 'the', 'a', 'an', 'is', 'was', 'were', 'are', 
+                           'very', 'much', 'indeed', 'today', 'tonight', 'daily', 'originally', 
+                           'constantly', 'successfully', 'gracefully', 'brightly', 'beautifully', 
+                           'perfectly', 'amazing', 'special', 'good', ' ', '␣', '.', ',', '!', '?', ';', ':'];
+        
         const words = [];
-        const spaces = [];
-        const punctuation = [];
         
         tokens.forEach(token => {
-            if (token === ' ' || token === '␣') {
-                spaces.push(token);
-            } else if (/^[.,!?;:]$/.test(token)) {
-                punctuation.push(token);
-            } else if (token.trim() && !/^(the|a|an|is|was|were|very|from)$/i.test(token)) {
+            const t = token.toLowerCase().trim();
+            // Only include meaningful content words (length > 1, not in noise list)
+            if (token.trim().length > 1 && !noiseWords.includes(t)) {
                 words.push(token);
             }
         });
         
-        // Get unique words, but keep ALL spaces and punctuation
-        const uniqueWords = [...new Set(words)].slice(0, 8);
-        const allSpaces = spaces.slice(0, 3); // Multiple spaces
-        const allPunct = punctuation.slice(0, 3); // Multiple punctuation
+        // Get unique meaningful words only (10-12 tokens max)
+        const uniqueWords = [...new Set(words)].slice(0, 12);
         
-        // Define target groups based on training data patterns
+        // Define target groups based on training data patterns - 4 CATEGORIES
         this.targetGroups = {
-            'subjects': [],  // Who does actions
-            'actions': [],   // Verbs and verb parts
-            'objects': [],   // What's acted upon
-            'spaces': allSpaces,
-            'punctuation': allPunct
+            'subjects': [],      // Who/what does actions (top-left)
+            'actions': [],       // Verbs and activities (top-right)
+            'objects': [],       // Things acted upon, places (bottom-left)
+            'prepositions': []   // Connectors and relationships (bottom-right)
         };
         
-        // Auto-categorize words (including verb parts like "cook", "ed")
+        // Auto-categorize words based on actual training data
         uniqueWords.forEach(token => {
             const t = token.toLowerCase();
-            // Subjects (nouns that do actions)
-            if (['chef', 'player', 'programmer', 'cat', 'dog', 'rocket', 'astronaut', 'team', 'pizza', 'oven', 'space'].includes(t)) {
-                    this.targetGroups.subjects.push(token);
-                }
-            // Actions (verbs, verb parts, suffixes)
-            else if (['cooked', 'cook', 'played', 'play', 'kicked', 'kick', 'scored', 'loves', 'love', 'tastes', 'taste', 'wrote', 'write', 'came', 'come', 'launched', 'launch', 'floated', 'float', 'ed', 'ing', 's'].includes(t)) {
+            
+            // SUBJECTS - Nouns that perform actions
+            if (['chef', 'player', 'programmer', 'cat', 'dog', 'bird', 'rocket', 'astronaut', 
+                 'team', 'coach', 'pizza', 'pasta', 'restaurant', 'satellite', 'moon', 'stars', 
+                 'Earth', 'planet', 'oven', 'computer', 'developer', 'mat'].includes(t)) {
+                this.targetGroups.subjects.push(token);
+            }
+            // ACTIONS - Verbs (complete words, not suffixes)
+            else if (['cooked', 'cook', 'played', 'play', 'kicked', 'kick', 'scored', 'score',
+                     'loves', 'love', 'tastes', 'taste', 'wrote', 'write', 'came', 'come',
+                     'launched', 'launch', 'floated', 'float', 'orbits', 'orbit', 'shine',
+                     'shines', 'carried', 'carry', 'wore', 'wear', 'trained', 'train', 'trains',
+                     'reflects', 'reflect', 'serves', 'serve', 'baked', 'bake', 'sharing', 'share',
+                     'looks', 'look', 'needs', 'need', 'form', 'sang', 'sing', 'watched', 'watch',
+                     'processed', 'process', 'runs', 'run', 'builds', 'build', 'celebrates', 'celebrate',
+                     'competing', 'compete', 'winning', 'win', 'sleep', 'sleeps', 'has', 'chased', 'chase',
+                     'chirped', 'chirp', 'working', 'work', 'cooking', 'monitors', 'monitor', 'likes', 
+                     'includes', 'sat'].includes(t)) {
                 this.targetGroups.actions.push(token);
-            } 
-            // Objects (things being acted upon - includes prepositions like "into")
-            else if (['pasta', 'ball', 'computer', 'fish', 'bones', 'cuisine', 'italian', 'fresh', 'delicious', 'into', 'orbit', 'sky'].includes(t)) {
+            }
+            // PREPOSITIONS - Connectors between entities
+            else if (['into', 'from', 'with', 'around', 'in', 'at', 'for', 'on', 'to',
+                     'of', 'out', 'by', 'about', 'near', 'against'].includes(t)) {
+                this.targetGroups.prepositions.push(token);
+            }
+            // OBJECTS/DESCRIPTORS - Things, places, qualities
+            else if (['ball', 'goal', 'fish', 'milk', 'bones', 'treats', 'window', 'garden', 
+                     'sofa', 'toy', 'tree', 'seeds', 'water', 'friends',
+                     'code', 'data', 'software', 'features', 'calculations', 'programs', 
+                     'applications', 'documentation', 'users', 'task', 'problems',
+                     'cuisine', 'meal', 'meals', 'cheese', 'tomatoes', 'ingredients',
+                     'sauce', 'Italy', 'recipes', 'people', 'food', 'kitchen', 'customers', 'fresh', 'hot',
+                     'space', 'sky', 'night', 'suit', 'equipment', 'patterns',
+                     'fuel', 'sunlight', 'years', 'today',
+                     'football', 'games', 'victory', 'skill', 'training', 'rivals', 
+                     'championship', 'minute', 'matches', 'dedication', 'project', 
+                     'solutions', 'editor', 'feedback', 'mat', 'branch', 'dawn'].includes(t)) {
                 this.targetGroups.objects.push(token);
             }
         });
         
-        const allSelectedTokens = [...uniqueWords, ...allSpaces, ...allPunct];
-        
-        // Initialize random positions for tokens - ALL START WITH NEUTRAL GRAY COLOR
+        // Initialize random positions in CENTER area - ALL START WITH NEUTRAL GRAY COLOR
         this.groupingState = {
-            tokens: allSelectedTokens.map(token => ({
+            tokens: uniqueWords.map(token => ({
                 word: token,
-                x: Math.random() * 500 + 80,
-                y: Math.random() * 120 + 40,
+                x: Math.random() * 300 + 190, // Center area
+                y: Math.random() * 200 + 95,  // Center area
                 color: '#6b7280', // Neutral gray - no cheating!
                 inZone: null
             })),
+            // 4 CORNER ZONES - Better visual separation!
             zones: {
-                subjects: { x: 20, y: 260, width: 125, height: 110, color: '#22c55e', label: '👥 Subjects' },
-                actions: { x: 155, y: 260, width: 125, height: 110, color: '#3b82f6', label: '⚡ Actions' },
-                objects: { x: 290, y: 260, width: 125, height: 110, color: '#f59e0b', label: '📦 Objects' },
-                spaces: { x: 425, y: 260, width: 100, height: 110, color: '#8b5cf6', label: '␣ Spaces' },
-                punctuation: { x: 535, y: 260, width: 105, height: 110, color: '#ec4899', label: '.,!? Punct' }
+                subjects: { 
+                    x: 20, y: 20, width: 150, height: 130, 
+                    color: '#22c55e', label: '👥 Subjects' 
+                },
+                actions: { 
+                    x: 510, y: 20, width: 150, height: 130, 
+                    color: '#3b82f6', label: '⚡ Actions' 
+                },
+                objects: { 
+                    x: 20, y: 240, width: 150, height: 130, 
+                    color: '#f59e0b', label: '📦 Objects' 
+                },
+                prepositions: { 
+                    x: 510, y: 240, width: 150, height: 130, 
+                    color: '#8b5cf6', label: '🔗 Prepositions' 
+                }
             }
         };
     },
@@ -825,9 +862,10 @@ window.phase2 = {
                     <div class="hint-section">
                         <h4>💡 Look for patterns!</h4>
                         <p style="font-size: 11px; line-height: 1.5;">
-                        Which words appear in similar positions?<br>
-                        <strong>Spaces:</strong> Always between words<br>
-                        <strong>Punctuation:</strong> Always at sentence ends</p>
+                        <strong>👥 Subjects:</strong> Who/what does the action<br>
+                        <strong>⚡ Actions:</strong> Verbs - what happens<br>
+                        <strong>📦 Objects:</strong> What's acted upon<br>
+                        <strong>🔗 Prepositions:</strong> Connectors (in, with, from)</p>
                     </div>
                     
                     <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05)); 
@@ -837,7 +875,7 @@ window.phase2 = {
                             <h4 style="font-size: 12px; color: #ef4444; margin: 0;">Game Simplification</h4>
                         </div>
                         <div style="font-size: 10px; line-height: 1.5; color: var(--text-secondary);">
-                            <p style="margin: 0;">This game groups by grammar roles. <strong>Real LLMs don't know grammar!</strong> They only see patterns in data.</p>
+                            <p style="margin: 0;">This game uses grammar categories for learning. <strong>Real LLMs don't know grammar!</strong> They discover patterns purely from position in training data.</p>
                         </div>
                     </div>
                 </div>
@@ -847,7 +885,10 @@ window.phase2 = {
                         
                         <div style="margin-bottom: 14px; text-align: center;">
                             <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;">
-                                🎯 Drag token circles into zones - tokens change color when placed correctly
+                                🎯 Drag tokens into corner zones - watch them change color when placed correctly!
+                            </div>
+                            <div style="font-size: 11px; color: rgba(251, 191, 36, 0.9); margin-top: 4px;">
+                                💡 Corners = Different pattern types. Distance in space = How different the patterns are!
                             </div>
                         </div>
                         
@@ -996,8 +1037,9 @@ window.phase2 = {
             });
             
             canvas.addEventListener('mouseup', () => {
-                if (isDragging) {
-                    SoundManager.play('click');
+                if (isDragging && dragToken) {
+                    // Check placement when token is dropped
+                    this.checkTokenPlacement(dragToken, zones, tokens, draw, tokenRadius, ctx);
                 }
                 isDragging = false;
                 dragToken = null;
@@ -1015,6 +1057,171 @@ window.phase2 = {
         }, 100);
     },
     
+    // NEW: Real-time feedback when token is placed
+    checkTokenPlacement(dragToken, zones, tokens, draw, tokenRadius, ctx) {
+        let inZone = null;
+        let correctPlacement = false;
+        
+        // Check which zone the token is in
+        Object.entries(zones).forEach(([zoneName, zone]) => {
+            if (dragToken.x >= zone.x && dragToken.x <= zone.x + zone.width &&
+                dragToken.y >= zone.y && dragToken.y <= zone.y + zone.height) {
+                inZone = zoneName;
+                
+                // Check if it's the CORRECT zone for this token
+                // Use case-insensitive comparison to match how tokens were categorized
+                if (this.targetGroups[zoneName]) {
+                    const tokenInGroup = this.targetGroups[zoneName].find(t => 
+                        t.toLowerCase() === dragToken.word.toLowerCase()
+                    );
+                    if (tokenInGroup) {
+                        correctPlacement = true;
+                    }
+                }
+            }
+        });
+        
+        // Update token's zone tracking
+        dragToken.inZone = inZone;
+        
+        if (inZone) {
+            if (correctPlacement) {
+                // ✅ CORRECT PLACEMENT!
+                SoundManager.play('coin');
+                Game.addScore(20); // Mini-game: +20 per correct placement
+                
+                // Change to GREEN permanently
+                dragToken.color = '#22c55e'; // Green
+                draw();
+                
+                // Show floating "+15"
+                this.showFloatingPoints(dragToken.x, dragToken.y, '+15', '#22c55e');
+                
+                // Check if ALL tokens are correctly placed
+                this.checkAllCorrect(tokens);
+                
+            } else {
+                // ❌ WRONG PLACEMENT!
+                SoundManager.play('wrong');
+                Game.addScoreSafe(-10); // Mini-game penalty (only if score > 0)
+                
+                // Change to RED permanently (stay red until moved)
+                dragToken.color = '#ef4444'; // Red
+                draw();
+                
+                // Show floating "-10"
+                this.showFloatingPoints(dragToken.x, dragToken.y, '-10', '#ef4444');
+                
+                // Show error message
+                const feedback = document.getElementById('groupingFeedback');
+                if (feedback) {
+                    feedback.style.display = 'block';
+                    feedback.style.background = 'rgba(239, 68, 68, 0.1)';
+                    feedback.style.border = '2px solid rgba(239, 68, 68, 0.3)';
+                    feedback.innerHTML = `
+                        <div style="font-size: 14px; color: #ef4444; font-weight: 700;">❌ "${dragToken.word}" doesn't belong in this zone!</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Try another zone based on how it appears in your training data.</div>
+                    `;
+                    
+                    // Auto-hide after 2 seconds
+                    setTimeout(() => {
+                        feedback.style.display = 'none';
+                    }, 2000);
+                }
+            }
+        } else {
+            // Token placed outside any zone - reset to gray
+            dragToken.color = '#6b7280';
+            draw();
+            SoundManager.play('click');
+        }
+    },
+    
+    // Show floating point animation
+    showFloatingPoints(x, y, text, color) {
+        const canvas = document.getElementById('groupingCanvas');
+        if (!canvas) return;
+        
+        const floatingText = document.createElement('div');
+        floatingText.textContent = text;
+        floatingText.style.cssText = `
+            position: absolute;
+            left: ${canvas.offsetLeft + x}px;
+            top: ${canvas.offsetTop + y - 40}px;
+            color: ${color};
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            pointer-events: none;
+            z-index: 1000;
+            text-shadow: 0 2px 10px ${color};
+            animation: floatUp 1s ease-out forwards;
+        `;
+        
+        canvas.parentElement.appendChild(floatingText);
+        
+        setTimeout(() => {
+            floatingText.remove();
+        }, 1000);
+    },
+    
+    // Check if all tokens are correctly placed
+    checkAllCorrect(tokens) {
+        const zones = this.groupingState.zones;
+        let allCorrect = true;
+        
+        tokens.forEach(token => {
+            let inCorrectZone = false;
+            
+            Object.entries(zones).forEach(([zoneName, zone]) => {
+                if (token.x >= zone.x && token.x <= zone.x + zone.width &&
+                    token.y >= zone.y && token.y <= zone.y + zone.height) {
+                    // Use case-insensitive comparison
+                    if (this.targetGroups[zoneName]) {
+                        const tokenInGroup = this.targetGroups[zoneName].find(t => 
+                            t.toLowerCase() === token.word.toLowerCase()
+                        );
+                        if (tokenInGroup) {
+                            inCorrectZone = true;
+                        }
+                    }
+                }
+            });
+            
+            if (!inCorrectZone) {
+                allCorrect = false;
+            }
+        });
+        
+        if (allCorrect) {
+            // 🎉 ALL CORRECT - AUTO COMPLETE!
+            setTimeout(() => {
+                const feedback = document.getElementById('groupingFeedback');
+                if (feedback) {
+                    feedback.style.display = 'block';
+                    feedback.style.background = 'rgba(34, 197, 94, 0.15)';
+                    feedback.style.border = '2px solid rgba(34, 197, 94, 0.5)';
+                    feedback.innerHTML = `
+                        <div style="font-size: 18px; color: #22c55e; font-weight: 700; margin-bottom: 8px;">🎉 Perfect! All tokens correctly placed!</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">
+                            You successfully identified all pattern categories! +100 bonus points! 🚀
+                        </div>
+                    `;
+                }
+                
+                SoundManager.play('powerup');
+                Game.addScore(200); // Mini-game completion bonus (fixed)
+                Game.state.embeddings = this.generateEmbeddings();
+                
+                // Auto-advance after showing completion message
+                setTimeout(() => {
+                    this.currentStep = 'recap1';
+                    this.render(document.getElementById('phaseContainer'));
+                }, 2500);
+            }, 300);
+        }
+    },
+    
     checkGrouping() {
         const zones = this.groupingState.zones;
         const tokens = this.groupingState.tokens;
@@ -1025,6 +1232,7 @@ window.phase2 = {
         let correct = 0;
         let total = tokens.length;
         let errors = [];
+        let misplacedTokens = [];
         
         // Check which zone each token is in
         tokens.forEach(token => {
@@ -1038,57 +1246,73 @@ window.phase2 = {
                 }
             });
             
-            // Check if it's in the correct zone
-            if (inZone && this.targetGroups[inZone] && this.targetGroups[inZone].includes(token.word)) {
+            // Store the zone for this token
+            token.inZone = inZone;
+            
+            // Check if it's in the correct zone - use case-insensitive comparison
+            if (inZone && this.targetGroups[inZone]) {
+                const tokenInGroup = this.targetGroups[inZone].find(t => 
+                    t.toLowerCase() === token.word.toLowerCase()
+                );
+                if (tokenInGroup) {
                     correct++;
-            } else if (inZone) {
-                errors.push(`"${token.word}" is in wrong zone`);
-            } else {
-                errors.push(`"${token.word}" not in any zone yet`);
+                } else {
+                    misplacedTokens.push(`"${token.word}" in ${inZone}`);
+                    errors.push(`"${token.word}" should not be in ${inZone}`);
                 }
+            } else if (!inZone) {
+                errors.push(`"${token.word}" needs to be placed in a zone`);
+            }
         });
         
         const accuracy = total > 0 ? correct / total : 0;
         feedback.style.display = 'block';
         
-        if (accuracy >= 0.7) { // 70% correct
+        if (accuracy >= 0.70) { // 70% correct threshold
             // Track best performance
             this.groupingCorrect = correct;
             
             feedback.style.background = 'rgba(34, 197, 94, 0.1)';
             feedback.style.border = '2px solid rgba(34, 197, 94, 0.3)';
             feedback.innerHTML = `
-                <div style="font-size: 16px; color: #22c55e; font-weight: 700; margin-bottom: 8px;">✓ Great grouping!</div>
+                <div style="font-size: 16px; color: #22c55e; font-weight: 700; margin-bottom: 8px;">✓ Excellent pattern recognition!</div>
                 <div style="font-size: 13px; color: var(--text-secondary);">
                     ${correct} out of ${total} tokens correctly grouped (${Math.round(accuracy * 100)}%)! 
-                    You identified usage patterns successfully.
+                    You successfully identified usage patterns from the training data. 
+                    ${accuracy === 1 ? '🎉 Perfect score!' : ''}
                 </div>
             `;
-            SoundManager.play('powerup'); // Use powerup for completing a big challenge!
+            SoundManager.play('powerup');
             
-            // Calculate accuracy-based bonus: 70% accuracy = 105 points, 100% = 150 points
-            const baseBonus = 150;
-            const accuracyBonus = Math.floor(baseBonus * accuracy);
-            Game.addScore(accuracyBonus);
+            // Fixed mini-game completion bonus
+            Game.addScore(200); // Mini-game completion bonus (fixed)
             
             Game.state.embeddings = this.generateEmbeddings();
             
             setTimeout(() => {
-            this.currentStep = 'recap';
-            this.render(document.getElementById('phaseContainer'));
+                this.currentStep = 'recap1';
+                this.render(document.getElementById('phaseContainer'));
             }, 2000);
         } else {
+            const zoneLabels = {
+                'subjects': '👥 Subjects',
+                'actions': '⚡ Actions', 
+                'objects': '📦 Objects',
+                'prepositions': '🔗 Prepositions'
+            };
+            
             feedback.style.background = 'rgba(239, 68, 68, 0.1)';
             feedback.style.border = '2px solid rgba(239, 68, 68, 0.3)';
             feedback.innerHTML = `
-                <div style="font-size: 16px; color: #ef4444; font-weight: 700; margin-bottom: 8px;">Keep adjusting!</div>
-                <div style="font-size: 13px; color: var(--text-secondary);">
+                <div style="font-size: 16px; color: #ef4444; font-weight: 700; margin-bottom: 8px;">Keep adjusting positions!</div>
+                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
                     ${correct} out of ${total} correct (${Math.round(accuracy * 100)}%). 
-                    ${errors.slice(0, 2).join('. ')}. Keep trying!
+                    ${errors.slice(0, 3).join('. ')}. 
+                    <br><br>💡 Tip: Check your training data to see where these tokens appear in sentences!
                 </div>
             `;
-            SoundManager.play('wrong'); // Use 'wrong' for incorrect grouping
-            Game.addScore(-15); // Penalty for wrong grouping attempt
+            SoundManager.play('wrong');
+            // NO PENALTY for wrong grouping check - learning phase!
         }
     },
     
@@ -1101,8 +1325,8 @@ window.phase2 = {
         
         uniqueTokens.forEach((token, idx) => {
             // Simple 2D embedding based on which zone the token ended up in
-            let x = Math.random() * 100;
-            let y = Math.random() * 100;
+            let x = 50; // default
+            let y = 50; // default
             
             // Find which zone this token is in
             const tokenObj = groupedTokens.find(t => t.word === token);
@@ -1110,16 +1334,23 @@ window.phase2 = {
                 Object.entries(zones).forEach(([zoneName, zone]) => {
                     if (tokenObj.x >= zone.x && tokenObj.x <= zone.x + zone.width &&
                         tokenObj.y >= zone.y && tokenObj.y <= zone.y + zone.height) {
-                        // Cluster by zone
+                        // Cluster tokens by their zone position (4 corners)
                         if (zoneName === 'subjects') {
-                x = 20 + Math.random() * 20;
-                y = 50 + Math.random() * 20;
+                            // Top-left corner cluster
+                            x = 15 + Math.random() * 15;
+                            y = 15 + Math.random() * 15;
                         } else if (zoneName === 'actions') {
-                x = 50 + Math.random() * 20;
-                y = 30 + Math.random() * 20;
+                            // Top-right corner cluster
+                            x = 75 + Math.random() * 15;
+                            y = 15 + Math.random() * 15;
                         } else if (zoneName === 'objects') {
-                x = 75 + Math.random() * 20;
-                y = 60 + Math.random() * 20;
+                            // Bottom-left corner cluster
+                            x = 15 + Math.random() * 15;
+                            y = 75 + Math.random() * 15;
+                        } else if (zoneName === 'prepositions') {
+                            // Bottom-right corner cluster
+                            x = 75 + Math.random() * 15;
+                            y = 75 + Math.random() * 15;
                         }
                     }
                 });
@@ -1131,7 +1362,7 @@ window.phase2 = {
         return embeddings;
     },
     
-    renderRecap(container) {
+    renderRecap1(container) {
         const embeddings = Game.state.embeddings;
         const embeddingCount = Object.keys(embeddings).length;
         
@@ -1164,15 +1395,43 @@ window.phase2 = {
                     </div>
                     
                     <!-- What Happened -->
-                    <div style="padding: 20px; background: rgba(255, 255, 255, 0.02); border-radius: 12px; margin-bottom: 24px;">
+                    <div style="padding: 20px; background: rgba(255, 255, 255, 0.02); border-radius: 12px; margin-bottom: 32px;">
                         <h3 style="font-size: 16px; color: var(--primary); margin-bottom: 12px;">📊 What Just Happened:</h3>
                         <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary); font-size: 14px; line-height: 1.8;">
-                            <li>Each token now has a <strong>numerical vector</strong> (2 numbers in this simplified version)</li>
-                            <li>Tokens you grouped together have <strong>similar vectors</strong></li>
-                            <li>You didn't "understand" meanings - you recognized <strong>context patterns</strong></li>
-                            <li>These vectors are now <strong>stored</strong> - next phases use them</li>
+                            <li>You grouped tokens into <strong>4 pattern categories</strong> based on usage in training data</li>
+                            <li>Each category clustered in a <strong>different corner</strong> of vector space</li>
+                            <li>👥 Subjects (who/what acts) → Top-left | ⚡ Actions (verbs) → Top-right</li>
+                            <li>📦 Objects (acted upon) → Bottom-left | 🔗 Prepositions (connectors) → Bottom-right</li>
+                            <li>You didn't "understand" meanings - you recognized <strong>positional patterns</strong></li>
+                            <li>These vectors are now <strong>stored</strong> for use in next phases</li>
                         </ul>
                     </div>
+                    
+                    <button class="btn-primary" onclick="phase2.nextRecapPage()" style="width: 100%; font-size: 17px; padding: 14px;">
+                        Continue (1/2) →
+                    </button>
+                    
+                </div>
+            </div>
+        `;
+    },
+    
+    renderRecap2(container) {
+        const embeddings = Game.state.embeddings;
+        const embeddingCount = Object.keys(embeddings).length;
+        
+        container.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 30px; overflow-y: auto;">
+                <div style="max-width: 900px; width: 100%;">
+                    
+                    <h1 style="font-size: 32px; text-align: center; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                               -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        ✓ Phase 2 Complete: Embeddings
+                    </h1>
+                    
+                    <p style="font-size: 15px; color: var(--text-secondary); text-align: center; margin-bottom: 32px;">
+                        Understanding your progress (2/2)
+                    </p>
                     
                     <!-- Journey Checkpoint -->
                     <div style="padding: 24px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.08)); 
@@ -1216,20 +1475,6 @@ window.phase2 = {
                         </div>
                     </div>
                     
-                    <!-- ANIMATED SCALE COMPARISON -->
-                    <div style="margin: 40px 0; padding: 32px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.08), rgba(245, 158, 11, 0.05)); 
-                               border: 3px solid rgba(236, 72, 153, 0.3); border-radius: 16px;">
-                        <div style="text-align: center; margin-bottom: 30px;">
-                            <h3 style="font-size: 22px; color: #ec4899; margin-bottom: 10px; font-weight: 700;">
-                                📐 Dimension Explosion: 2D vs. Real LLMs
-                            </h3>
-                            <p style="font-size: 14px; color: var(--text-secondary);">
-                                Watch how your 2D space compares to thousands of dimensions in production models
-                            </p>
-                        </div>
-                        <div id="embeddingScaleAnimation" style="min-height: 550px;"></div>
-                    </div>
-                    
                     <button class="btn-primary" onclick="phase2.completePhase()" style="width: 100%; font-size: 17px; padding: 14px;">
                         Continue to Attention →
                     </button>
@@ -1237,17 +1482,20 @@ window.phase2 = {
                 </div>
             </div>
         `;
-        
-        // Trigger the animation after a short delay
-        setTimeout(() => {
-            if (window.ScaleAnimations && window.ScaleAnimations.animateEmbeddingComparison) {
-                ScaleAnimations.animateEmbeddingComparison();
-            }
-        }, 500);
+    },
+    
+    nextRecapPage() {
+        this.currentStep = 'recap2';
+        SoundManager.play('click');
+        this.render(document.getElementById('phaseContainer'));
     },
     
     completePhase() {
-        Game.completePhase(150);
+        // Mark phase complete with fixed transition bonus
+        if (!Game.state.phaseCompleted[2]) {
+            Game.state.phaseCompleted[2] = true;
+            Game.addScore(100); // Phase transition bonus (fixed)
+        }
         Game.saveState();
         SoundManager.play('success');
         setTimeout(() => Game.nextPhase(), 500);

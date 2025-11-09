@@ -1,11 +1,61 @@
 // Phase 5: Generation - USER GENERATES TEXT WITH THE MODEL
 window.phase5 = {
-    currentStep: 'intro', // 'intro' -> 'generate' -> 'recap'
+    currentStep: 'intro', // 'intro' -> 'challenge' -> 'generate' -> 'recap'
     generatedSequence: [],
+    currentChallenge: 0,
+    challengeCorrect: 0,
+    challengeWrong: 0,
+    
+    // Quiz challenges to test understanding
+    challenges: [
+        {
+            type: 'predict',
+            question: 'Which word is MORE LIKELY after "chef" based on training?',
+            context: 'chef',
+            options: ['cooked', 'swimming', 'rocket'],
+            correct: 0,
+            explanation: 'The model learned "chef cooked" from training data. "Swimming" and "rocket" likely never followed "chef" in training!'
+        },
+        {
+            type: 'probability',
+            question: 'If "cooked" appears after "chef" 80% of the time, what is the model doing?',
+            options: [
+                'Understanding that chefs cook food',
+                'Counting patterns from training data',
+                'Thinking about cooking'
+            ],
+            correct: 1,
+            explanation: 'The model is just following statistics! It saw this pattern 80% of the time in training, so it predicts it 80% of the time. No understanding required.'
+        },
+        {
+            type: 'deadend',
+            question: 'You pick "pasta" but there are no next words. Why?',
+            options: [
+                'The model ran out of memory',
+                '"pasta" only appeared at sentence endings in training',
+                'The model is broken'
+            ],
+            correct: 1,
+            explanation: 'Dead ends happen when a word only appeared at the END of sentences in training! The model never learned what comes after it.'
+        },
+        {
+            type: 'concept',
+            question: 'When generating, does the model "plan" the full sentence?',
+            options: [
+                'Yes, it thinks ahead 5-10 words',
+                'No, it picks one word at a time with zero planning',
+                'Sometimes yes, sometimes no'
+            ],
+            correct: 1,
+            explanation: 'LLMs generate ONE token at a time with NO ability to plan or revise! That\'s why they sometimes start sentences they can\'t finish logically.'
+        }
+    ],
     
     render(container) {
         if (this.currentStep === 'intro') {
             this.renderIntro(container);
+        } else if (this.currentStep === 'challenge') {
+            this.renderChallenge(container);
         } else if (this.currentStep === 'generate') {
             this.renderGenerate(container);
         } else if (this.currentStep === 'recap') {
@@ -80,14 +130,198 @@ window.phase5 = {
                         </div>
                     </div>
                     
-                    <button class="btn-primary" onclick="phase5.startGenerating()" 
+                    <button class="btn-primary" onclick="phase5.startChallenges()" 
                             style="font-size: 17px; padding: 14px 40px;">
-                        🚀 Start Generating
+                        🎮 Test Your Understanding
                     </button>
                     
                 </div>
             </div>
         `;
+    },
+    
+    startChallenges() {
+        this.currentStep = 'challenge';
+        this.currentChallenge = 0;
+        this.challengeCorrect = 0;
+        this.challengeWrong = 0;
+        SoundManager.play('click');
+        this.render(document.getElementById('phaseContainer'));
+    },
+    
+    renderChallenge(container) {
+        if (this.currentChallenge >= this.challenges.length) {
+            // All challenges complete, move to generation
+            this.startGenerating();
+            return;
+        }
+        
+        const challenge = this.challenges[this.currentChallenge];
+        const progress = this.currentChallenge + 1;
+        const total = this.challenges.length;
+        
+        container.innerHTML = `
+            <div class="phase">
+                <div class="phase-sidebar">
+                    <div>
+                        <h2 class="phase-title">Test Your Knowledge</h2>
+                        <p class="phase-subtitle">Challenge ${progress} of ${total}</p>
+                    </div>
+                    
+                    <div class="phase-description">
+                        Answer questions to test your understanding of how generation works!
+                    </div>
+                    
+                    <div class="hint-section">
+                        <h4>📊 Your Score</h4>
+                        <div style="display: flex; gap: 16px; margin-top: 8px;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 24px; color: #22c55e; font-weight: 700;">${this.challengeCorrect}</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">Correct</div>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 24px; color: #ef4444; font-weight: 700;">${this.challengeWrong}</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">Wrong</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 12px; background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 8px; margin-top: 16px;">
+                        <p style="font-size: 11px; color: var(--text-secondary); margin: 0; line-height: 1.6;">
+                            💡 Think about what you learned: LLMs follow patterns, not meaning!
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="phase-content">
+                    <div style="width: 100%; max-width: 700px;">
+                        
+                        <!-- Question -->
+                        <div style="padding: 24px; background: rgba(0, 212, 255, 0.08); border-radius: 12px; margin-bottom: 24px;">
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
+                                Question ${progress}/${total}
+                            </div>
+                            <div style="font-size: 18px; color: white; line-height: 1.6; font-weight: 500;">
+                                ${challenge.question}
+                            </div>
+                        </div>
+                        
+                        <!-- Options -->
+                        <div id="challengeOptions" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                            ${challenge.options.map((option, idx) => `
+                                <button onclick="phase5.checkAnswer(${idx})"
+                                        class="challenge-option"
+                                        style="padding: 18px 20px; background: rgba(255, 255, 255, 0.02); 
+                                               border: 2px solid rgba(0, 212, 255, 0.2); border-radius: 12px; 
+                                               cursor: pointer; transition: all 0.3s; text-align: left; 
+                                               font-size: 15px; color: white; font-weight: 500;">
+                                    <span style="display: inline-block; width: 30px; height: 30px; 
+                                                 background: rgba(0, 212, 255, 0.2); border-radius: 50%; 
+                                                 text-align: center; line-height: 30px; margin-right: 12px; 
+                                                 font-family: 'JetBrains Mono', monospace;">
+                                        ${String.fromCharCode(65 + idx)}
+                                    </span>
+                                    ${option}
+                                </button>
+                            `).join('')}
+                        </div>
+                        
+                        <!-- Feedback area -->
+                        <div id="challengeFeedback" style="display: none; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                        </div>
+                        
+                        <button id="nextChallengeBtn" class="btn-primary" onclick="phase5.nextChallenge()" 
+                                style="width: 100%; display: none;">
+                            Next Question →
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            <style>
+                .challenge-option:hover {
+                    background: rgba(0, 212, 255, 0.1) !important;
+                    border-color: rgba(0, 212, 255, 0.5) !important;
+                    transform: translateX(4px);
+                }
+                
+                .challenge-option:active {
+                    transform: scale(0.98);
+                }
+                
+                .challenge-option.correct {
+                    background: rgba(34, 197, 94, 0.15) !important;
+                    border-color: #22c55e !important;
+                }
+                
+                .challenge-option.wrong {
+                    background: rgba(239, 68, 68, 0.15) !important;
+                    border-color: #ef4444 !important;
+                }
+                
+                .challenge-option.disabled {
+                    cursor: not-allowed !important;
+                    opacity: 0.5;
+                }
+            </style>
+        `;
+    },
+    
+    checkAnswer(selectedIdx) {
+        const challenge = this.challenges[this.currentChallenge];
+        const isCorrect = selectedIdx === challenge.correct;
+        
+        // Update score
+        if (isCorrect) {
+            this.challengeCorrect++;
+            Game.addScore(50);
+            SoundManager.play('success');
+        } else {
+            this.challengeWrong++;
+            SoundManager.play('error');
+        }
+        
+        // Disable all buttons and highlight correct/wrong
+        const options = document.querySelectorAll('.challenge-option');
+        options.forEach((btn, idx) => {
+            btn.classList.add('disabled');
+            btn.style.pointerEvents = 'none';
+            
+            if (idx === challenge.correct) {
+                btn.classList.add('correct');
+            } else if (idx === selectedIdx && !isCorrect) {
+                btn.classList.add('wrong');
+            }
+        });
+        
+        // Show feedback
+        const feedbackEl = document.getElementById('challengeFeedback');
+        feedbackEl.style.display = 'block';
+        feedbackEl.style.background = isCorrect ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+        feedbackEl.style.border = isCorrect ? '2px solid #22c55e' : '2px solid #ef4444';
+        feedbackEl.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <span style="font-size: 32px;">${isCorrect ? '✓' : '✗'}</span>
+                <div>
+                    <div style="font-size: 18px; color: ${isCorrect ? '#22c55e' : '#ef4444'}; font-weight: 700; margin-bottom: 4px;">
+                        ${isCorrect ? 'Correct!' : 'Not quite!'}
+                    </div>
+                    <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+                        ${challenge.explanation}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Show next button
+        document.getElementById('nextChallengeBtn').style.display = 'block';
+    },
+    
+    nextChallenge() {
+        this.currentChallenge++;
+        SoundManager.play('click');
+        this.render(document.getElementById('phaseContainer'));
     },
     
     startGenerating() {
@@ -111,6 +345,24 @@ window.phase5 = {
                     
                     <div class="phase-description">
                         Pick a starting word, then let your model predict what comes next based on training probabilities.
+                    </div>
+                    
+                    <!-- Quiz Results -->
+                    <div style="padding: 16px; background: rgba(34, 197, 94, 0.1); border: 2px solid rgba(34, 197, 94, 0.3); 
+                               border-radius: 10px; margin-bottom: 16px;">
+                        <div style="font-size: 13px; color: #22c55e; font-weight: 700; margin-bottom: 8px;">
+                            ✓ Quiz Complete!
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <div style="flex: 1; text-align: center;">
+                                <div style="font-size: 20px; color: #22c55e; font-weight: 700;">${this.challengeCorrect}</div>
+                                <div style="font-size: 10px; color: var(--text-secondary);">Correct</div>
+                            </div>
+                            <div style="flex: 1; text-align: center;">
+                                <div style="font-size: 20px; color: #ef4444; font-weight: 700;">${this.challengeWrong}</div>
+                                <div style="font-size: 10px; color: var(--text-secondary);">Wrong</div>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="hint-section">
@@ -253,7 +505,7 @@ window.phase5 = {
     finishGenerating() {
         if (this.generatedSequence.length >= 5) {
             Game.state.generatedText = this.generatedSequence.join(' ');
-            Game.addScore(200);
+            Game.addScore(250); // Mini-game completion bonus (fixed)
             SoundManager.play('levelUp');
             this.currentStep = 'recap';
             this.render(document.getElementById('phaseContainer'));
@@ -267,6 +519,10 @@ window.phase5 = {
         const trainingText = Game.state.trainingText || '';
         const sentenceCount = trainingText.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
         
+        // Calculate quiz performance
+        const quizTotal = this.challenges.length;
+        const quizPercent = Math.round((this.challengeCorrect / quizTotal) * 100);
+        
         container.innerHTML = `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 30px; overflow-y: auto;">
                 <div style="max-width: 900px; width: 100%;">
@@ -279,6 +535,23 @@ window.phase5 = {
                     <p style="font-size: 15px; color: var(--text-secondary); text-align: center; margin-bottom: 32px;">
                         You generated NEW text using your trained model!
                     </p>
+                    
+                    <!-- Quiz Performance -->
+                    <div style="padding: 20px; background: linear-gradient(135deg, ${quizPercent >= 75 ? 'rgba(34, 197, 94, 0.15)' : 'rgba(251, 191, 36, 0.15)'}, rgba(0, 0, 0, 0.1)); 
+                               border: 2px solid ${quizPercent >= 75 ? '#22c55e' : '#fbbf24'}; border-radius: 12px; margin-bottom: 24px; text-align: center;">
+                        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">
+                            🎯 Your Quiz Score
+                        </div>
+                        <div style="font-size: 48px; font-weight: 700; color: ${quizPercent >= 75 ? '#22c55e' : '#fbbf24'}; margin-bottom: 8px;">
+                            ${quizPercent}%
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">
+                            ${this.challengeCorrect} correct out of ${quizTotal} questions
+                        </div>
+                        <div style="margin-top: 12px; font-size: 13px; color: ${quizPercent >= 75 ? '#22c55e' : '#f59e0b'}; font-weight: 600;">
+                            ${quizPercent >= 100 ? '🏆 Perfect Score!' : quizPercent >= 75 ? '✓ Great Understanding!' : '👍 Keep Learning!'}
+                        </div>
+                    </div>
                     
                     <!-- Generated Text -->
                     <div style="padding: 24px; background: rgba(0, 212, 255, 0.08); border: 2px solid var(--primary); border-radius: 12px; margin-bottom: 24px;">
@@ -399,7 +672,11 @@ window.phase5 = {
     },
     
     completePhase() {
-        Game.completePhase(200);
+        // Mark phase complete with fixed transition bonus
+        if (!Game.state.phaseCompleted[5]) {
+            Game.state.phaseCompleted[5] = true;
+            Game.addScore(100); // Phase transition bonus (fixed)
+        }
         Game.saveState();
         SoundManager.play('success');
         setTimeout(() => Game.nextPhase(), 500);

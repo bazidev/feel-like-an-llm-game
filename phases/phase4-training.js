@@ -1,14 +1,37 @@
 // Phase 4: Training - BUILD BIGRAM MODEL (CRYSTAL CLEAR)
 window.phase4 = {
-    currentStep: 'intro', // 'intro' -> 'practice' -> 'build' -> 'recap'
+    currentStep: 'intro', // 'intro' -> 'examples' -> 'practice' -> 'build' -> 'recap'
     bigramCounts: {},
     bigramProbs: {},
     practiceTarget: null,
     userCounts: {},
+    currentExample: 0,
+    
+    // Tutorial examples showing training process
+    trainingExamples: [
+        {
+            title: "Example 1: Simple Counting",
+            trainingData: "The cat sat. The cat jumped. The cat ran.",
+            targetWord: "cat",
+            explanation: "Let's count what comes after 'cat' in this simple text.",
+            correctCounts: { "sat": 1, "jumped": 1, "ran": 1 },
+            insight: "Each word appeared once after 'cat', so each has 33.3% probability!"
+        },
+        {
+            title: "Example 2: Unequal Frequencies",
+            trainingData: "The dog barked. The dog barked loudly. The dog slept. The dog barked again.",
+            targetWord: "dog",
+            explanation: "Now 'dog' is followed by different words at different frequencies.",
+            correctCounts: { "barked": 3, "slept": 1 },
+            insight: "'barked' appeared 3 times, 'slept' once → 75% barked, 25% slept. The model will favor 'barked'!"
+        }
+    ],
     
     render(container) {
         if (this.currentStep === 'intro') {
             this.renderIntro(container);
+        } else if (this.currentStep === 'examples') {
+            this.renderExamples(container);
         } else if (this.currentStep === 'practice') {
             this.renderPractice(container);
         } else if (this.currentStep === 'build') {
@@ -80,7 +103,174 @@ window.phase4 = {
     },
     
     startTraining() {
-        // Start with practice step
+        // Start with examples step
+        this.currentStep = 'examples';
+        this.currentExample = 0;
+        SoundManager.play('click');
+        this.render(document.getElementById('phaseContainer'));
+    },
+    
+    renderExamples(container) {
+        const example = this.trainingExamples[this.currentExample];
+        const tokens = example.trainingData.split(/\s+/);
+        const targetWord = example.targetWord;
+        
+        // Find what comes after target word
+        const followingWords = [];
+        for (let i = 0; i < tokens.length - 1; i++) {
+            if (tokens[i].toLowerCase() === targetWord.toLowerCase()) {
+                // Remove punctuation from next word
+                const nextWord = tokens[i + 1].replace(/[.,!?]/g, '');
+                if (nextWord) {
+                    followingWords.push(nextWord);
+                }
+            }
+        }
+        
+        // Count occurrences
+        const counts = {};
+        followingWords.forEach(word => {
+            counts[word] = (counts[word] || 0) + 1;
+        });
+        
+        // Calculate total and probabilities
+        const total = followingWords.length;
+        const probs = {};
+        Object.keys(counts).forEach(word => {
+            probs[word] = (counts[word] / total * 100).toFixed(1);
+        });
+        
+        container.innerHTML = `
+            <div class="phase">
+                <div class="phase-sidebar">
+                    <div>
+                        <h2 class="phase-title">${example.title}</h2>
+                        <p class="phase-subtitle">Example ${this.currentExample + 1} of ${this.trainingExamples.length}</p>
+                    </div>
+                    
+                    <div class="phase-description">
+                        ${example.explanation}
+                    </div>
+                    
+                    <div class="hint-section">
+                        <h4>💡 What to Notice</h4>
+                        <p>Watch how we count what comes AFTER "<strong style="color: var(--primary);">${targetWord}</strong>". 
+                        The frequency determines the probability!</p>
+                    </div>
+                    
+                    <div style="padding: 12px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; margin-top: 12px;">
+                        <p style="font-size: 11px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                            <strong>Reality Check:</strong> This is ALL that training is - counting co-occurrences!
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="phase-content">
+                    <div style="width: 100%; max-width: 700px;">
+                        
+                        <!-- Training Data with Highlighting -->
+                        <div style="padding: 20px; background: rgba(0, 212, 255, 0.08); border-radius: 12px; margin-bottom: 24px;">
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">📚 Training Data:</div>
+                            <div style="font-size: 16px; font-family: 'JetBrains Mono', monospace; color: white; line-height: 2;">
+                                ${this.highlightExampleText(tokens, targetWord)}
+                            </div>
+                        </div>
+                        
+                        <!-- Counting Breakdown -->
+                        <div style="padding: 20px; background: rgba(255, 255, 255, 0.02); border-radius: 12px; margin-bottom: 24px;">
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; text-align: center;">
+                                📊 What follows "<strong style="color: var(--primary);">${targetWord}</strong>"?
+                            </div>
+                            
+                            ${Object.entries(counts).map(([word, count]) => `
+                                <div style="display: flex; align-items: center; justify-content: space-between; 
+                                           padding: 12px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; 
+                                           margin-bottom: 10px; border-left: 4px solid var(--primary);">
+                                    <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 16px; color: white; font-weight: 600;">
+                                            "${word}"
+                                        </span>
+                                        <span style="font-size: 12px; color: var(--text-secondary);">
+                                            appeared ${count} ${count === 1 ? 'time' : 'times'}
+                                        </span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="font-size: 20px; font-weight: 700; color: var(--primary); font-family: 'JetBrains Mono', monospace;">
+                                            ${probs[word]}%
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            
+                            <div style="margin-top: 16px; padding: 12px; background: rgba(251, 191, 36, 0.1); 
+                                       border-left: 3px solid #fbbf24; border-radius: 6px;">
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    <strong style="color: #fbbf24;">💡 Insight:</strong> ${example.insight}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Navigation -->
+                        <div style="display: flex; gap: 12px;">
+                            ${this.currentExample > 0 ? `
+                                <button class="btn-secondary" onclick="phase4.previousExample()" style="flex: 1;">
+                                    ← Previous Example
+                                </button>
+                            ` : '<div style="flex: 1;"></div>'}
+                            
+                            ${this.currentExample < this.trainingExamples.length - 1 ? `
+                                <button class="btn-primary" onclick="phase4.nextExample()" style="flex: 1;">
+                                    Next Example →
+                                </button>
+                            ` : `
+                                <button class="btn-primary" onclick="phase4.startPractice()" style="flex: 1;">
+                                    Try It Yourself →
+                                </button>
+                            `}
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+    
+    highlightExampleText(tokens, targetWord) {
+        let html = '';
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i];
+            const cleanToken = token.replace(/[.,!?]/g, '');
+            
+            if (cleanToken.toLowerCase() === targetWord.toLowerCase()) {
+                html += `<span style="background: rgba(191, 0, 255, 0.4); padding: 4px 8px; border-radius: 6px; font-weight: 700;">${token}</span> `;
+            } else if (i > 0 && tokens[i-1].replace(/[.,!?]/g, '').toLowerCase() === targetWord.toLowerCase()) {
+                // Highlight the word AFTER target
+                html += `<span style="background: rgba(0, 212, 255, 0.4); padding: 4px 8px; border-radius: 6px; font-weight: 700; color: #00d4ff;">${token}</span> `;
+            } else {
+                html += `${token} `;
+            }
+        }
+        return html;
+    },
+    
+    nextExample() {
+        if (this.currentExample < this.trainingExamples.length - 1) {
+            this.currentExample++;
+            Game.addScore(30); // Examples: +30 per completed
+            SoundManager.play('click');
+            this.render(document.getElementById('phaseContainer'));
+        }
+    },
+    
+    previousExample() {
+        if (this.currentExample > 0) {
+            this.currentExample--;
+            SoundManager.play('click');
+            this.render(document.getElementById('phaseContainer'));
+        }
+    },
+    
+    startPractice() {
         this.currentStep = 'practice';
         this.setupPractice();
         SoundManager.play('click');
@@ -391,7 +581,7 @@ window.phase4 = {
     },
     
     completeTraining() {
-        Game.addScore(200);
+        Game.addScore(250); // Mini-game completion bonus (fixed)
         SoundManager.play('levelUp');
         this.currentStep = 'recap';
         this.render(document.getElementById('phaseContainer'));
@@ -516,7 +706,11 @@ window.phase4 = {
     },
     
     completePhase() {
-        Game.completePhase(200);
+        // Mark phase complete with fixed transition bonus
+        if (!Game.state.phaseCompleted[4]) {
+            Game.state.phaseCompleted[4] = true;
+            Game.addScore(100); // Phase transition bonus (fixed)
+        }
         Game.saveState();
         SoundManager.play('success');
         setTimeout(() => Game.nextPhase(), 500);

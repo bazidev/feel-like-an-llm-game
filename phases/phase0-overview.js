@@ -11,31 +11,31 @@ window.phase0 = {
     datasets: {
         animals: {
             name: "🐾 Animals",
-            text: "A cat sat on the mat. The dog played with the ball. The cat likes fish and milk. The dog likes bones and treats. The cat sat near the window. The dog played in the garden. The cat likes to sleep all day. The dog likes to run around. A cat and dog can be friends. The cat sat on the sofa. The dog played with the toy. A bird sang in the tree. The bird likes seeds and water. The cat watched the bird carefully.",
+            text: "A cat sat on the mat near the window. The dog played with the ball in the garden. The bird sang from the tree branch. The cat likes fish and milk treats. The dog likes bones and toys. The bird likes seeds and water bowls. The cat watched the bird carefully. The dog chased after the ball eagerly. The bird chirped at dawn beautifully. The cat sleeps on the mat. They're running. Aren't they?",
             description: "Learn about pets and their behaviors",
             color: "#22c55e"
         },
         space: {
             name: "🚀 Space",
-            text: "The rocket launched into orbit successfully. The astronaut floated in space gracefully. The stars shine very brightly tonight. The moon orbits around Earth constantly. The rocket carried equipment into space. The astronaut wore a special suit. The stars form beautiful patterns at night. The moon looks big and bright. A satellite orbits the planet Earth. The rocket needs fuel to fly. The astronaut trained for many years. The stars are far away from Earth. The moon reflects the sunlight beautifully.",
+            text: "The rocket launched into orbit successfully. The astronaut floated in space gracefully. The stars shine very brightly at night. The moon orbits around Earth constantly. The satellite orbits the planet continuously. The rocket carried equipment into space today. The astronaut wore a special protective suit. The stars form beautiful patterns in the sky. The satellite monitors weather patterns from orbit. The moon reflects sunlight beautifully. It's amazing. Won't you agree?",
             description: "Explore the cosmos and universe",
             color: "#3b82f6"
         },
         food: {
             name: "🍕 Food",
-            text: "The chef cooked fresh pasta today. The pizza came from the oven hot. The chef loves Italian cuisine very much. The pasta tastes very delicious indeed. The chef cooked a special meal. The pizza has cheese and tomatoes. The chef loves to cook for people. The pasta came from Italy originally. A restaurant serves good food daily. The chef cooked with fresh ingredients. The pizza came out perfectly baked. The chef loves sharing recipes online. The pasta tastes amazing with sauce.",
+            text: "The chef cooked fresh pasta in the kitchen today. The pizza came from the oven hot. The restaurant serves delicious meals to customers. The chef loves cooking Italian cuisine for people. The pasta tastes very delicious with tomato sauce. The pizza has cheese and fresh ingredients on top. The meal includes special recipes from Italy. I'm eating. Isn't it delicious?",
             description: "Culinary adventures and cooking",
             color: "#f59e0b"
         },
         tech: {
             name: "💻 Technology",
-            text: "The programmer wrote clean code yesterday. The computer processed the data quickly. The programmer loves software development very much. The computer runs very efficiently now. The programmer wrote new features today. The computer processed millions of calculations. The programmer loves learning new skills. The computer runs many programs simultaneously. A developer builds useful applications daily. The programmer wrote documentation for users. The computer processed the task successfully. The programmer loves solving difficult problems. The computer runs faster than before.",
+            text: "The programmer wrote clean code for the project today. The computer processed the data quickly with software. The developer builds useful applications for modern users. The programmer loves working on new features daily. The computer runs programs very efficiently now. The developer wrote solutions in the code editor. The programmer processed user feedback carefully about features. The computer builds calculations at high speed. We're coding. Can't we rest?",
             description: "Coding and innovation world",
             color: "#8b5cf6"
         },
         sports: {
             name: "⚽ Sports",
-            text: "The player kicked the ball hard. The team scored a goal happily. The player loves football games very much. The team celebrates their victory loudly. The player kicked with great skill. The team scored three goals today. The player loves training every day. The team celebrates each victory together. A coach trains the team regularly. The player kicked the ball accurately. The team scored in the final minute. The player loves competing against rivals. The team celebrates winning the championship.",
+            text: "The player kicked the ball with great skill. The team scored a goal in the final minute. The coach trains the team for victory regularly. The player loves football games very much. The team celebrates their victory together loudly. The coach kicked strategies into action daily. The player trains for matches with dedication. The team scored three goals against rivals today. The coach celebrates winning at championships proudly. They've won. Didn't they celebrate?",
             description: "Athletics and competition",
             color: "#ef4444"
         }
@@ -702,7 +702,12 @@ window.phase0 = {
         // Complete phase and move to next
         SoundManager.play('levelUp');
         
-        // Mark phase 0 as complete (no score yet - they'll earn it in Phase 1+)
+        // Award points for completing setup - NEW SCORING
+        if (!Game.state.phaseCompleted[0]) {
+            Game.addScore(50); // Setup completion bonus
+        }
+        
+        // Mark phase 0 as complete
         Game.state.phaseCompleted[0] = true;
         Game.saveState();
         

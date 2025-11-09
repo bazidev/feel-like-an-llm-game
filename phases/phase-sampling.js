@@ -1,13 +1,42 @@
 // Phase: Sampling Parameters - INTERACTIVE PARAMETER CONTROL
 window.phaseSampling = {
     DEV_MODE: true,
-    currentStep: 'intro', // 'intro' -> 'temperature' -> 'top_p' -> 'repetition' -> 'presence' -> 'recap'
+    currentStep: 'intro', // 'intro' -> 'temperature' -> 'top_p' -> 'repetition' -> 'presence' -> 'challenge' -> 'recap'
     
     // Game state
     temperatureValue: 0.7,
     topPValue: 0.9,
     repetitionValue: 1.2,
     presenceValue: 0.5,
+    
+    // Challenge state
+    challengeScenarios: [
+        {
+            goal: "Creative storytelling with variety",
+            hint: "High randomness, diverse topics",
+            correctTemp: { min: 0.8, max: 1.5 },
+            correctTopP: { min: 0.85, max: 1.0 },
+            correctRep: { min: 1.0, max: 1.3 },
+            correctPres: { min: 0.5, max: 1.5 }
+        },
+        {
+            goal: "Deterministic code generation",
+            hint: "Low randomness, predictable output",
+            correctTemp: { min: 0.0, max: 0.4 },
+            correctTopP: { min: 0.9, max: 1.0 },
+            correctRep: { min: 1.0, max: 1.2 },
+            correctPres: { min: 0.0, max: 0.5 }
+        },
+        {
+            goal: "Balanced conversation without repetition",
+            hint: "Moderate randomness, prevent loops",
+            correctTemp: { min: 0.6, max: 0.9 },
+            correctTopP: { min: 0.85, max: 0.95 },
+            correctRep: { min: 1.2, max: 1.8 },
+            correctPres: { min: 0.3, max: 0.8 }
+        }
+    ],
+    currentScenario: 0,
     
     // For interactive demonstrations
     sampleText: "The cat",
@@ -24,6 +53,8 @@ window.phaseSampling = {
             this.renderRepetition(container);
         } else if (this.currentStep === 'presence') {
             this.renderPresence(container);
+        } else if (this.currentStep === 'challenge') {
+            this.renderChallenge(container);
         } else if (this.currentStep === 'recap') {
             this.renderRecap(container);
         }
@@ -630,7 +661,7 @@ window.phaseSampling = {
                         </div>
                         
                         <button class="btn-primary" onclick="phaseSampling.nextStep()" style="width: 100%; padding: 12px;">
-                            Complete →
+                            Next: Challenge →
                         </button>
                         
                     </div>
@@ -682,6 +713,210 @@ window.phaseSampling = {
                 </div>
             `;
         }).join('');
+    },
+    
+    renderChallenge(container) {
+        const scenario = this.challengeScenarios[this.currentScenario];
+        const scenarioNum = this.currentScenario + 1;
+        const totalScenarios = this.challengeScenarios.length;
+        
+        container.innerHTML = `
+            <div class="phase">
+                <div class="phase-sidebar">
+                    <div>
+                        <h2 class="phase-title">🎯 Parameter Challenge</h2>
+                        <p class="phase-subtitle">Test your knowledge</p>
+                    </div>
+                    
+                    <div class="phase-description">
+                        Configure the sampling parameters to match the goal. Get all scenarios correct to master sampling!
+                    </div>
+                    
+                    <div class="hint-section">
+                        <h4>💡 Hints</h4>
+                        <p style="font-size: 12px; line-height: 1.6;">
+                            <strong style="color: var(--secondary);">Hint:</strong> ${scenario.hint}
+                        </p>
+                    </div>
+                    
+                    <div style="padding: 12px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; margin-top: 12px;">
+                        <p style="font-size: 11px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                            <strong>Reality Check:</strong> Think about what each parameter does and how they work together!
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="phase-content">
+                    <div style="width: 100%; max-width: 680px;">
+                        
+                        <!-- Scenario Goal - MAIN SECTION -->
+                        <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(191, 0, 255, 0.1)); 
+                                   border: 2px solid rgba(0, 212, 255, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center;">
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
+                                💡 Scenario ${scenarioNum}/${totalScenarios}
+                            </div>
+                            <h3 style="font-size: 22px; color: var(--primary); margin: 0; font-weight: 700; line-height: 1.4;">
+                                Goal: ${scenario.goal}
+                            </h3>
+                        </div>
+                        
+                        <!-- Progress Indicator -->
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <div style="display: flex; gap: 8px; justify-content: center;">
+                                ${this.challengeScenarios.map((_, i) => `
+                                    <div style="width: ${100 / totalScenarios}%; max-width: 100px; height: 6px; 
+                                               background: ${i < this.currentScenario ? 'var(--success)' : 
+                                                            i === this.currentScenario ? 'var(--primary)' : 
+                                                            'rgba(255, 255, 255, 0.1)'}; 
+                                               border-radius: 3px;">
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <!-- All 4 Parameter Sliders -->
+                        <div style="padding: 20px; background: rgba(0, 212, 255, 0.08); border-radius: 12px; margin-bottom: 20px;">
+                            
+                            <!-- Temperature -->
+                            <div style="margin-bottom: 20px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <label style="font-size: 13px; color: var(--primary); font-weight: 600;">🌡️ Temperature</label>
+                                    <span id="challengeTempValue" style="font-size: 20px; font-weight: 700; color: var(--primary); font-family: 'JetBrains Mono', monospace;">0.7</span>
+                                </div>
+                                <input type="range" id="challengeTempSlider" min="0" max="2" step="0.1" value="0.7" 
+                                       oninput="phaseSampling.updateChallengeParam('temp', this.value)"
+                                       style="width: 100%; height: 6px; cursor: pointer; appearance: none; background: linear-gradient(90deg, #3b82f6, #f59e0b, #ef4444); border-radius: 3px;">
+                            </div>
+                            
+                            <!-- Top-p -->
+                            <div style="margin-bottom: 20px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <label style="font-size: 13px; color: var(--secondary); font-weight: 600;">🎯 Top-p</label>
+                                    <span id="challengeTopPValue" style="font-size: 20px; font-weight: 700; color: var(--secondary); font-family: 'JetBrains Mono', monospace;">0.9</span>
+                                </div>
+                                <input type="range" id="challengeTopPSlider" min="0.1" max="1.0" step="0.05" value="0.9" 
+                                       oninput="phaseSampling.updateChallengeParam('topP', this.value)"
+                                       style="width: 100%; height: 6px; cursor: pointer; appearance: none; background: linear-gradient(90deg, #8b5cf6, #a855f7, #bf00ff); border-radius: 3px;">
+                            </div>
+                            
+                            <!-- Repetition Penalty -->
+                            <div style="margin-bottom: 20px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <label style="font-size: 13px; color: #f59e0b; font-weight: 600;">🔁 Repetition Penalty</label>
+                                    <span id="challengeRepValue" style="font-size: 20px; font-weight: 700; color: #f59e0b; font-family: 'JetBrains Mono', monospace;">1.2</span>
+                                </div>
+                                <input type="range" id="challengeRepSlider" min="1.0" max="2.0" step="0.1" value="1.2" 
+                                       oninput="phaseSampling.updateChallengeParam('rep', this.value)"
+                                       style="width: 100%; height: 6px; cursor: pointer; appearance: none; background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444); border-radius: 3px;">
+                            </div>
+                            
+                            <!-- Presence Penalty -->
+                            <div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <label style="font-size: 13px; color: #22c55e; font-weight: 600;">✨ Presence Penalty</label>
+                                    <span id="challengePresValue" style="font-size: 20px; font-weight: 700; color: #22c55e; font-family: 'JetBrains Mono', monospace;">0.5</span>
+                                </div>
+                                <input type="range" id="challengePresSlider" min="0.0" max="2.0" step="0.1" value="0.5" 
+                                       oninput="phaseSampling.updateChallengeParam('pres', this.value)"
+                                       style="width: 100%; height: 6px; cursor: pointer; appearance: none; background: linear-gradient(90deg, #6b7280, #22c55e, #10b981); border-radius: 3px;">
+                            </div>
+                        </div>
+                        
+                        <!-- Check Button -->
+                        <button class="btn-primary" onclick="phaseSampling.checkChallenge()" style="width: 100%; padding: 14px; margin-bottom: 16px;">
+                            ✓ Check My Parameters
+                        </button>
+                        
+                        <!-- Feedback Area -->
+                        <div id="challengeFeedback" style="display: none; padding: 16px; border-radius: 10px; margin-top: 12px;"></div>
+                        
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+    
+    updateChallengeParam(param, value) {
+        const val = parseFloat(value);
+        if (param === 'temp') {
+            this.temperatureValue = val;
+            document.getElementById('challengeTempValue').textContent = value;
+        } else if (param === 'topP') {
+            this.topPValue = val;
+            document.getElementById('challengeTopPValue').textContent = value;
+        } else if (param === 'rep') {
+            this.repetitionValue = val;
+            document.getElementById('challengeRepValue').textContent = value;
+        } else if (param === 'pres') {
+            this.presenceValue = val;
+            document.getElementById('challengePresValue').textContent = value;
+        }
+        SoundManager.play('click');
+    },
+    
+    checkChallenge() {
+        const scenario = this.challengeScenarios[this.currentScenario];
+        const feedback = document.getElementById('challengeFeedback');
+        
+        // Check if all parameters are within acceptable range
+        const tempCorrect = this.temperatureValue >= scenario.correctTemp.min && 
+                           this.temperatureValue <= scenario.correctTemp.max;
+        const topPCorrect = this.topPValue >= scenario.correctTopP.min && 
+                           this.topPValue <= scenario.correctTopP.max;
+        const repCorrect = this.repetitionValue >= scenario.correctRep.min && 
+                          this.repetitionValue <= scenario.correctRep.max;
+        const presCorrect = this.presenceValue >= scenario.correctPres.min && 
+                           this.presenceValue <= scenario.correctPres.max;
+        
+        const allCorrect = tempCorrect && topPCorrect && repCorrect && presCorrect;
+        
+        feedback.style.display = 'block';
+        
+        if (allCorrect) {
+            feedback.style.background = 'rgba(34, 197, 94, 0.1)';
+            feedback.style.border = '2px solid rgba(34, 197, 94, 0.3)';
+            feedback.innerHTML = `
+                <div style="font-size: 16px; color: #22c55e; font-weight: 700; margin-bottom: 8px;">✓ Perfect!</div>
+                <div style="font-size: 13px; color: var(--text-secondary);">
+                    Your parameters match the goal perfectly!
+                </div>
+            `;
+            SoundManager.play('success');
+            Game.addScore(100); // Challenge scenarios: +100 per correct
+            
+            // Move to next scenario or complete
+            setTimeout(() => {
+                this.currentScenario++;
+                if (this.currentScenario >= this.challengeScenarios.length) {
+                    // All scenarios complete!
+                    this.currentStep = 'recap';
+                    const container = document.getElementById('phaseContainer');
+                    this.render(container);
+                } else {
+                    // Next scenario
+                    const container = document.getElementById('phaseContainer');
+                    this.render(container);
+                }
+            }, 1500);
+        } else {
+            // Show which parameters are wrong
+            const errors = [];
+            if (!tempCorrect) errors.push(`🌡️ Temperature should be ${scenario.correctTemp.min}-${scenario.correctTemp.max}`);
+            if (!topPCorrect) errors.push(`🎯 Top-p should be ${scenario.correctTopP.min}-${scenario.correctTopP.max}`);
+            if (!repCorrect) errors.push(`🔁 Repetition should be ${scenario.correctRep.min}-${scenario.correctRep.max}`);
+            if (!presCorrect) errors.push(`✨ Presence should be ${scenario.correctPres.min}-${scenario.correctPres.max}`);
+            
+            feedback.style.background = 'rgba(239, 68, 68, 0.1)';
+            feedback.style.border = '2px solid rgba(239, 68, 68, 0.3)';
+            feedback.innerHTML = `
+                <div style="font-size: 16px; color: #ef4444; font-weight: 700; margin-bottom: 8px;">Not quite right!</div>
+                <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.7;">
+                    ${errors.map(e => `• ${e}`).join('<br>')}
+                    <br><br>💡 Think about the goal: "${scenario.goal}"
+                </div>
+            `;
+            SoundManager.play('error');
+        }
     },
     
     renderRecap(container) {
@@ -743,6 +978,45 @@ window.phaseSampling = {
                         </ul>
                     </div>
                     
+                    <!-- Journey Checkpoint -->
+                    <div style="padding: 24px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.08)); 
+                               border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 14px; margin-bottom: 24px;">
+                        <div style="text-align: center; margin-bottom: 16px;">
+                            <span style="font-size: 32px;">🗺️</span>
+                            <h3 style="font-size: 18px; color: #fbbf24; margin: 8px 0 0 0; font-weight: 700;">Journey Checkpoint</h3>
+                        </div>
+                        
+                        <div style="display: grid; gap: 14px;">
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #22c55e; border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: #22c55e; margin-bottom: 6px;">📍 Where You Are</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    You've completed the <strong>full LLM pipeline</strong>! From text to tokens, vectors to attention, training to generation, and now fine-tuned control with sampling parameters.
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--primary); border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 6px;">✅ What You Did</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    You mastered the 4 sampling parameters: Temperature (randomness), Top-p (token selection), Repetition penalty (avoid loops), and Presence penalty (topic diversity). These are the same controls used in ChatGPT, Claude, and all production LLMs!
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--secondary); border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px;">🎯 What's Next</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    <strong>The Finale:</strong> Reflect on your complete journey, see how all pieces fit together, and understand what separates your tiny model from billion-parameter giants like GPT-4. Celebrate what you've built!
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #fbbf24; border-radius: 6px;">
+                                <div style="font-size: 13px; font-weight: 600; color: #fbbf24; margin-bottom: 6px;">💡 Why It Matters</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    Sampling parameters are why LLMs feel "intelligent" and "creative." Without them, every response would be identical and deterministic. Temperature=0? Boring but accurate. Temperature=1.5? Creative but unpredictable. You now control the personality of AI!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Real World Usage -->
                     <div style="padding: 20px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.05)); 
                                border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 12px; margin-bottom: 32px;">
@@ -772,27 +1046,34 @@ window.phaseSampling = {
     },
     
     nextStep() {
-        const steps = ['intro', 'temperature', 'top_p', 'repetition', 'presence', 'recap'];
+        const steps = ['intro', 'temperature', 'top_p', 'repetition', 'presence', 'challenge', 'recap'];
         const currentIndex = steps.indexOf(this.currentStep);
         if (currentIndex < steps.length - 1) {
             this.currentStep = steps[currentIndex + 1];
             const container = document.getElementById('phaseContainer');
             this.render(container);
             SoundManager.play('click');
-            Game.addScore(20);
+            Game.addScore(40); // Parameter demos: +40 per completed
         }
     },
     
     completePhase() {
-        Game.addScore(150);
-        Game.completePhase(150, "You mastered sampling parameters!");
+        // Mark phase complete with fixed transition bonus (phase 6 = sampling phase)
+        if (!Game.state.phaseCompleted[6]) {
+            Game.state.phaseCompleted[6] = true;
+            Game.addScore(100); // Phase transition bonus (fixed)
+        }
         Game.saveState();
         SoundManager.play('levelUp');
+        
+        // Move to next phase after a delay
+        setTimeout(() => {
+            Game.nextPhase();
+        }, 500);
     },
     
     devSkipPhase() {
         if (!this.DEV_MODE) return;
-        Game.addScore(150);
         this.completePhase();
     }
 };

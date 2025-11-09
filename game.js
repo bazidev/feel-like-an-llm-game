@@ -368,10 +368,9 @@ const Game = {
         this.state.phaseCompleted[this.state.currentPhase] = true;
         this.saveState();
         
-        // Don't show modal for final phase (phase 6) - it has its own recap display
+        // Don't show modal for final phase (phase 7) - it has its own recap display
         if (this.state.currentPhase === this.state.totalPhases - 1) {
-            // Final phase - stop timer and just show sound
-            this.stopTimer();
+            // Final phase - timer already stopped in phase6-finale.js
             SoundManager.play('levelUp');
             console.log('🎉 Game Complete! Showing final recap on screen.');
         } else {
@@ -384,6 +383,17 @@ const Game = {
     // Scoring
     addScore(points) {
         this.state.score += points;
+        this.animateStatChange('scoreValue', this.state.score);
+        this.saveState();
+    },
+    
+    // Add score with penalty protection (only subtract if score > 0)
+    addScoreSafe(points) {
+        if (points < 0 && this.state.score === 0) {
+            // Don't go negative - just play error sound
+            return;
+        }
+        this.state.score = Math.max(0, this.state.score + points);
         this.animateStatChange('scoreValue', this.state.score);
         this.saveState();
     },
@@ -459,6 +469,7 @@ const Game = {
             { icon: '🎯', name: 'Attention', subtitle: 'Find connections' },
             { icon: '🧠', name: 'Train', subtitle: 'Learn patterns' },
             { icon: '✨', name: 'Generate', subtitle: 'Create text' },
+            { icon: '🎛️', name: 'Sampling', subtitle: 'Control generation' },
             { icon: '🎉', name: 'Complete', subtitle: 'Journey done!' }
         ];
         
@@ -710,6 +721,12 @@ const Game = {
     },
     
     pauseTimer() {
+        // Don't pause if game is complete (phase 7 = finale)
+        if (this.state.currentPhase >= 7) {
+            console.log('⏸️ Timer not paused - game is complete');
+            return;
+        }
+        
         if (this.timerInterval && this.state.startTime) {
             // Save elapsed time before pausing
             const now = Date.now();
@@ -729,8 +746,9 @@ const Game = {
     },
     
     resumeTimer() {
-        // Only resume if we have a game in progress (phase > 0) and timer isn't already running
-        if (!this.timerInterval && this.state.currentPhase > 0) {
+        // Only resume if we have a game in progress (phase > 0 and < 7) and timer isn't already running
+        // Don't resume if game is complete (phase 7 = finale)
+        if (!this.timerInterval && this.state.currentPhase > 0 && this.state.currentPhase < 7) {
             // Resume timer from where we left off
             this.state.startTime = Date.now();
             this.saveState();
@@ -741,6 +759,8 @@ const Game = {
             }, 1000);
             
             console.log('▶️ Timer resumed');
+        } else if (this.state.currentPhase >= 7) {
+            console.log('▶️ Timer not resumed - game is complete');
         }
     },
     
@@ -1080,7 +1100,16 @@ const Game = {
     saveToScoreboard() {
         const records = this.getScoreboardRecords();
         
-        const elapsedSeconds = Math.floor((Date.now() - this.state.startTime) / 1000);
+        // Calculate total elapsed time correctly
+        let totalElapsed = 0;
+        if (this.state.startTime) {
+            const currentSessionElapsed = Date.now() - this.state.startTime;
+            totalElapsed = (this.state.elapsedTimeBeforePause || 0) + currentSessionElapsed;
+        } else if (this.state.elapsedTimeBeforePause) {
+            totalElapsed = this.state.elapsedTimeBeforePause;
+        }
+        
+        const elapsedSeconds = Math.floor(totalElapsed / 1000);
         const rating = this.calculateRating(this.state.score, elapsedSeconds, this.state.tokensProcessed);
         
         const record = {

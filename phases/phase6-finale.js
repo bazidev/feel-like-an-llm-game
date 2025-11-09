@@ -46,6 +46,16 @@ window.phase6 = {
         // 🎉 PLAY VICTORY SOUND FOR GAME COMPLETION!
         SoundManager.play('victory');
         
+        // STOP THE TIMER - Game is complete!
+        Game.stopTimer();
+        
+        // Award game completion bonus - NEW SCORING SYSTEM
+        if (!Game.state.phaseCompleted[7]) {
+            Game.state.phaseCompleted[7] = true;
+            Game.addScore(500); // Game completion bonus!
+            Game.saveState();
+        }
+        
         // Save to local scoreboard
         const scoreboardResult = Game.saveToScoreboard();
         const ratingData = Game.getRatingGrade(scoreboardResult.record.rating);
@@ -104,45 +114,109 @@ window.phase6 = {
                         <h3 style="font-size: 18px; color: var(--primary); margin-bottom: 16px; text-align: center;">📈 Your Stats</h3>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; text-align: center;">
                             <div>
-                                <div style="font-size: 32px; color: var(--primary); font-weight: 700; margin-bottom: 6px;">${Game.state.score}</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">Total Score</div>
-                            </div>
-                            <div>
                                 <div style="font-size: 32px; color: var(--primary); font-weight: 700; margin-bottom: 6px;">${Game.getElapsedTime()}</div>
                                 <div style="font-size: 12px; color: var(--text-secondary);">Time Spent</div>
                             </div>
                             <div>
-                                <div style="font-size: 32px; color: var(--secondary); font-weight: 700; margin-bottom: 6px;">${Game.state.tokensProcessed}</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">Tokens Processed</div>
+                                <div style="font-size: 32px; color: var(--secondary); font-weight: 700; margin-bottom: 6px;">${Game.state.score}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Total Score</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 32px; color: white; font-weight: 700; margin-bottom: 6px;">#${scoreboardResult.rank}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Rank</div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Rating & Rank -->
-                    <div style="padding: 24px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.1)); 
-                               border: 3px solid ${ratingData.color}; border-radius: 14px; margin-bottom: 32px; text-align: center;">
-                        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 14px;">Your Performance Rating</div>
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 28px; margin-bottom: 14px;">
-                            <div>
-                                <div style="font-size: 48px; font-weight: 700; color: ${ratingData.color};">
-                                    ${ratingData.grade}
-                                </div>
-                                <div style="font-size: 14px; color: ${ratingData.color}; font-weight: 600; margin-top: 4px;">
-                                    ${ratingData.label}
-                                </div>
+                    <!-- Hidden Minimal Score Card for Screenshot (Social Media Ready) -->
+                    <div id="shareableScoreCard" style="position: fixed; left: -9999px; top: -9999px; width: 600px; 
+                               padding: 48px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+                               border-radius: 24px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);">
+                        
+                        <!-- Branding Header -->
+                        <div style="text-align: center; margin-bottom: 32px;">
+                            <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
+                            <div style="font-size: 32px; font-weight: 700; background: linear-gradient(135deg, #00d4ff, #bf00ff); 
+                                       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px;">
+                                I Built an LLM!
                             </div>
-                            <div style="width: 2px; height: 60px; background: ${ratingData.color}; opacity: 0.3;"></div>
-                            <div>
-                                <div style="font-size: 42px; font-weight: 700; color: white;">
-                                    #${scoreboardResult.rank}
-                                </div>
-                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
-                                    Scoreboard Rank
-                                </div>
+                            <div style="font-size: 14px; color: #94a3b8; letter-spacing: 0.5px;">
+                                from scratch - no frameworks required
                             </div>
                         </div>
-                        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
-                            <strong style="color: ${ratingData.color};">Final Rating: ${scoreboardResult.record.rating}</strong>
+                        
+                        <!-- Player Name -->
+                        <div style="text-align: center; margin-bottom: 32px; padding: 20px; 
+                                   background: rgba(0, 212, 255, 0.08); border: 2px solid rgba(0, 212, 255, 0.3); 
+                                   border-radius: 16px;">
+                            <div style="font-size: 28px; font-weight: 700; color: #00d4ff;">
+                                ${Game.state.modelName || 'My AI Model'}
+                            </div>
+                        </div>
+                        
+                        <!-- Stats Grid -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px;">
+                            <div style="text-align: center; padding: 16px; background: rgba(255, 255, 255, 0.03); 
+                                       border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">⏱️ TIME</div>
+                                <div style="font-size: 28px; font-weight: 700; color: white;">${Game.getElapsedTime()}</div>
+                            </div>
+                            <div style="text-align: center; padding: 16px; background: rgba(191, 0, 255, 0.08); 
+                                       border-radius: 12px; border: 1px solid rgba(191, 0, 255, 0.3);">
+                                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">💎 SCORE</div>
+                                <div style="font-size: 28px; font-weight: 700; color: #bf00ff;">${Game.state.score}</div>
+                            </div>
+                            <div style="text-align: center; padding: 16px; background: rgba(0, 212, 255, 0.08); 
+                                       border-radius: 12px; border: 1px solid rgba(0, 212, 255, 0.3);">
+                                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">🏆 RANK</div>
+                                <div style="font-size: 28px; font-weight: 700; color: #00d4ff;">#${scoreboardResult.rank}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div style="text-align: center; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="font-size: 13px; color: #64748b;">
+                                Play at <span style="color: #00d4ff; font-weight: 600;">feel-like-an-llm.dev</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Score Card for Screenshot -->
+                    <div id="scoreCard" style="padding: 24px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(191, 0, 255, 0.08)); 
+                               border: 2px solid rgba(0, 212, 255, 0.4); border-radius: 14px; margin-bottom: 24px; text-align: center;">
+                        <div style="font-size: 16px; color: var(--text-secondary); margin-bottom: 16px;">🎉 Congratulations!</div>
+                        <div style="font-size: 28px; font-weight: 700; color: var(--primary); margin-bottom: 8px;">
+                            ${Game.state.modelName || 'My AI Model'}
+                        </div>
+                        <div style="display: flex; justify-content: center; gap: 40px; margin-top: 20px;">
+                            <div>
+                                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 6px;">⏱️ Time</div>
+                                <div style="font-size: 24px; font-weight: 700; color: white;">${Game.getElapsedTime()}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 6px;">🎯 Score</div>
+                                <div style="font-size: 24px; font-weight: 700; color: var(--secondary);">${Game.state.score}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 6px;">🏆 Rank</div>
+                                <div style="font-size: 24px; font-weight: 700; color: var(--primary);">#${scoreboardResult.rank}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Share Score Buttons -->
+                    <div style="padding: 20px; background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 12px; margin-bottom: 32px;">
+                        <h3 style="font-size: 16px; color: var(--primary); margin-bottom: 16px; text-align: center;">📤 Share Your Score</h3>
+                        <div style="display: flex; gap: 12px; justify-content: center;">
+                            <button id="copyTextBtn" class="btn-secondary" style="padding: 12px 24px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                                📋 Copy as Text
+                            </button>
+                            <button id="copyImageBtn" class="btn-primary" style="padding: 12px 24px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                                📸 Copy as Image
+                            </button>
+                        </div>
+                        <div id="shareMessage" style="margin-top: 12px; font-size: 13px; text-align: center; color: var(--success); opacity: 0; transition: opacity 0.3s;">
+                            ✓ Copied to clipboard!
                         </div>
                     </div>
                     
@@ -165,6 +239,22 @@ window.phase6 = {
                 btn.addEventListener('click', () => {
                     console.log('Celebration Next button clicked!');
                     window.phase6.nextStep();
+                });
+            }
+            
+            // Copy as Text button
+            const copyTextBtn = document.getElementById('copyTextBtn');
+            if (copyTextBtn) {
+                copyTextBtn.addEventListener('click', () => {
+                    window.phase6.copyScoreAsText(scoreboardResult, ratingData);
+                });
+            }
+            
+            // Copy as Image button
+            const copyImageBtn = document.getElementById('copyImageBtn');
+            if (copyImageBtn) {
+                copyImageBtn.addEventListener('click', () => {
+                    window.phase6.copyScoreAsImage();
                 });
             }
         }, 0);
@@ -351,9 +441,9 @@ window.phase6 = {
                                     </tr>
                                     <tr>
                                         <td style="padding: 12px; font-weight: 600; color: #f59e0b;">GPT-4</td>
-                                        <td style="padding: 12px; text-align: right; font-weight: 600; color: #f59e0b;">~1.76 Trillion</td>
+                                        <td style="padding: 12px; text-align: right; font-weight: 600; color: #f59e0b;">~1.76 Trillion <em style="font-size: 11px; opacity: 0.8;">(estimated)</em></td>
                                         <td style="padding: 12px; text-align: right; font-weight: 600; color: #f59e0b;">100,000</td>
-                                        <td style="padding: 12px; text-align: right; font-weight: 600; color: #f59e0b;">~13 Trillion tokens</td>
+                                        <td style="padding: 12px; text-align: right; font-weight: 600; color: #f59e0b;">~13 Trillion tokens <em style="font-size: 11px; opacity: 0.8;">(estimated)</em></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -533,5 +623,182 @@ window.phase6 = {
                 </div>
             </div>
         `;
+    },
+    
+    // Copy score as text
+    copyScoreAsText(scoreboardResult, ratingData) {
+        const modelName = Game.state.modelName || 'My AI Model';
+        const score = Game.state.score;
+        const time = Game.getElapsedTime();
+        const rank = scoreboardResult.rank;
+        const generatedText = Game.state.generatedText;
+        
+        // Get the game URL - adjust this to your actual game URL
+        const gameURL = window.location.href.split('?')[0]; // Remove any query params
+        
+        const textToShare = `🎉 I just completed "Feel Like an LLM"!
+
+🤖 Model: ${modelName}
+⏱️ Time: ${time}
+🎯 Score: ${score} points
+🏆 Rank: #${rank}
+
+✨ My AI Generated: "${generatedText}"
+
+Try it yourself: ${gameURL}`;
+
+        // Copy to clipboard
+        navigator.clipboard.writeText(textToShare).then(() => {
+            this.showShareMessage();
+            if (window.SoundManager) {
+                SoundManager.play('success');
+            }
+        }).catch(err => {
+            console.error('Failed to copy text:', err);
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = textToShare;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                this.showShareMessage();
+                if (window.SoundManager) {
+                    SoundManager.play('success');
+                }
+            } catch (err) {
+                console.error('Fallback: Failed to copy', err);
+                alert('Failed to copy to clipboard');
+            }
+            document.body.removeChild(textArea);
+        });
+    },
+    
+    // Copy score as image
+    async copyScoreAsImage() {
+        const shareableCard = document.getElementById('shareableScoreCard');
+        if (!shareableCard) {
+            console.error('Shareable score card element not found');
+            return;
+        }
+        
+        try {
+            // Use html2canvas library if available
+            if (typeof html2canvas === 'undefined') {
+                // If html2canvas is not loaded, try to load it dynamically
+                await this.loadHtml2Canvas();
+            }
+            
+            // Show loading indicator
+            const copyImageBtn = document.getElementById('copyImageBtn');
+            if (copyImageBtn) {
+                copyImageBtn.textContent = '⏳ Capturing...';
+                copyImageBtn.disabled = true;
+            }
+            
+            // Temporarily move the card into view for rendering
+            shareableCard.style.position = 'absolute';
+            shareableCard.style.left = '0';
+            shareableCard.style.top = '0';
+            shareableCard.style.zIndex = '-1';
+            shareableCard.style.opacity = '0';
+            
+            // Wait a moment for the DOM to update
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Generate canvas from the hidden shareable card
+            const canvas = await html2canvas(shareableCard, {
+                backgroundColor: null,
+                scale: 2, // Higher quality (2x resolution)
+                logging: false,
+                width: 600,
+                height: shareableCard.scrollHeight
+            });
+            
+            // Hide the card again
+            shareableCard.style.position = 'fixed';
+            shareableCard.style.left = '-9999px';
+            shareableCard.style.top = '-9999px';
+            shareableCard.style.zIndex = '';
+            shareableCard.style.opacity = '';
+            
+            // Convert canvas to blob
+            canvas.toBlob(async (blob) => {
+                try {
+                    // Copy to clipboard
+                    await navigator.clipboard.write([
+                        new ClipboardItem({
+                            'image/png': blob
+                        })
+                    ]);
+                    
+                    this.showShareMessage('✓ Image copied! Ready to share 🎉');
+                    if (window.SoundManager) {
+                        SoundManager.play('success');
+                    }
+                } catch (err) {
+                    console.error('Failed to copy image to clipboard:', err);
+                    // Fallback: download the image instead
+                    const url = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.download = `llm-score-${Game.state.modelName || 'achievement'}-${Date.now()}.png`;
+                    link.href = url;
+                    link.click();
+                    
+                    this.showShareMessage('✓ Image downloaded!');
+                    if (window.SoundManager) {
+                        SoundManager.play('success');
+                    }
+                }
+                
+                // Reset button
+                if (copyImageBtn) {
+                    copyImageBtn.textContent = '📸 Copy as Image';
+                    copyImageBtn.disabled = false;
+                }
+            }, 'image/png');
+            
+        } catch (err) {
+            console.error('Failed to capture screenshot:', err);
+            alert('Failed to capture screenshot. Make sure html2canvas is loaded.');
+            
+            // Reset button
+            const copyImageBtn = document.getElementById('copyImageBtn');
+            if (copyImageBtn) {
+                copyImageBtn.textContent = '📸 Copy as Image';
+                copyImageBtn.disabled = false;
+            }
+        }
+    },
+    
+    // Load html2canvas library dynamically
+    loadHtml2Canvas() {
+        return new Promise((resolve, reject) => {
+            if (typeof html2canvas !== 'undefined') {
+                resolve();
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Failed to load html2canvas'));
+            document.head.appendChild(script);
+        });
+    },
+    
+    // Show share success message
+    showShareMessage(message = '✓ Copied to clipboard!') {
+        const shareMessage = document.getElementById('shareMessage');
+        if (shareMessage) {
+            shareMessage.textContent = message;
+            shareMessage.style.opacity = '1';
+            
+            setTimeout(() => {
+                shareMessage.style.opacity = '0';
+            }, 3000);
+        }
     }
 };

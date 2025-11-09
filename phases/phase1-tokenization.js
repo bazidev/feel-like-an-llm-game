@@ -402,7 +402,7 @@ window.phase1 = {
                 </div>
             `;
             
-            Game.addScore(20);
+            Game.addScore(25); // Examples: +25 per correct (no penalties!)
             SoundManager.play('correct'); // Use 'correct' for quick quiz answers
             
             // Move to next challenge
@@ -427,7 +427,7 @@ window.phase1 = {
                 </div>
             `;
             
-            Game.addScore(-5);
+            // NO PENALTY in examples/challenges (learning phase!)
             SoundManager.play('wrong'); // Use 'wrong' for quiz mistakes
             
             // Re-enable after delay
@@ -555,13 +555,6 @@ window.phase1 = {
                                                        padding: 20px; background: rgba(0, 245, 255, 0.05); border-radius: 10px; 
                                                        border: 1px solid rgba(0, 245, 255, 0.2); margin-bottom: 14px; min-height: 160px;
                                                        position: relative;">
-                            <!-- Pointer positioned to point at first word in text -->
-                            ${this.showTutorial ? `
-                            <div id="tutorialPointer" style="position: absolute; left: 10px; top: 18px; 
-                                       animation: pointerBounce 1.5s ease-in-out infinite; z-index: 1000;">
-                                <span style="font-size: 48px;">👉</span>
-                            </div>
-                            ` : ''}
                             ${this.makeClickableText(this.currentText)}
                         </div>
                         
@@ -692,24 +685,39 @@ window.phase1 = {
                 `;
                 interactiveText.parentNode.insertBefore(tutorialBox, interactiveText);
                 
-                // Add pointer to the text area pointing at first word
-                const pointer = document.createElement('div');
-                pointer.id = 'tutorialPointer';
-                pointer.style.cssText = `position: absolute; left: 10px; top: 18px; 
-                                        animation: pointerBounce 1.5s ease-in-out infinite; z-index: 1000;`;
-                pointer.innerHTML = '<span style="font-size: 48px;">👉</span>';
-                interactiveText.appendChild(pointer);
+                // Add blue pulsing animation to first word (instead of hand pointer)
+                setTimeout(() => {
+                    const firstChar = interactiveText.querySelector('.token-char[data-idx="0"]');
+                    if (firstChar) {
+                        // Find the end of the first word
+                        let endIdx = 0;
+                        const chars = interactiveText.querySelectorAll('.token-char');
+                        for (let i = 0; i < chars.length; i++) {
+                            if (chars[i].textContent.trim() === '') break; // Stop at first space
+                            endIdx = i;
+                        }
+                        
+                        // Apply blue pulsing animation to all characters of first word
+                        for (let i = 0; i <= endIdx; i++) {
+                            if (chars[i]) {
+                                chars[i].style.animation = 'blueHighlight 1.5s ease-in-out infinite';
+                                chars[i].style.background = 'rgba(0, 212, 255, 0.3)';
+                                chars[i].style.boxShadow = '0 0 10px rgba(0, 212, 255, 0.5)';
+                                chars[i].classList.add('first-word-highlight');
+                            }
+                        }
+                    }
+                }, 100);
             }
             
             return;
         }
         
         // Progressive speed increase with different tiers
-        // 0-10%: Normal (1x)
-        // 10-20%: Fast (3x)
-        // 20-80%: SUPER FAST (instant, no animation)
-        // 80-85%: Fast (3x)
-        // 85-90%: Normal (1x)
+        // 0-2%: Normal (1x)
+        // 2-7%: Fast (3x)
+        // 7-85%: SUPER FAST (instant, no animation)
+        // 85-90%: Fast (3x)
         // 90-100%: User does it!
         let highlightDelay, flashDelay, nextDelay;
         
@@ -723,21 +731,18 @@ window.phase1 = {
         } else {
             let speedMultiplier;
             
-            if (percentComplete < 10) {
-                // 0-10%: Normal
+            if (percentComplete < 2) {
+                // 0-2%: Normal
                 speedMultiplier = 1;
-            } else if (percentComplete < 20) {
-                // 10-20%: Fast
+            } else if (percentComplete < 7) {
+                // 2-7%: Fast
                 speedMultiplier = 3;
-            } else if (percentComplete < 80) {
-                // 20-80%: SUPER FAST - will skip animation below
-                speedMultiplier = 100; // Not actually used, just for logging
             } else if (percentComplete < 85) {
-                // 80-85%: Fast
-                speedMultiplier = 3;
+                // 7-85%: SUPER FAST - will skip animation below
+                speedMultiplier = 100; // Not actually used, just for logging
             } else if (percentComplete < 90) {
-                // 85-90%: Normal
-                speedMultiplier = 1;
+                // 85-90%: Fast
+                speedMultiplier = 3;
             } else {
                 // 90-100%: User's turn - shouldn't reach here
                 speedMultiplier = 1;
@@ -758,10 +763,10 @@ window.phase1 = {
         const token = this.correctTokens[currentIndex];
         const tokenLength = token.length;
         
-        // SUPER FAST MODE (20-80%): Skip animation entirely, just add tokens instantly
-        if (percentComplete >= 20 && percentComplete < 80) {
+        // SUPER FAST MODE (7-85%): Skip animation entirely, just add tokens instantly
+        if (percentComplete >= 7 && percentComplete < 85) {
             // Play whoosh sound on entering this phase
-            if (percentComplete >= 20 && percentComplete < 20.5) {
+            if (percentComplete >= 7 && percentComplete < 7.5) {
                 SoundManager.play('whoosh'); // Fast whoosh sound for super speed!
             }
             
@@ -889,14 +894,14 @@ window.phase1 = {
         this.isSelecting = true;
         this.updateSelectionDisplay();
         
-        // Remove pointer when user starts selecting
-        const pointer = document.getElementById('tutorialPointer');
-        if (pointer) {
-            pointer.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => {
-                pointer.remove();
-            }, 300);
-        }
+        // Remove blue highlight animation from first word when user starts selecting
+        const highlightedChars = document.querySelectorAll('.first-word-highlight');
+        highlightedChars.forEach(char => {
+            char.style.animation = 'none';
+            char.style.background = 'transparent';
+            char.style.boxShadow = 'none';
+            char.classList.remove('first-word-highlight');
+        });
         
         // Dismiss tutorial on first interaction
         if (this.showTutorial) {
@@ -974,7 +979,7 @@ window.phase1 = {
             this.correctAnswers++;
             this.showFeedback('✓ Correct!', 'success');
             SoundManager.play('coin'); // Use coin for token collection!
-            Game.addScore(10);
+            Game.addScore(15); // Mini-game: +15 per correct token
             
             setTimeout(() => {
                 // Add to validated tokens
@@ -1021,7 +1026,7 @@ window.phase1 = {
             this.wrongAnswers++;
             this.showFeedback(`✗ Wrong! Expected: "${nextExpectedToken === ' ' ? '␣' : nextExpectedToken}"`, 'error');
             SoundManager.play('wrong'); // Use 'wrong' for wrong answers
-            Game.addScore(-10); // Penalty for wrong answer
+            Game.addScoreSafe(-10); // Mini-game penalty (only if score > 0)
             
             setTimeout(() => {
                 this.clearSelection();
@@ -1192,11 +1197,34 @@ window.phase1 = {
                     tokens.push(parts[0]);
                     tokens.push("'" + parts[1]);
             } else {
-                // Check for suffixes
+                // Words that should NOT be split (complete words, not derived forms)
+                    const doNotSplit = [
+                        // -ing words that are NOT verb+ing
+                        'thing', 'something', 'nothing', 'everything', 'anything',
+                        'king', 'ring', 'sing', 'bring', 'string', 'spring', 'wing',
+                        'morning', 'evening', 'during', 'amazing', 'interesting',
+                        'running', 'eating', 'coding', 'winning', 'cooking',
+                        // -ed words that are NOT verb+ed
+                        'red', 'bed', 'fed', 'led', 'shed', 'wed',
+                        'said', 'paid', 'laid', 'made', 'trade',
+                        // Other complete words
+                        'business', 'witness', 'fitness', 'darkness'
+                    ];
+                    
+                    const lowerWord = word.toLowerCase();
+                    
+                    // Don't split if it's in the do-not-split list
+                    if (doNotSplit.includes(lowerWord)) {
+                        tokens.push(word);
+                    } else {
+                        // Check for suffixes only on words where it makes sense
                     const suffixes = ['ing', 'ed', 'ness'];
                     let foundSuffix = false;
                     for (const suffix of suffixes) {
-                        if (word.endsWith(suffix) && word.length > suffix.length) {
+                            // Only split if: word ends with suffix AND root is at least 3 chars
+                            // This splits: "play+ing", "cook+ed", "happy+ness"
+                            // But keeps: "thing", "red", "business" (too short or in exception list)
+                            if (word.endsWith(suffix) && word.length > suffix.length + 2) {
                             tokens.push(word.substring(0, word.length - suffix.length));
                             tokens.push(suffix);
                             foundSuffix = true;
@@ -1205,6 +1233,7 @@ window.phase1 = {
                     }
                     if (!foundSuffix) {
                         tokens.push(word);
+                    }
                     }
                 }
             }
@@ -1548,13 +1577,8 @@ window.phase1 = {
                     if (!Game.state.phaseCompleted[1]) {
                         Game.state.phaseCompleted[1] = true;
                         
-                        // Calculate accuracy-based completion bonus
-                        const totalAttempts = this.correctAnswers + this.wrongAnswers;
-                        const accuracy = totalAttempts > 0 ? (this.correctAnswers / totalAttempts) : 1;
-                        const baseBonus = 100;
-                        const accuracyBonus = Math.floor(baseBonus * accuracy); // 70% accuracy = 70 points, 100% = 100 points
-                        
-                        Game.addScore(accuracyBonus);
+                        // Fixed transition bonus: +100 points
+                        Game.addScore(100); // Phase transition bonus
                         Game.saveState();
                     }
                     Game.nextPhase();
