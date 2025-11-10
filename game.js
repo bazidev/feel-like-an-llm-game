@@ -348,15 +348,13 @@ const Game = {
             const fromPhase = this.state.currentPhase;
             const toPhase = this.state.currentPhase + 1;
             
-            // Show transition overlay, then advance
-            this.showPhaseTransition(fromPhase, toPhase, () => {
-                this.state.currentPhase = toPhase;
-                console.log('✅ Advanced to phase:', this.state.currentPhase);
-                this.saveState();
-                this.renderCurrentPhase();
-                this.updateUI();
-                SoundManager.play('levelup');
-            });
+            // Advance to next phase directly (no transition overlay)
+            this.state.currentPhase = toPhase;
+            console.log('✅ Advanced to phase:', this.state.currentPhase);
+            this.saveState();
+            this.renderCurrentPhase();
+            this.updateUI();
+            SoundManager.play('levelup');
         } else {
             console.warn('⚠️ Cannot advance phase!');
             console.warn('   Reason: Phase not completed or at end');
@@ -760,12 +758,12 @@ const Game = {
                 <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; max-width: 850px;">
                     <div style="width: 100%;">
                         
-                        <h1 style="font-size: 32px; text-align: center; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                        <h1 style="font-size: 24px; text-align: center; margin-bottom: 4px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
                                    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
                             ✓ Phase ${phaseNum} Complete: ${phaseData.title}
                         </h1>
                         
-                        <p style="font-size: 15px; color: var(--text-secondary); text-align: center; margin-bottom: 32px;">
+                        <p style="font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 25px;">
                             ${phaseData.subtitle}
                         </p>
                         

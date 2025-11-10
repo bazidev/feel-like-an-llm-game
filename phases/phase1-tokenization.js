@@ -47,7 +47,6 @@ window.phase1 = {
     challenges: [
         {
             word: "playing",
-            question: "Challenge 1: How should this tokenize?",
             explanation: "<strong style='color: var(--primary);'>Rule:</strong> Common suffixes like -ing, -ed, -ness typically split into separate tokens",
             options: [
                 { tokens: ["playing"], correct: false, why: "❌ Too large - common suffixes like '-ing' split separately" },
@@ -57,7 +56,6 @@ window.phase1 = {
         },
         {
             word: "Hello World",
-            question: "Challenge 2: How does this tokenize?",
             explanation: "<strong style='color: var(--primary);'>Rule:</strong> Spaces attach to the word that follows them (most common pattern in training data)",
             options: [
                 { tokens: ["Hello World"], correct: false, why: "❌ Must split into tokens! 'Hello World' is two separate concepts." },
@@ -67,7 +65,6 @@ window.phase1 = {
         },
         {
             word: "I'm",
-            question: "Challenge 3: How do contractions split?",
             explanation: "<strong style='color: var(--primary);'>Rule:</strong> Contractions split at the apostrophe, keeping it with the suffix",
             options: [
                 { tokens: ["I'm"], correct: false, why: "❌ Contractions typically split - 'I am' became 'I'm', so it splits back" },
@@ -77,7 +74,6 @@ window.phase1 = {
         },
         {
             word: "unhappiness",
-            question: "Challenge 4: How do prefixes and suffixes combine?",
             explanation: "<strong style='color: var(--primary);'>Rule:</strong> Both prefixes (un-, re-) and suffixes (-ness, -ment) can split",
             options: [
                 { tokens: ["unhappiness"], correct: false, why: "❌ Too large - both 'un-' (prefix) and '-ness' (suffix) are common patterns that split" },
@@ -87,7 +83,6 @@ window.phase1 = {
         },
         {
             word: "rocks!",
-            question: "Challenge 5: What about punctuation?",
             explanation: "<strong style='color: var(--primary);'>Rule:</strong> Punctuation marks are separate tokens",
             options: [
                 { tokens: ["rocks!"], correct: false, why: "❌ Punctuation splits separately - it has its own meaning!" },
@@ -307,7 +302,7 @@ window.phase1 = {
                     </div>
                     
                     <div class="hint-section">
-                        <h4>Tokenization Rules</h4>
+                        <h4>📋 Tokenization Rules</h4>
                         <p><strong>1. Common suffixes split:</strong> -ing, -ed, -ness<br>
                         <strong>2. Spaces attach to following word</strong><br>
                         <strong>3. Punctuation separates</strong><br>
@@ -316,7 +311,7 @@ window.phase1 = {
                     
                     <div style="padding: 12px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px;">
                         <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0; line-height: 1.6;">
-                            <strong>Reality Check:</strong> You learned these patterns from millions of text examples. You don't "know" what "playing" means - you just pattern-match that "-ing" usually splits.
+                            <strong>⚡ Reality Check:</strong> The LLM learns these patterns from millions of text examples. It doesn't "know" what "playing" means - it just pattern-match that "-ing" usually splits.
                         </p>
                     </div>
                 </div>
@@ -329,7 +324,6 @@ window.phase1 = {
                             <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">
                                 ${this.currentExample + 1} of ${this.challenges.length}
                             </p>
-                            <h3 style="font-size: 15px; color: var(--text-primary); margin-bottom: 10px;">${challenge.question}</h3>
                             <div style="font-size: 12px; color: rgba(0, 245, 255, 0.9); padding: 10px 16px; 
                                         background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 245, 255, 0.05)); 
                                         border: 2px solid rgba(0, 245, 255, 0.3); border-radius: 10px; 
@@ -466,7 +460,7 @@ window.phase1 = {
                     </div>
                     
                     <div class="phase-description">
-                            Watch as the system tokenizes ~70% automatically, then you'll complete the rest!
+                            Watch as the system tokenizes ~90% of your data automatically, then you'll complete the rest!
                     </div>
                     
                     <div class="hint-section" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(251, 191, 36, 0.05)); padding: 12px;">
@@ -1014,7 +1008,7 @@ window.phase1 = {
             }, 500);
         } else {
             this.wrongAnswers++;
-            this.showFeedback(`✗ Wrong! Expected: "${nextExpectedToken === ' ' ? '␣' : nextExpectedToken}"`, 'error');
+            this.showFeedback(`Wrong! Expected: "${nextExpectedToken === ' ' ? '␣' : nextExpectedToken}"`, 'error');
             SoundManager.play('wrong'); // Use 'wrong' for wrong answers
             Game.addScoreSafe(-10); // Mini-game penalty (only if score > 0)
             
@@ -1319,12 +1313,12 @@ window.phase1 = {
     
     renderRecap(container) {
         container.innerHTML = `
-            <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: hidden;">
+            <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;">
                 <div style="max-width: 950px; width: 100%;">
                     
                     <!-- ANIMATED SCALE COMPARISON -->
                     <div style="margin: 20px 0; padding: 24px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.05)); 
-                               border: 3px solid rgba(139, 92, 246, 0.3); border-radius: 16px; overflow: hidden;">
+                               border: 3px solid rgba(139, 92, 246, 0.3); border-radius: 16px; overflow: visible;">
                         <div style="text-align: center; margin-bottom: 20px;">
                             <h3 style="font-size: 20px; color: #a855f7; margin-bottom: 8px; font-weight: 700;">
                                 🔬 Scale Comparison: Your Model vs. Real LLMs
@@ -1333,7 +1327,7 @@ window.phase1 = {
                                 Watch your vocabulary shrink as we compare it to production models
                             </p>
                         </div>
-                        <div id="tokenScaleAnimation" style="height: 420px; max-height: 420px; overflow: hidden;"></div>
+                        <div id="tokenScaleAnimation" style="min-height: 380px; max-height: 380px; overflow: visible;"></div>
                     </div>
                     
                     <div style="text-align: center; margin-top: 20px;">
@@ -1384,7 +1378,7 @@ window.phase1 = {
         const phaseData = {
             title: 'Tokenization',
             subtitle: `You broke down your training text into ${Game.state.tokens.length} processable tokens`,
-            whereYouAre: 'Your text is now split into tokens - the basic building blocks that neural networks can process. Each word, punctuation mark, and space has become a discrete unit.',
+            whereYouAre: 'Your text is now split into tokens - the basic building blocks that neural networks can process. Each word, punctuation mark, and space has become a discrete unit with an ID and a position.',
             whatYouDid: `You successfully tokenized your training data into ${Game.state.tokens.length} tokens using space-attached tokenization (mimicking real LLM behavior). You learned that spaces attach to following words, suffixes are split ("-ing", "-ed"), and each token gets a unique ID.`,
             whatsNext: '<strong>Embeddings:</strong> Convert each token into a numerical vector (embedding). These vectors capture semantic meaning - similar words get similar vectors, allowing the model to understand relationships.',
             whyItMatters: 'Tokenization is the FIRST step of every LLM! Without it, AI cannot process text. Good tokenization leads to efficient learning. GPT uses ~50K tokens to handle all of English + code + multilingual text efficiently.',

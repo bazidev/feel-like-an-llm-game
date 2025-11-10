@@ -28,7 +28,7 @@ window.phase2 = {
                 { word: "fish", vector: [0.7, 0.3], color: "#f59e0b", targetGroup: "group2" },
                 { word: "bones", vector: [0.75, 0.35], color: "#ec4899", targetGroup: "group2" }
             ],
-            hint: "💡 Count the patterns! 'cat' and 'dog' BOTH appear 3 times at START (after The/A/My). 'fish' and 'bones' BOTH appear 3 times at END (after verbs).",
+            hint: "Count the patterns! 'cat' and 'dog' BOTH appear 3 times at START (after The/A/My). 'fish' and 'bones' BOTH appear 3 times at END (after verbs).",
             correctPairs: [["cat", "dog"], ["fish", "bones"]],
             showData: true
         },
@@ -79,7 +79,8 @@ window.phase2 = {
     // Canvas state for examples
     canvasState: {
         dragging: null,
-        positions: {}
+        positions: {},
+        exampleCompleted: {} // Track which examples have been completed
     },
     
     render(container) {
@@ -165,7 +166,7 @@ window.phase2 = {
     renderConcept2(container) {
         container.innerHTML = `
             <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px;">
-                <div style="max-width: 950px; width: 100%;">
+                <div style="max-width: 1000px; width: 100%;">
                     
                     <h1 style="font-size: 28px; margin-bottom: 12px; text-align: center; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
                                -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
@@ -175,29 +176,59 @@ window.phase2 = {
                         Vectors capture patterns from training data
                     </p>
                     
-                    <!-- Real LLM Concept - Compact Version -->
-                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.05)); 
-                               border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                    <!-- Rules Card -->
+                    <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(191, 0, 255, 0.05)); 
+                               border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 14px; padding: 18px; margin-bottom: 16px; text-align: left;">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                            <span style="font-size: 22px;">🧠</span>
-                            <h3 style="font-size: 16px; color: #a855f7; margin: 0;">Real LLM: Embedding Dimensions</h3>
+                            <span style="font-size: 22px;">📋</span>
+                            <h3 style="font-size: 17px; color: var(--primary); margin: 0;">Embedding rules (for this game)</h3>
                         </div>
-                        <div style="font-size: 13px; line-height: 1.7; color: var(--text-secondary);">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
-                                <div style="padding: 12px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; text-align: center;">
-                                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Your Model</div>
-                                    <div style="font-size: 20px; font-weight: 700; color: var(--primary);">2D</div>
-                                    <div style="font-size: 10px; color: var(--text-secondary);">Simple visualization</div>
-                                </div>
-                                <div style="padding: 12px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; text-align: center;">
-                                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">GPT-4</div>
-                                    <div style="font-size: 20px; font-weight: 700; color: #a855f7;">~18,000D</div>
-                                    <div style="font-size: 10px; color: var(--text-secondary);">Captures nuances</div>
-                                </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div style="padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
+                                <div style="font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 3px;">1. Similar context = similar vectors</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">Tokens appearing in similar positions get close vectors</div>
                             </div>
-                            <p style="margin: 0; padding: 12px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border-left: 3px solid #fbbf24; font-size: 12px;">
-                                💡 More dimensions = more patterns captured (grammar, context, topic, style, sentiment, etc.)
-                            </p>
+                            <div style="padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
+                                <div style="font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 3px;">2. Group by usage patterns</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">Not by meaning! "cat" + "dog" both appear after "The"</div>
+                            </div>
+                            <div style="padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
+                                <div style="font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 3px;">3. Distance = similarity</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">Closer vectors in space = more similar usage</div>
+                            </div>
+                            <div style="padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
+                                <div style="font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 3px;">4. Simple 2D vectors</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">We use [x, y] format for visualization</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Reality Check -->
+                    <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05)); 
+                               border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 14px; padding: 18px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <span style="font-size: 20px;">⚡</span>
+                            <h3 style="font-size: 15px; color: #ef4444; margin: 0;">Reality check: How real LLMs actually create embeddings</h3>
+                        </div>
+                        <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary);">
+                            <ul style="margin: 0; padding-left: 20px; list-style: none;">
+                                <li style="margin-bottom: 5px; padding-left: 16px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #ef4444;">•</span>
+                                    <strong style="color: #ef4444;">Learned through training:</strong> Real embeddings aren't manually assigned - they emerge from billions of training examples through backpropagation!
+                                </li>
+                                <li style="margin-bottom: 5px; padding-left: 16px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #ef4444;">•</span>
+                                    <strong style="color: #ef4444;">High-dimensional space:</strong> GPT-4 uses ~18,000 dimensions, not 2D. Each dimension captures different patterns.
+                                </li>
+                                <li style="margin-bottom: 5px; padding-left: 16px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #ef4444;">•</span>
+                                    <strong style="color: #ef4444;">No semantic rules:</strong> The model never "knows" what words mean - it just learns "chef" and "cook" appear near similar words
+                                </li>
+                                <li style="margin: 0; padding-left: 16px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #ef4444;">•</span>
+                                    <strong style="color: #ef4444;">Vector arithmetic works:</strong> king - man + woman ≈ queen (because of training patterns, not understanding!)
+                                </li>
+                            </ul>
                         </div>
                     </div>
                     
@@ -308,7 +339,7 @@ window.phase2 = {
                 <div class="phase-sidebar">
                     <div>
                         <h2 class="phase-title">${example.language}: ${example.title}</h2>
-                        <p class="phase-subtitle">Example ${this.currentExample + 1} of ${this.exampleSets.length}</p>
+                        <p class="phase-subtitle">Pattern recognition from data</p>
                     </div>
                     
                     <!-- Training Data -->
@@ -336,6 +367,9 @@ window.phase2 = {
                     <div style="width: 100%; max-width: 650px;">
                         
                         <div style="margin-bottom: 14px; text-align: center;">
+                            <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">
+                                ${this.currentExample + 1} of ${this.exampleSets.length}
+                            </p>
                             <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;">
                                 🎯 Drag tokens close if they appear in similar contexts
                             </div>
@@ -568,6 +602,11 @@ window.phase2 = {
     },
     
     checkExampleCanvas() {
+        // Prevent multiple submissions of the same example
+        if (this.canvasState.exampleCompleted[this.currentExample]) {
+            return; // Already validated this example
+        }
+        
         const example = this.exampleSets[this.currentExample];
         const positions = this.canvasState.positions[this.currentExample];
         const feedback = document.getElementById('feedback');
@@ -619,13 +658,16 @@ window.phase2 = {
             
             if (groupDistance < 150) {
                 allGood = false;
-                message = 'The two groups appear in DIFFERENT contexts, so they should be farther apart from each other!';
+                message = 'The two groups appear in different contexts, so they should be farther apart from each other!';
             }
         }
         
         feedback.style.display = 'block';
         
         if (allGood) {
+            // Mark this example as completed to prevent multiple submissions
+            this.canvasState.exampleCompleted[this.currentExample] = true;
+            
             // Draw connection lines for correct pairs
             Object.entries(groups).forEach(([groupName, groupTokens]) => {
                 if (groupTokens.length === 2) {
@@ -663,6 +705,14 @@ window.phase2 = {
             `;
             SoundManager.play('success');
             Game.addScore(50); // Examples: +50 per correct
+            
+            // Disable the button to prevent further clicks
+            const button = document.querySelector('button[onclick="phase2.checkExampleCanvas()"]');
+            if (button) {
+                button.disabled = true;
+                button.style.opacity = '0.5';
+                button.style.cursor = 'not-allowed';
+            }
             
             setTimeout(() => {
                 if (this.currentExample < this.exampleSets.length - 1) {
@@ -798,7 +848,7 @@ window.phase2 = {
     
     renderGrouping(container) {
         // Get training data to show
-        const trainingText = Game.state.trainingData || "The chef cooked pasta. The player kicked the ball.";
+        const trainingText = Game.state.trainingText || "The chef cooked pasta. The player kicked the ball.";
         const sentences = trainingText.split(/[.!?]+/).filter(s => s.trim()).slice(0, 4);
         
         container.innerHTML = `
@@ -828,13 +878,20 @@ window.phase2 = {
                     </div>
                     
                     <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05)); 
-                               border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 10px; margin-top: 12px;">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                            <span style="font-size: 16px;">🎮</span>
-                            <h4 style="font-size: 12px; color: #ef4444; margin: 0;">Game Simplification</h4>
+                               border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 12px; margin-top: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span style="font-size: 18px;">⚡</span>
+                            <h4 style="font-size: 13px; color: #ef4444; margin: 0; font-weight: 700;">Reality Check: How Real LLMs Learn Embeddings</h4>
                         </div>
-                        <div style="font-size: 10px; line-height: 1.5; color: var(--text-secondary);">
-                            <p style="margin: 0;">This game uses grammar categories for learning. <strong>Real LLMs don't know grammar!</strong> They discover patterns purely from position in training data.</p>
+                        <div style="font-size: 11px; line-height: 1.6; color: var(--text-secondary);">
+                            <ul style="margin: 0; padding-left: 20px; list-style: none;">
+                                <li style="margin-bottom: 6px; padding-left: 6px; position: relative;">
+                                    <strong style="color: #ef4444;">No grammar categories:</strong> Real LLMs don't classify into "subjects" or "verbs" - they learn pure numerical patterns from billions of word co-occurrences!
+                                </li>
+                                <li style="margin-bottom: 6px; padding-left: 6px; position: relative;">
+                                    <strong style="color: #ef4444;">Context-based learning:</strong> If "rocket" and "satellite" appear near similar words (orbit, space, launch), their vectors naturally become similar.
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -845,9 +902,6 @@ window.phase2 = {
                         <div style="margin-bottom: 14px; text-align: center;">
                             <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;">
                                 🎯 Drag tokens into corner zones - watch them change color when placed correctly!
-                            </div>
-                            <div style="font-size: 11px; color: rgba(251, 191, 36, 0.9); margin-top: 4px;">
-                                💡 Corners = Different pattern types. Distance in space = How different the patterns are!
                             </div>
                         </div>
                         
@@ -912,22 +966,27 @@ window.phase2 = {
                     ctx.fillText(zone.label, zone.x + zone.width / 2, zone.y + 10);
                 });
                 
-                // Update token colors based on zone they're in
+                // Update token zones (but DON'T override colors set by checkTokenPlacement)
                 tokens.forEach(token => {
                     let currentZone = null;
                     Object.entries(zones).forEach(([zoneName, zone]) => {
                         if (token.x >= zone.x && token.x <= zone.x + zone.width &&
                             token.y >= zone.y && token.y <= zone.y + zone.height) {
                             currentZone = zoneName;
-                            token.color = zone.color; // Change to zone color!
                             token.inZone = zoneName;
+                            // Only update color if token hasn't been validated (no red/green color)
+                            if (token.color !== '#22c55e' && token.color !== '#ef4444') {
+                                token.color = zone.color; // Change to zone color!
+                            }
                         }
                     });
                     
-                    // If not in any zone, stay gray
+                    // If not in any zone, stay gray (unless it's been validated)
                     if (!currentZone) {
-                        token.color = '#6b7280';
                         token.inZone = null;
+                        if (token.color !== '#22c55e' && token.color !== '#ef4444') {
+                            token.color = '#6b7280';
+                        }
                     }
                 });
                 
@@ -1053,8 +1112,8 @@ window.phase2 = {
                 dragToken.color = '#22c55e'; // Green
                 draw();
                 
-                // Show floating "+15"
-                this.showFloatingPoints(dragToken.x, dragToken.y, '+15', '#22c55e');
+                // Show floating "+20"
+                this.showFloatingPoints(dragToken.x, dragToken.y, '+20', '#22c55e');
                 
                 // Check if ALL tokens are correctly placed
                 this.checkAllCorrect(tokens);

@@ -1373,7 +1373,7 @@ button {
 
 .journey-checkpoint-page .journey-header {
     text-align: center;
-    margin-bottom: 10px;
+    margin-bottom: 25px;
 }
 
 .journey-checkpoint-page .journey-icon {
@@ -1392,7 +1392,7 @@ button {
 .journey-checkpoint-page .journey-steps {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 15px;
     flex: 1;
     position: relative;
     padding-left: 28px;
@@ -1417,7 +1417,8 @@ button {
 .journey-checkpoint-page .journey-step {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 15px;
+    text-align: left;
     padding: 4px 0;
     position: relative;
     transition: all 0.3s ease;

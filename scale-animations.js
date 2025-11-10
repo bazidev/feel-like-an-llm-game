@@ -47,115 +47,115 @@ window.ScaleAnimations = {
         console.log('✅ Display tokens:', uniqueTokens.slice(0, 10).map(displayToken));
         
         container.innerHTML = `
-            <div style="text-align: center; margin-bottom: 40px;">
-                <div style="font-size: 24px; color: var(--primary); font-weight: 700; margin-bottom: 25px; text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 20px; color: var(--primary); font-weight: 700; margin-bottom: 12px; text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);">
                     YOUR VOCABULARY
                 </div>
-                <div id="userTokenCloud" style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; min-height: 180px; align-items: center; perspective: 1000px;">
+                <div id="userTokenCloud" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; min-height: 80px; align-items: center; perspective: 1000px;">
                     ${uniqueTokens.slice(0, 20).map((token, i) => {
                         const colors = ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'];
                         const color = colors[i % colors.length];
                         const displayText = displayToken(token);
                         return `<div class="token-bubble" data-index="${i}" style="
-                            padding: 16px 24px; 
+                            padding: 8px 12px; 
                             background: ${color}40; 
-                            border: 3px solid ${color}; 
-                            border-radius: 12px; 
-                            font-size: 18px; 
+                            border: 2px solid ${color}; 
+                            border-radius: 8px; 
+                            font-size: 12px; 
                             font-weight: 700; 
                             color: white;
                             font-family: 'JetBrains Mono', monospace;
-                            box-shadow: 0 6px 20px ${color}60, 0 0 30px ${color}40;
+                            box-shadow: 0 4px 12px ${color}60, 0 0 20px ${color}40;
                             opacity: 0;
-                            transform: scale(0) rotateY(180deg);
+                            transform: scale(0);
                         ">${displayText}</div>`;
                     }).join('')}
                 </div>
             </div>
             
-            <div id="scaleComparison" style="display: flex; justify-content: space-around; align-items: flex-end; height: 350px; opacity: 0; padding: 20px;">
+            <div id="scaleComparison" style="display: flex; justify-content: space-around; align-items: flex-end; min-height: 200px; opacity: 0; padding: 15px 10px 10px 10px;">
                 <!-- Your Model -->
                 <div style="text-align: center; transition: all 0.3s;">
                     <div id="yourModelViz" style="
-                        width: 45px; 
-                        height: 45px; 
+                        width: 35px; 
+                        height: 35px; 
                         background: linear-gradient(135deg, var(--primary), var(--secondary)); 
                         border-radius: 50%; 
-                        margin: 0 auto 15px auto;
-                        box-shadow: 0 6px 25px rgba(0, 212, 255, 0.8), 0 0 40px rgba(0, 212, 255, 0.4);
+                        margin: 0 auto 10px auto;
+                        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.8), 0 0 30px rgba(0, 212, 255, 0.4);
                         position: relative;
                         animation: gentlePulse 2s ease-in-out infinite;
                     ">
-                        <div style="position: absolute; top: -12px; right: -12px; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; 
-                                   border-radius: 20px; padding: 6px 10px; font-size: 12px; font-weight: 700; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.6);">
+                        <div style="position: absolute; top: -8px; right: -8px; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; 
+                                   border-radius: 16px; padding: 4px 8px; font-size: 10px; font-weight: 700; box-shadow: 0 3px 12px rgba(34, 197, 94, 0.6);">
                             ${tokenCount}
                         </div>
                     </div>
-                    <div style="font-size: 14px; color: var(--primary); font-weight: 700;">Your Model</div>
-                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${tokenCount} tokens</div>
+                    <div style="font-size: 11px; color: var(--primary); font-weight: 700;">Your Model</div>
+                    <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">${tokenCount} tokens</div>
                 </div>
                 
                 <!-- GPT-2 -->
                 <div style="text-align: center; transition: all 0.3s;">
                     <div style="
-                        width: 90px; 
-                        height: 90px; 
+                        width: 70px; 
+                        height: 70px; 
                         background: linear-gradient(135deg, #8b5cf6, #6b46c1); 
                         border-radius: 50%; 
-                        margin: 0 auto 15px auto;
-                        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.7), 0 0 50px rgba(139, 92, 246, 0.4);
+                        margin: 0 auto 10px auto;
+                        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.7), 0 0 35px rgba(139, 92, 246, 0.4);
                         position: relative;
                         opacity: 0;
                     " class="model-circle" data-model="gpt2">
-                        <div style="position: absolute; top: -14px; right: -14px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; 
-                                   border-radius: 24px; padding: 8px 14px; font-size: 13px; font-weight: 700; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.8);">
+                        <div style="position: absolute; top: -10px; right: -10px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; 
+                                   border-radius: 18px; padding: 5px 10px; font-size: 11px; font-weight: 700; box-shadow: 0 3px 12px rgba(139, 92, 246, 0.8);">
                             50K
                         </div>
                     </div>
-                    <div style="font-size: 15px; color: #8b5cf6; font-weight: 700;">GPT-2</div>
-                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">50,257 tokens</div>
+                    <div style="font-size: 12px; color: #8b5cf6; font-weight: 700;">GPT-2</div>
+                    <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">50,257 tokens</div>
                 </div>
                 
                 <!-- GPT-3 -->
                 <div style="text-align: center; transition: all 0.3s;">
                     <div style="
-                        width: 140px; 
-                        height: 140px; 
+                        width: 110px; 
+                        height: 110px; 
                         background: linear-gradient(135deg, #ec4899, #db2777); 
                         border-radius: 50%; 
-                        margin: 0 auto 15px auto;
-                        box-shadow: 0 10px 40px rgba(236, 72, 153, 0.8), 0 0 60px rgba(236, 72, 153, 0.5);
+                        margin: 0 auto 10px auto;
+                        box-shadow: 0 8px 30px rgba(236, 72, 153, 0.8), 0 0 45px rgba(236, 72, 153, 0.5);
                         position: relative;
                         opacity: 0;
                     " class="model-circle" data-model="gpt3">
-                        <div style="position: absolute; top: -16px; right: -16px; background: linear-gradient(135deg, #ec4899, #db2777); color: white; 
-                                   border-radius: 28px; padding: 10px 16px; font-size: 14px; font-weight: 700; box-shadow: 0 4px 20px rgba(236, 72, 153, 0.9);">
+                        <div style="position: absolute; top: -12px; right: -12px; background: linear-gradient(135deg, #ec4899, #db2777); color: white; 
+                                   border-radius: 22px; padding: 7px 12px; font-size: 12px; font-weight: 700; box-shadow: 0 3px 15px rgba(236, 72, 153, 0.9);">
                             50K
                         </div>
                     </div>
-                    <div style="font-size: 16px; color: #ec4899; font-weight: 700;">GPT-3</div>
-                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">50,257 tokens</div>
+                    <div style="font-size: 13px; color: #ec4899; font-weight: 700;">GPT-3</div>
+                    <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">50,257 tokens</div>
                 </div>
                 
                 <!-- GPT-4 -->
                 <div style="text-align: center; transition: all 0.3s;">
                     <div style="
-                        width: 190px; 
-                        height: 190px; 
+                        width: 150px; 
+                        height: 150px; 
                         background: linear-gradient(135deg, #f59e0b, #ef4444); 
                         border-radius: 50%; 
-                        margin: 0 auto 15px auto;
-                        box-shadow: 0 12px 50px rgba(245, 158, 11, 0.9), 0 0 80px rgba(245, 158, 11, 0.6);
+                        margin: 0 auto 10px auto;
+                        box-shadow: 0 10px 35px rgba(245, 158, 11, 0.9), 0 0 55px rgba(245, 158, 11, 0.6);
                         position: relative;
                         opacity: 0;
                     " class="model-circle" data-model="gpt4">
-                        <div style="position: absolute; top: -18px; right: -18px; background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; 
-                                   border-radius: 32px; padding: 12px 20px; font-size: 16px; font-weight: 700; box-shadow: 0 6px 25px rgba(245, 158, 11, 1);">
+                        <div style="position: absolute; top: -14px; right: -14px; background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; 
+                                   border-radius: 26px; padding: 8px 14px; font-size: 13px; font-weight: 700; box-shadow: 0 4px 18px rgba(245, 158, 11, 1);">
                             100K
                         </div>
                     </div>
-                    <div style="font-size: 17px; color: #f59e0b; font-weight: 700;">GPT-4</div>
-                    <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">~100,000 tokens</div>
+                    <div style="font-size: 14px; color: #f59e0b; font-weight: 700;">GPT-4</div>
+                    <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">~100,000 tokens</div>
                 </div>
             </div>
             
@@ -167,12 +167,11 @@ window.ScaleAnimations = {
             </style>
         `;
         
-        // Animate user tokens appearing with 3D flip
+        // Animate user tokens appearing
         const bubbles = document.querySelectorAll('.token-bubble');
         gsap.to(bubbles, {
             opacity: 1,
             scale: 1,
-            rotateY: 0,
             duration: 0.6,
             stagger: 0.06,
             ease: 'back.out(1.7)',
