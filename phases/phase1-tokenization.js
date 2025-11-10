@@ -58,11 +58,11 @@ window.phase1 = {
         {
             word: "Hello World",
             question: "Challenge 2: How does this tokenize?",
-            explanation: "<strong style='color: var(--primary);'>Rule:</strong> Spaces and whitespace are their own tokens",
+            explanation: "<strong style='color: var(--primary);'>Rule:</strong> Spaces attach to the word that follows them (most common pattern in training data)",
             options: [
-                { tokens: ["Hello World"], correct: false, why: "❌ Spaces must be tokens! Otherwise you can't distinguish 'Hello World' from 'HelloWorld'" },
-                { tokens: ["Hello", " ", "World"], correct: true, why: "✓ Excellent! You caught the space! Spaces are tokens because they're meaningful separators. Token 1='Hello', Token 2=' ', Token 3='World'." },
-                { tokens: ["Hel", "lo", "Wor", "ld"], correct: false, why: "❌ Random splits don't follow learned patterns" }
+                { tokens: ["Hello World"], correct: false, why: "❌ Must split into tokens! 'Hello World' is two separate concepts." },
+                { tokens: ["Hello", " World"], correct: true, why: "✓ Perfect! The space attaches to 'World' because ' World' (with space) appears more frequently in training data than 'World' alone. Token 1='Hello', Token 2='␣World'." },
+                { tokens: ["Hel", "lo", "Wor", "ld"], correct: false, why: "❌ Random splits don't follow learned patterns from training data" }
             ]
         },
         {
@@ -114,14 +114,14 @@ window.phase1 = {
             this.renderExamples(container);
         } else if (this.currentStep === 'yourdata') {
             this.renderYourData(container);
-        } else if (this.currentStep === 'checkpoint1') {
-            this.renderCheckpoint1(container);
         } else if (this.currentStep === 'info1') {
             this.renderInfoStep1(container);
         } else if (this.currentStep === 'info2') {
             this.renderInfoStep2(container);
         } else if (this.currentStep === 'recap') {
             this.renderRecap(container);
+        } else if (this.currentStep === 'journey_checkpoint') {
+            this.renderJourneyCheckpoint(container);
         }
     },
     
@@ -221,8 +221,8 @@ window.phase1 = {
                                 <div style="font-size: 11px; color: var(--text-secondary);">-ing, -ed, -ness separate</div>
                             </div>
                             <div style="padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
-                                <div style="font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 3px;">2. Spaces are separate</div>
-                                <div style="font-size: 11px; color: var(--text-secondary);">Each space is a token</div>
+                                <div style="font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 3px;">2. Spaces attach to words</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">Space goes with next word: "Hello World" → ["Hello", " World"]</div>
                             </div>
                             <div style="padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
                                 <div style="font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 3px;">3. Punctuation splits</div>
@@ -309,7 +309,7 @@ window.phase1 = {
                     <div class="hint-section">
                         <h4>Tokenization Rules</h4>
                         <p><strong>1. Common suffixes split:</strong> -ing, -ed, -ness<br>
-                        <strong>2. Spaces are tokens</strong><br>
+                        <strong>2. Spaces attach to following word</strong><br>
                         <strong>3. Punctuation separates</strong><br>
                         <strong>4. Common prefixes split:</strong> un-, re-</p>
                     </div>
@@ -536,8 +536,8 @@ window.phase1 = {
                             <p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 13px; line-height: 1.6;">
                                 Drag to select the remaining <strong style="color: #fbbf24;">${this.correctTokens.length - this.validatedTokens.length} tokens</strong>
                             </p>
-                            <p style="margin: 8px 0 0 0; color: #fbbf24; font-size: 12px; font-style: italic;">
-                                💡 Don't forget spaces - they're separate tokens!
+                            <p style="margin: 8px 0 0 0; color: #fbbf24; font-size: 12px;">
+                                💡 Remember: Spaces attach to the word that follows them!
                             </p>
                         </div>
                         ` : ''}
@@ -630,7 +630,7 @@ window.phase1 = {
         
         // Calculate how many tokens to auto-complete (90%)
         const totalTokens = this.correctTokens.length;
-        const autoTokenCount = Math.ceil(totalTokens * 0.9);
+        const autoTokenCount = Math.ceil(totalTokens * 0.85);
         
         // Auto-tokenize with delays
         this.autoTokenizeNext(0, autoTokenCount);
@@ -671,32 +671,30 @@ window.phase1 = {
                     <p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 13px; line-height: 1.6;">
                         Drag to select the remaining <strong style="color: #fbbf24;">${this.correctTokens.length - this.validatedTokens.length} tokens</strong>
                     </p>
-                    <p style="margin: 8px 0 0 0; color: #fbbf24; font-size: 12px; font-style: italic;">
-                        💡 Don't forget spaces - they're separate tokens!
+                    <p style="margin: 8px 0 0 0; color: #fbbf24; font-size: 12px;">
+                        💡 Remember: Spaces attach to the word that follows them!
                     </p>
                 `;
                 interactiveText.parentNode.insertBefore(tutorialBox, interactiveText);
                 
-                // Add blue pulsing animation to first word (instead of hand pointer)
+                // Add blue pulsing animation to first token (not just first word!)
                 setTimeout(() => {
-                    const firstChar = interactiveText.querySelector('.token-char[data-idx="0"]');
-                    if (firstChar) {
-                        // Find the end of the first word
-                        let endIdx = 0;
-                        const chars = interactiveText.querySelectorAll('.token-char');
-                        for (let i = 0; i < chars.length; i++) {
-                            if (chars[i].textContent.trim() === '') break; // Stop at first space
-                            endIdx = i;
-                        }
-                        
-                        // Apply blue pulsing animation to all characters of first word
-                        for (let i = 0; i <= endIdx; i++) {
-                            if (chars[i]) {
-                                chars[i].style.animation = 'blueHighlight 1.5s ease-in-out infinite';
-                                chars[i].style.background = 'rgba(0, 212, 255, 0.3)';
-                                chars[i].style.boxShadow = '0 0 10px rgba(0, 212, 255, 0.5)';
-                                chars[i].classList.add('first-word-highlight');
-                            }
+                    if (this.validatedTokens.length >= this.correctTokens.length) return;
+                    
+                    // Get the NEXT expected token (not the first one in the original list)
+                    const nextExpectedToken = this.correctTokens[this.validatedTokens.length];
+                    if (!nextExpectedToken) return;
+                    
+                    const nextTokenLength = nextExpectedToken.length;
+                    
+                    // Apply blue pulsing animation to all characters of the next expected token
+                    const chars = interactiveText.querySelectorAll('.token-char');
+                    for (let i = 0; i < nextTokenLength && i < chars.length; i++) {
+                        if (chars[i]) {
+                            chars[i].style.animation = 'blueHighlight 1.5s ease-in-out infinite';
+                            chars[i].style.background = 'rgba(0, 212, 255, 0.3)';
+                            chars[i].style.boxShadow = '0 0 10px rgba(0, 212, 255, 0.5)';
+                            chars[i].classList.add('first-word-highlight');
                         }
                     }
                 }, 100);
@@ -729,10 +727,10 @@ window.phase1 = {
             } else if (percentComplete < 7) {
                 // 2-7%: Fast
                 speedMultiplier = 3;
-            } else if (percentComplete < 85) {
+            } else if (percentComplete < 80) {
                 // 7-85%: SUPER FAST - will skip animation below
                 speedMultiplier = 100; // Not actually used, just for logging
-            } else if (percentComplete < 90) {
+            } else if (percentComplete < 85) {
                 // 85-90%: Fast
                 speedMultiplier = 3;
             } else {
@@ -1077,61 +1075,13 @@ window.phase1 = {
     
     
     finishTokenization() {
-        // Show fun completion message about boring tokenization 😄
+        // Skip completion screen and go directly to Token IDs
+        Game.state.tokens = this.validatedTokens;
+        Game.saveState();
+        SoundManager.play('levelUp');
+        this.currentStep = 'info1';
         const phaseContainer = document.getElementById('phaseContainer');
-        if (phaseContainer) {
-            phaseContainer.innerHTML = `
-                <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px;">
-                    <div style="max-width: 700px; width: 100%; text-align: center; animation: slideInFromTop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);">
-                        
-                        <div style="font-size: 64px; margin-bottom: 20px; animation: float 2s ease-in-out infinite;">🎉</div>
-                        
-                        <h2 style="font-size: 32px; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-                                   -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                            Tokenization Complete!
-                        </h2>
-                        
-                        <div style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(239, 68, 68, 0.1)); 
-                                   border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 14px; padding: 24px; 
-                                   margin: 32px 0; text-align: left;">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                                <span style="font-size: 36px;">😅</span>
-                                <h3 style="font-size: 20px; color: #fbbf24; margin: 0; font-weight: 700;">See How Boring That Was?</h3>
-                            </div>
-                            <p style="font-size: 15px; color: rgba(255, 255, 255, 0.9); line-height: 1.7; margin-bottom: 16px;">
-                                You just experienced one of the most <strong style="color: #fbbf24;">tedious, repetitive, and mind-numbing</strong> tasks 
-                                that computers do for us <strong style="color: var(--primary);">billions of times a day</strong>! 
-                            </p>
-                            <p style="font-size: 15px; color: rgba(255, 255, 255, 0.9); line-height: 1.7; margin-bottom: 16px;">
-                                Imagine having to manually split <strong style="color: #ef4444;">every single word, space, and punctuation mark</strong> 
-                                in every text message, email, and document you process. That's what LLMs do automatically - 
-                                <strong style="color: var(--secondary);">trillions of times</strong>, without complaining! 😂
-                            </p>
-                            <div style="background: rgba(0, 0, 0, 0.3); padding: 16px; border-radius: 10px; border-left: 4px solid #22c55e;">
-                                <p style="font-size: 14px; color: rgba(255, 255, 255, 0.9); margin: 0; line-height: 1.6;">
-                                    <strong style="color: #22c55e;">💡 The Point:</strong> Tokenization might be boring for humans, 
-                                    but it's <strong>essential</strong> for AI. It's the foundation that lets computers understand 
-                                    and process language at incredible speed. Pretty cool for such a "boring" task! 🚀
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <button onclick="phase1.continueAfterCompletion()" 
-                                style="padding: 16px 48px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-                                       border: none; border-radius: 12px; color: white; font-size: 17px; font-weight: 700; 
-                                       cursor: pointer; box-shadow: 0 6px 25px rgba(0, 212, 255, 0.4); transition: all 0.3s;
-                                       animation: pulse 2s ease-in-out infinite;">
-                            Continue: Let's Move On! →
-                        </button>
-                        
-                    </div>
-                </div>
-            `;
-            
-            setTimeout(() => {
-                SoundManager.play('levelUp');
-            }, 300);
-        }
+        this.render(phaseContainer);
     },
     
     continueAfterCompletion() {
@@ -1145,39 +1095,53 @@ window.phase1 = {
     calculateCorrectTokens(text) {
         const tokens = [];
         let i = 0;
+        let isFirstToken = true; // Track if this is the first token (no leading space)
         
         while (i < text.length) {
             const char = text[i];
             
-            // Handle spaces - tokenize them
+            // Skip spaces - they'll be attached to the next word
             if (char === ' ') {
-                tokens.push(' ');
                 i++;
                 continue;
             }
             
-            // Handle punctuation
+            // Handle punctuation (no space attached)
             if ('.!?,'.includes(char)) {
                 tokens.push(char);
                 i++;
+                isFirstToken = false; // After punctuation, next word needs space
                 continue;
             }
             
-            // Handle words
+            // Handle words (with space attached if not first token)
             let word = '';
+            
+            // Add leading space if not the first token and previous char was space
+            if (!isFirstToken && i > 0 && text[i - 1] === ' ') {
+                word = ' ';
+            }
+            
+            // Collect the word characters
             while (i < text.length && text[i] !== ' ' && !'.!?,'.includes(text[i])) {
                 word += text[i];
                 i++;
             }
             
             if (word) {
+                // Remove the space prefix temporarily to process the word
+                const hasSpace = word.startsWith(' ');
+                const wordWithoutSpace = hasSpace ? word.substring(1) : word;
+                
                 // Check for contractions
-                if (word.includes("'")) {
-                    const parts = word.split("'");
-                    tokens.push(parts[0]);
+                if (wordWithoutSpace.includes("'")) {
+                    const parts = wordWithoutSpace.split("'");
+                    // First part gets the space
+                    tokens.push((hasSpace ? ' ' : '') + parts[0]);
+                    // Second part (with apostrophe) no space
                     tokens.push("'" + parts[1]);
-            } else {
-                // Words that should NOT be split (complete words, not derived forms)
+                } else {
+                    // Words that should NOT be split (complete words, not derived forms)
                     const doNotSplit = [
                         // -ing words that are NOT verb+ing
                         'thing', 'something', 'nothing', 'everything', 'anything',
@@ -1191,31 +1155,32 @@ window.phase1 = {
                         'business', 'witness', 'fitness', 'darkness'
                     ];
                     
-                    const lowerWord = word.toLowerCase();
+                    const lowerWord = wordWithoutSpace.toLowerCase();
                     
                     // Don't split if it's in the do-not-split list
                     if (doNotSplit.includes(lowerWord)) {
                         tokens.push(word);
                     } else {
                         // Check for suffixes only on words where it makes sense
-                    const suffixes = ['ing', 'ed', 'ness'];
-                    let foundSuffix = false;
-                    for (const suffix of suffixes) {
+                        const suffixes = ['ing', 'ed', 'ness'];
+                        let foundSuffix = false;
+                        for (const suffix of suffixes) {
                             // Only split if: word ends with suffix AND root is at least 3 chars
-                            // This splits: "play+ing", "cook+ed", "happy+ness"
-                            // But keeps: "thing", "red", "business" (too short or in exception list)
-                            if (word.endsWith(suffix) && word.length > suffix.length + 2) {
-                            tokens.push(word.substring(0, word.length - suffix.length));
-                            tokens.push(suffix);
-                            foundSuffix = true;
-                            break;
+                            if (wordWithoutSpace.endsWith(suffix) && wordWithoutSpace.length > suffix.length + 2) {
+                                // Root word gets the space
+                                tokens.push((hasSpace ? ' ' : '') + wordWithoutSpace.substring(0, wordWithoutSpace.length - suffix.length));
+                                // Suffix no space
+                                tokens.push(suffix);
+                                foundSuffix = true;
+                                break;
+                            }
+                        }
+                        if (!foundSuffix) {
+                            tokens.push(word);
                         }
                     }
-                    if (!foundSuffix) {
-                        tokens.push(word);
-                    }
-                    }
                 }
+                isFirstToken = false;
             }
         }
         
@@ -1223,94 +1188,6 @@ window.phase1 = {
     },
     
     // INFO & RECAP (keeping them simple)
-    renderCheckpoint1(container) {
-        container.innerHTML = `
-            <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 30px;">
-                <div style="max-width: 800px; width: 100%; text-align: center;">
-                    
-                    <!-- Progress Indicator -->
-                    <div style="margin-bottom: 32px;">
-                        <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); 
-                                       display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;
-                                       box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);">✓</div>
-                            <div style="width: 60px; height: 3px; background: linear-gradient(90deg, #22c55e, var(--primary));"></div>
-                            <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-                                       display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;
-                                       box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4); animation: pulse 2s ease-in-out infinite;">2</div>
-                            <div style="width: 60px; height: 3px; background: rgba(255, 255, 255, 0.2);"></div>
-                            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); 
-                                       display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.4); font-weight: 700; font-size: 18px;">3</div>
-                        </div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">
-                            <strong style="color: #22c55e;">Tokenize</strong> → <strong style="color: var(--primary);">Convert to Numbers</strong> → Embeddings
-                        </div>
-                    </div>
-                    
-                    <h1 style="font-size: 36px; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-                               -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                        🎯 Journey Checkpoint
-                    </h1>
-                    
-                    <p style="font-size: 16px; color: var(--text-secondary); margin-bottom: 40px; line-height: 1.6;">
-                        Let's pause and understand what you just accomplished
-                    </p>
-                    
-                    <!-- Journey Details -->
-                    <div style="display: grid; gap: 14px; margin-bottom: 32px;">
-                        <div style="padding: 16px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #22c55e; border-radius: 6px; text-align: left;">
-                            <div style="font-size: 13px; font-weight: 600; color: #22c55e; margin-bottom: 6px;">📍 Where You Are</div>
-                            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                Your raw text is now <strong>tokenized</strong>! You've broken it into ${Game.state.tokens.length} meaningful pieces that capture the structure of language.
-                            </div>
-                        </div>
-                        
-                        <div style="padding: 16px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--primary); border-radius: 6px; text-align: left;">
-                            <div style="font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 6px;">✅ What You Did</div>
-                            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 10px;">
-                                You split text using BPE-like rules: common endings ("ed", "ing"), spaces as tokens, etc. 
-                                This creates <strong>reusable pieces</strong> that help the model learn efficiently.
-                            </div>
-                            <div style="background: rgba(0, 0, 0, 0.3); padding: 10px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; 
-                                       font-size: 11px; display: flex; flex-wrap: wrap; gap: 4px; max-height: 80px; overflow-y: auto;">
-                                ${Game.state.tokens.slice(0, 15).map(token => {
-                                    const color = this.getTokenColor(token);
-                                    return `<span style="background: ${color}60; padding: 3px 6px; border-radius: 4px; border: 1px solid ${color}aa; color: white; white-space: nowrap;">${token === ' ' ? '␣' : token}</span>`;
-                                }).join('')}
-                                ${Game.state.tokens.length > 15 ? '<span style="color: rgba(255, 255, 255, 0.4);">...</span>' : ''}
-                            </div>
-                        </div>
-                        
-                        <div style="padding: 16px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--secondary); border-radius: 6px; text-align: left;">
-                            <div style="font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px;">🎯 What's Next</div>
-                            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                <strong>Token IDs:</strong> Convert each token to a number. "cat" → 42, "dog" → 87, etc. 
-                                Neural networks only understand numbers, so this numerical mapping is essential for all future steps.
-                            </div>
-                        </div>
-                        
-                        <div style="padding: 16px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #fbbf24; border-radius: 6px; text-align: left;">
-                            <div style="font-size: 13px; font-weight: 600; color: #fbbf24; margin-bottom: 6px;">💡 Why It Matters</div>
-                            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                Tokenization is the FIRST step of every LLM! Without it, AI can't process text. 
-                                Good tokenization = efficient learning. GPT uses ~50K tokens to handle all of English + code + multilingual text!
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <button onclick="phase1.nextStep()" 
-                            style="padding: 16px 48px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-                                   border: none; border-radius: 12px; color: white; font-size: 17px; font-weight: 700; 
-                                   cursor: pointer; box-shadow: 0 6px 25px rgba(0, 212, 255, 0.4); transition: all 0.3s;
-                                   transform: scale(1); animation: pulse 2s ease-in-out infinite;">
-                        Continue: Convert to Numbers →
-                    </button>
-                    
-                </div>
-            </div>
-        `;
-    },
-    
     renderInfoStep1(container) {
         container.innerHTML = `
             <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px;">
@@ -1320,28 +1197,22 @@ window.phase1 = {
                         🔢 Token IDs
                     </h2>
                     <p style="font-size: 15px; color: var(--text-secondary); margin-bottom: 24px;">
-                        Each token gets converted to a unique number (ID)
+                        After <strong style="color: #22c55e;">tokenization</strong>, we need to assign IDs, because computers can't work with text directly. Each token is assigned a unique numerical ID from a <strong style="color: var(--primary);">vocabulary</strong>:
                     </p>
                     
                     <div style="background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); 
-                               border-radius: 14px; padding: 20px; margin-bottom: 20px; text-align: left;">
-                        <div style="font-size: 13px; line-height: 1.6; color: var(--text-secondary);">
-                            <p style="margin-bottom: 14px;">
-                                Computers can't work with text directly. Each token is assigned a unique numerical ID from a <strong style="color: var(--primary);">vocabulary</strong>:
-                            </p>
-                            
-                            <div style="background: rgba(0, 0, 0, 0.3); padding: 14px; border-radius: 10px; font-family: monospace; font-size: 12px; max-height: 240px; overflow-y: auto; line-height: 2.2;">
-                                ${Game.state.tokens.slice(0, 15).map((token, idx) => {
-                                    const colors = ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'];
-                                    const color = colors[idx % colors.length];
-                                    const displayToken = token === ' ' ? '␣' : token;
-                                    return `<span style="display: inline-block; margin: 3px 4px; padding: 4px 10px; background: ${color}40; border: 1px solid ${color}; border-radius: 6px; white-space: nowrap;">
-                                        <span style="color: white; font-weight: 600;">"${displayToken}"</span>
-                                        <span style="color: ${color}; margin-left: 6px; font-size: 11px;">ID:${idx + 1}</span>
-                                    </span>`;
-                                }).join('')}
-                                ${Game.state.tokens.length > 15 ? '<div style="color: var(--text-secondary); font-style: italic; margin-top: 8px;">...and more</div>' : ''}
-                            </div>
+                               border-radius: 14px; padding: 16px; margin-bottom: 20px; text-align: left;">
+                        <div style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 10px; font-family: monospace; font-size: 11px; max-height: 180px; overflow-y: auto; line-height: 2;">
+                            ${Game.state.tokens.slice(0, 10).map((token, idx) => {
+                                const colors = ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'];
+                                const color = colors[idx % colors.length];
+                                const displayToken = token === ' ' ? '␣' : token;
+                                return `<span style="display: inline-block; margin: 2px; padding: 3px 8px; background: ${color}40; border: 1px solid ${color}; border-radius: 6px;">
+                                    <span style="color: white;">"${displayToken}"</span>
+                                    <span style="color: ${color}; margin-left: 6px; font-size: 10px;">ID:${idx + 1}</span>
+                                </span>`;
+                            }).join('')}
+                            ${Game.state.tokens.length > 10 ? '<div style="color: var(--text-secondary); font-style: italic; margin-top: 8px; font-size: 10px;">...and more</div>' : ''}
                         </div>
                     </div>
                     
@@ -1359,29 +1230,12 @@ window.phase1 = {
                                 <div style="font-size: 11px; line-height: 1.8;">
                                     • <strong style="color: #fbbf24;">Fixed vocabulary:</strong> Each unique token gets a permanent ID (e.g., "the" = 257, "cat" = 4892)<br>
                                     • <strong style="color: #fbbf24;">Byte-Pair Encoding (BPE):</strong> Algorithm that learns common subwords from massive training data<br>
-                                    • <strong style="color: #fbbf24;">Example:</strong> GPT models have a vocabulary file mapping tokens → IDs<br>
-                                    • <strong style="color: #fbbf24;">Why subwords?</strong> Handles rare words efficiently: "unbelievable" → ["un", "believ", "able"]
+                                    • <strong style="color: #fbbf24;">Vocab size:</strong> GPT-3: 50,257 tokens | GPT-4: 100,000 tokens
                                 </div>
                             </div>
                             <p style="margin: 0; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border-left: 3px solid #fbbf24;">
                                 💡 <strong>Key Insight:</strong> The vocabulary is frozen after training. The model can't learn new token IDs - 
                                 it only learns relationships between existing tokens through billions of parameters!
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.05)); 
-                               border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: left;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                            <span style="font-size: 20px;">🧠</span>
-                            <h3 style="font-size: 15px; color: #a855f7; margin: 0; font-weight: 700;">Real LLM Concept: Vocabulary Size</h3>
-                        </div>
-                        <div style="font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
-                            <p style="margin-bottom: 8px;">
-                                <strong style="color: #a855f7;">GPT-3:</strong> 50,257 tokens | <strong style="color: #a855f7;">GPT-4:</strong> 100,000 tokens
-                            </p>
-                            <p style="margin: 0;">
-                                Larger vocabulary = more efficient encoding, but each token adds <strong style="color: #a855f7;">parameters</strong> to the model (more memory & compute needed).
                             </p>
                         </div>
                     </div>
@@ -1407,7 +1261,7 @@ window.phase1 = {
                         📍 Positional Encoding
                     </h2>
                     <p style="font-size: 15px; color: var(--text-secondary); margin-bottom: 24px;">
-                        Token order matters! We add position information to each token.
+                        Token order matters! After IDs, our tokens need order. We add position information to each token.
                     </p>
                     
                     <div style="background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); 
@@ -1442,8 +1296,11 @@ window.phase1 = {
                             <p style="margin-bottom: 8px;">
                                 LLMs have a <strong style="color: #a855f7;">maximum context window</strong> - a limit on how many tokens they can process at once:
                             </p>
-                            <p style="margin: 0;">
+                            <p style="margin-bottom: 8px;">
                                 <strong style="color: #a855f7;">GPT-3.5:</strong> 4,096 tokens | <strong style="color: #a855f7;">GPT-4:</strong> 8,192-32,768 tokens | <strong style="color: #a855f7;">Claude:</strong> 100,000+ tokens
+                            </p>
+                            <p style="margin: 0; padding: 8px; background: rgba(139, 92, 246, 0.1); border-radius: 6px; border-left: 3px solid #a855f7;">
+                                💡 This includes <strong>everything</strong>: system prompts, your messages, and the AI's responses. When the conversation exceeds this limit, older messages get truncated.
                             </p>
                         </div>
                     </div>
@@ -1462,78 +1319,29 @@ window.phase1 = {
     
     renderRecap(container) {
         container.innerHTML = `
-            <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px;">
-                <div style="max-width: 1000px; width: 100%;">
-                    
-                    <h2 style="font-size: 28px; margin-bottom: 14px; text-align: center; color: var(--primary);">
-                        ✅ Tokenization Complete!
-                    </h2>
-                    <p style="font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 24px;">
-                        You successfully broke down your training text into ${Game.state.tokens.length} tokens
-                    </p>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
-                        
-                        <!-- Your Tokens -->
-                    <div style="background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); 
-                                   border-radius: 12px; padding: 20px;">
-                            <h3 style="font-size: 16px; color: var(--primary); margin-bottom: 12px;">Your tokens:</h3>
-                            <div style="display: flex; flex-wrap: wrap; gap: 6px; max-height: 180px; overflow-y: auto; padding: 12px; 
-                                       background: rgba(0, 0, 0, 0.3); border-radius: 10px;">
-                                ${Game.state.tokens.map(token => {
-                                    const color = this.getTokenColor(token);
-                                    return `<span style="background: ${color}80; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; border: 1px solid ${color}cc;">${token === ' ' ? '␣' : token}</span>`;
-                                }).join('')}
-                        </div>
-                    </div>
-                    
-                        <!-- What you learned + What's next -->
-                        <div style="display: flex; flex-direction: column; gap: 16px;">
-                    <div style="background: rgba(34, 197, 94, 0.1); border: 2px solid rgba(34, 197, 94, 0.3); 
-                                       border-radius: 12px; padding: 16px;">
-                                <h3 style="font-size: 16px; color: #22c55e; margin-bottom: 10px;">What you learned:</h3>
-                                <div style="font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
-                                    <p style="margin-bottom: 6px;">✓ Tokenization converts text into processable pieces</p>
-                                    <p style="margin-bottom: 6px;">✓ Each token gets a unique numerical ID</p>
-                                    <p style="margin-bottom: 6px;">✓ Position information is added to maintain order</p>
-                            <p style="margin: 0;">✓ This is the foundation for all LLM processing!</p>
-                        </div>
-                    </div>
-                    
-                    <div style="background: rgba(139, 92, 246, 0.1); border: 2px solid rgba(139, 92, 246, 0.3); 
-                                       border-radius: 12px; padding: 16px;">
-                                <h3 style="font-size: 16px; color: #8b5cf6; margin-bottom: 10px;">What's next:</h3>
-                                <div style="font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
-                            <p style="margin: 0;">
-                                Now that we have tokens, we'll convert them into <strong style="color: #8b5cf6;">embeddings</strong> 
-                                - mathematical vectors that capture meaning and relationships!
-                            </p>
-                                </div>
-                        </div>
-                        </div>
-                        
-                    </div>
+            <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: hidden;">
+                <div style="max-width: 950px; width: 100%;">
                     
                     <!-- ANIMATED SCALE COMPARISON -->
-                    <div style="margin: 40px 0; padding: 32px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.05)); 
-                               border: 3px solid rgba(139, 92, 246, 0.3); border-radius: 16px;">
-                        <div style="text-align: center; margin-bottom: 30px;">
-                            <h3 style="font-size: 22px; color: #a855f7; margin-bottom: 10px; font-weight: 700;">
+                    <div style="margin: 20px 0; padding: 24px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.05)); 
+                               border: 3px solid rgba(139, 92, 246, 0.3); border-radius: 16px; overflow: hidden;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <h3 style="font-size: 20px; color: #a855f7; margin-bottom: 8px; font-weight: 700;">
                                 🔬 Scale Comparison: Your Model vs. Real LLMs
                             </h3>
-                            <p style="font-size: 14px; color: var(--text-secondary);">
+                            <p style="font-size: 13px; color: var(--text-secondary);">
                                 Watch your vocabulary shrink as we compare it to production models
                             </p>
                         </div>
-                        <div id="tokenScaleAnimation" style="min-height: 500px;"></div>
+                        <div id="tokenScaleAnimation" style="height: 420px; max-height: 420px; overflow: hidden;"></div>
                     </div>
                     
-                    <div style="text-align: center;">
-                        <button id="continueToEmbeddingsBtn"
-                                style="padding: 14px 42px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-                                       border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; 
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button id="continueToJourneyBtn"
+                                style="padding: 12px 36px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                       border: none; border-radius: 12px; color: white; font-size: 15px; font-weight: 600; 
                                        cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
-                            Continue to embeddings →
+                            Continue: View Progress →
                         </button>
                     </div>
                     
@@ -1550,36 +1358,61 @@ window.phase1 = {
         
         // Add event listener after rendering
         setTimeout(() => {
-            const btn = document.getElementById('continueToEmbeddingsBtn');
+            const btn = document.getElementById('continueToJourneyBtn');
             if (btn) {
                 btn.addEventListener('click', () => {
-                    // Mark phase 1 as complete before advancing
-                    if (!Game.state.phaseCompleted[1]) {
-                        Game.state.phaseCompleted[1] = true;
-                        Game.saveState();
-                    }
-                    
-                    // Award transition bonus only once
-                    if (!Game.state.pointsAwarded['phase1_transition']) {
-                        Game.addScore(100); // Phase transition bonus
-                        Game.state.pointsAwarded['phase1_transition'] = true;
-                        Game.saveState();
-                    }
-                    
-                    Game.nextPhase();
+                    // Go to Journey Checkpoint page
+                    this.currentStep = 'journey_checkpoint';
+                    this.render(document.getElementById('phaseContainer'));
                 });
             }
         }, 0);
     },
     
     nextStep() {
-        const steps = ['concept1', 'concept2', 'examples', 'yourdata', 'checkpoint1', 'info1', 'info2', 'recap'];
+        const steps = ['concept1', 'concept2', 'examples', 'yourdata', 'info1', 'info2', 'recap'];
         const currentIndex = steps.indexOf(this.currentStep);
         if (currentIndex < steps.length - 1) {
             this.currentStep = steps[currentIndex + 1];
             const container = document.getElementById('phaseContainer');
             this.render(container);
         }
+    },
+    
+    // Journey Checkpoint Page
+    renderJourneyCheckpoint(container) {
+        const phaseData = {
+            title: 'Tokenization',
+            subtitle: `You broke down your training text into ${Game.state.tokens.length} processable tokens`,
+            whereYouAre: 'Your text is now split into tokens - the basic building blocks that neural networks can process. Each word, punctuation mark, and space has become a discrete unit.',
+            whatYouDid: `You successfully tokenized your training data into ${Game.state.tokens.length} tokens using space-attached tokenization (mimicking real LLM behavior). You learned that spaces attach to following words, suffixes are split ("-ing", "-ed"), and each token gets a unique ID.`,
+            whatsNext: '<strong>Embeddings:</strong> Convert each token into a numerical vector (embedding). These vectors capture semantic meaning - similar words get similar vectors, allowing the model to understand relationships.',
+            whyItMatters: 'Tokenization is the FIRST step of every LLM! Without it, AI cannot process text. Good tokenization leads to efficient learning. GPT uses ~50K tokens to handle all of English + code + multilingual text efficiently.',
+            buttonText: 'Continue to Embeddings',
+            onContinue: 'phase1.completePhaseAndAdvance()'
+        };
+        
+        Game.renderJourneyCheckpoint(1, phaseData);
+    },
+    
+    // Complete Phase and Advance
+    completePhaseAndAdvance() {
+        // Mark phase 1 as complete
+        if (!Game.state.phaseCompleted[1]) {
+            Game.state.phaseCompleted[1] = true;
+            Game.saveState();
+        }
+        
+        // Award transition bonus only once
+        if (!Game.state.pointsAwarded['phase1_transition']) {
+            Game.addScore(100); // Phase transition bonus
+            Game.state.pointsAwarded['phase1_transition'] = true;
+            Game.saveState();
+        }
+        
+        // Advance to next phase
+        SoundManager.play('success');
+        Game.nextPhase();
     }
 };
 

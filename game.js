@@ -681,6 +681,138 @@ const Game = {
         }
     },
     
+    // Render Journey Checkpoint Page (reusable for all phases)
+    renderJourneyCheckpoint(phaseNum, phaseData) {
+        const container = document.getElementById('phaseContainer');
+        if (!container) return;
+        
+        // All phases definition
+        const allPhases = [
+            { num: 1, icon: '✂️', name: 'Tokenization' },
+            { num: 2, icon: '🔢', name: 'Embeddings' },
+            { num: 3, icon: '🎯', name: 'Attention' },
+            { num: 4, icon: '🧠', name: 'Training' },
+            { num: 5, icon: '✨', name: 'Generation' },
+            { num: 6, icon: '🎛️', name: 'Sampling' },
+            { num: 7, icon: '🎉', name: 'Complete' }
+        ];
+        
+        // Generate sidebar steps
+        let stepsHtml = allPhases.map(phase => {
+            const isCompleted = this.state.phaseCompleted[phase.num];
+            const isCurrent = phaseNum === phase.num;
+            const isNext = phaseNum === phase.num - 1;
+            
+            let statusClass = '';
+            let statusIcon = '';
+            let statusLabel = '';
+            
+            if (isCompleted) {
+                statusClass = 'completed';
+                statusIcon = '✓';
+                statusLabel = 'Complete';
+            } else if (isCurrent) {
+                statusClass = 'current';
+                statusIcon = '📍';
+                statusLabel = 'Current';
+            } else if (isNext) {
+                statusClass = 'next';
+                statusIcon = '→';
+                statusLabel = 'Next';
+            } else {
+                statusClass = 'locked';
+                statusIcon = '🔒';
+                statusLabel = 'Locked';
+            }
+            
+            return `
+                <div class="journey-step ${statusClass}">
+                    <div class="step-icon">${phase.icon}</div>
+                    <div class="step-info">
+                        <div class="step-name">${phase.num}. ${phase.name}</div>
+                        <div class="step-status">${statusIcon} ${statusLabel}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        container.innerHTML = `
+            <div class="journey-checkpoint-page" style="display: flex; gap: 50px; padding: 40px 60px; height: 100%; overflow-y: auto;">
+                
+                <!-- LEFT SIDEBAR: Journey Progress -->
+                <div class="journey-checkpoint-sidebar">
+                    <div class="journey-header">
+                        <div class="journey-icon">🗺️</div>
+                        <h3>Your Journey</h3>
+                    </div>
+                    <div class="journey-steps">
+                        ${stepsHtml}
+                    </div>
+                    <div class="journey-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${(phaseNum / 7) * 100}%"></div>
+                        </div>
+                        <div class="progress-text">${phaseNum}/7</div>
+                    </div>
+                </div>
+                
+                <!-- CENTER CONTENT: Phase-specific information -->
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; max-width: 850px;">
+                    <div style="width: 100%;">
+                        
+                        <h1 style="font-size: 32px; text-align: center; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                            ✓ Phase ${phaseNum} Complete: ${phaseData.title}
+                        </h1>
+                        
+                        <p style="font-size: 15px; color: var(--text-secondary); text-align: center; margin-bottom: 32px;">
+                            ${phaseData.subtitle}
+                        </p>
+                        
+                        <!-- Journey Checkpoint Sections -->
+                        <div style="display: grid; gap: 14px; margin-bottom: 32px;">
+                            
+                            <div style="padding: 18px 20px; background: rgba(0, 0, 0, 0.3); border-left: 4px solid #22c55e; border-radius: 10px;">
+                                <div style="font-size: 14px; font-weight: 600; color: #22c55e; margin-bottom: 8px;">📍 Where You Are</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    ${phaseData.whereYouAre}
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 18px 20px; background: rgba(0, 0, 0, 0.3); border-left: 4px solid var(--primary); border-radius: 10px;">
+                                <div style="font-size: 14px; font-weight: 600; color: var(--primary); margin-bottom: 8px;">✅ What You Did</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    ${phaseData.whatYouDid}
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 18px 20px; background: rgba(0, 0, 0, 0.3); border-left: 4px solid var(--secondary); border-radius: 10px;">
+                                <div style="font-size: 14px; font-weight: 600; color: var(--secondary); margin-bottom: 8px;">🎯 What's Next</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    ${phaseData.whatsNext}
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 18px 20px; background: rgba(0, 0, 0, 0.3); border-left: 4px solid #fbbf24; border-radius: 10px;">
+                                <div style="font-size: 14px; font-weight: 600; color: #fbbf24; margin-bottom: 8px;">💡 Why It Matters</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    ${phaseData.whyItMatters}
+                                </div>
+                            </div>
+                            
+                        </div>
+                        
+                        <button class="btn-primary" onclick="${phaseData.onContinue}" style="width: 100%; font-size: 15px; padding: 12px;">
+                            ${phaseData.buttonText} →
+                        </button>
+                        
+                    </div>
+                </div>
+                
+            </div>
+        `;
+    },
+    
     // Hint system
     setHint(hintText) {
         document.getElementById('hintContent').innerHTML = hintText;

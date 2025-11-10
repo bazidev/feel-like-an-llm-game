@@ -9,8 +9,42 @@ window.ScaleAnimations = {
         const container = document.getElementById('tokenScaleAnimation');
         if (!container) return;
         
-        const uniqueTokens = [...new Set(userTokens)];
+        console.log('🔍 Debug: Received tokens:', userTokens);
+        console.log('🔍 Token types:', userTokens.map(t => typeof t));
+        console.log('🔍 Token charCodes:', userTokens.slice(0, 5).map(t => 
+            t.split('').map(c => c.charCodeAt(0))
+        ));
+        
+        const uniqueTokens = [...new Set(userTokens)].map(token => {
+            // Ensure token is a proper string
+            if (typeof token !== 'string') {
+                console.warn('⚠️ Non-string token detected:', token);
+                return String(token);
+            }
+            return token;
+        });
         const tokenCount = uniqueTokens.length;
+        
+        // Helper function to display token properly
+        const displayToken = (token) => {
+            // Ensure it's a string
+            const str = String(token);
+            
+            // Handle special whitespace
+            if (str === ' ') return '␣';
+            if (str === '\n') return '↵';
+            if (str === '\t') return '⇥';
+            if (str === '') return '∅'; // Empty token
+            
+            // Escape HTML entities
+            return str.replace(/&/g, '&amp;')
+                     .replace(/</g, '&lt;')
+                     .replace(/>/g, '&gt;')
+                     .replace(/"/g, '&quot;')
+                     .replace(/'/g, '&#39;');
+        };
+        
+        console.log('✅ Display tokens:', uniqueTokens.slice(0, 10).map(displayToken));
         
         container.innerHTML = `
             <div style="text-align: center; margin-bottom: 40px;">
@@ -21,6 +55,7 @@ window.ScaleAnimations = {
                     ${uniqueTokens.slice(0, 20).map((token, i) => {
                         const colors = ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'];
                         const color = colors[i % colors.length];
+                        const displayText = displayToken(token);
                         return `<div class="token-bubble" data-index="${i}" style="
                             padding: 16px 24px; 
                             background: ${color}40; 
@@ -33,7 +68,7 @@ window.ScaleAnimations = {
                             box-shadow: 0 6px 20px ${color}60, 0 0 30px ${color}40;
                             opacity: 0;
                             transform: scale(0) rotateY(180deg);
-                        ">${token === ' ' ? '␣' : token}</div>`;
+                        ">${displayText}</div>`;
                     }).join('')}
                 </div>
             </div>

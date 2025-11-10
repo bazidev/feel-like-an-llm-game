@@ -91,10 +91,10 @@ window.phase2 = {
             this.renderExamples(container);
         } else if (this.currentStep === 'group') {
             this.renderGrouping(container);
-        } else if (this.currentStep === 'recap1') {
-            this.renderRecap1(container);
-        } else if (this.currentStep === 'recap2') {
-            this.renderRecap2(container);
+        } else if (this.currentStep === 'recap') {
+            this.renderRecap(container);
+        } else if (this.currentStep === 'journey_checkpoint') {
+            this.renderJourneyCheckpoint(container);
         }
     },
     
@@ -172,67 +172,31 @@ window.phase2 = {
                         📊 Embeddings
                     </h1>
                     <p style="font-size: 15px; color: var(--text-secondary); text-align: center; margin-bottom: 24px;">
-                        Pattern matching, not language understanding
+                        Vectors capture patterns from training data
                     </p>
                     
-                    <!-- Language-Independent -->
-                    <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(191, 0, 255, 0.05)); 
-                               border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 14px; padding: 20px; margin-bottom: 18px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                            <span style="font-size: 24px;">🌍</span>
-                            <h2 style="font-size: 18px; color: var(--primary); margin: 0;">Embeddings Work in ANY Language</h2>
-                        </div>
-                        <div style="font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
-                            <p style="margin-bottom: 10px;">
-                                The same process works in English, Arabic, Chinese, or any language - because it's based on <strong style="color: var(--primary);">patterns</strong>, not meaning!
-                            </p>
-                            <p style="margin: 0;">
-                                <strong style="color: var(--primary);">Example:</strong> In Chinese "猫" (cat) and "狗" (dog) get similar vectors - not because you understand Chinese, but because they appear in similar patterns: "猫喜欢鱼" and "狗喜欢骨头".
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <!-- Reality Check -->
-                    <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05)); 
-                               border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 14px; padding: 18px; margin-bottom: 20px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                            <span style="font-size: 20px;">⚡</span>
-                            <h3 style="font-size: 15px; color: #ef4444; margin: 0;">Reality Check: You're NOT Understanding</h3>
-                        </div>
-                        <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary);">
-                            <p style="margin-bottom: 8px;">
-                                You don't "know" what a cat is. You don't "understand" that fish is food. You just learned:
-                            </p>
-                            <ul style="margin: 0; padding-left: 20px;">
-                                <li style="margin-bottom: 5px;">"cat" appears before "likes" → gets vector [X, Y]</li>
-                                <li style="margin-bottom: 5px;">"dog" appears before "likes" → gets similar vector [X+0.1, Y+0.1]</li>
-                                <li style="margin: 0;">Pattern matching ≠ Understanding! 🤖</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <!-- Real LLM Concept -->
+                    <!-- Real LLM Concept - Compact Version -->
                     <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.05)); 
-                               border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                            <span style="font-size: 20px;">🧠</span>
-                            <h3 style="font-size: 15px; color: #a855f7; margin: 0;">Real LLM Concept: Embedding Dimensions</h3>
+                               border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <span style="font-size: 22px;">🧠</span>
+                            <h3 style="font-size: 16px; color: #a855f7; margin: 0;">Real LLM: Embedding Dimensions</h3>
                         </div>
-                        <div style="font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
-                            <p style="margin-bottom: 10px;">
-                                <strong style="color: #a855f7;">GPT-3:</strong> 12,288 dimensions | <strong style="color: #a855f7;">GPT-4:</strong> ~18,000 dimensions <em>(estimated)</em>
-                            </p>
-                            <div style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
-                                <div style="font-size: 11px; line-height: 1.8;">
-                                    • This game uses <strong style="color: #fbbf24;">2D</strong> for visualization (x, y coordinates)<br>
-                                    • Real LLMs use <strong style="color: #fbbf24;">thousands of dimensions</strong> to capture nuanced patterns<br>
-                                    • More dimensions = more subtle relationships can be learned<br>
-                                    • Each dimension can represent different aspects (grammar, topic, sentiment, etc.)
+                        <div style="font-size: 13px; line-height: 1.7; color: var(--text-secondary);">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                                <div style="padding: 12px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Your Model</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--primary);">2D</div>
+                                    <div style="font-size: 10px; color: var(--text-secondary);">Simple visualization</div>
+                                </div>
+                                <div style="padding: 12px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">GPT-4</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: #a855f7;">~18,000D</div>
+                                    <div style="font-size: 10px; color: var(--text-secondary);">Captures nuances</div>
                                 </div>
                             </div>
-                            <p style="margin: 0; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border-left: 3px solid #fbbf24;">
-                                💡 <strong>Key Insight:</strong> Embeddings are learned, not programmed! The model discovers these patterns automatically from training data. 
-                                No one explicitly tells it "cat" and "dog" should be similar - it figures that out through billions of examples!
+                            <p style="margin: 0; padding: 12px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border-left: 3px solid #fbbf24; font-size: 12px;">
+                                💡 More dimensions = more patterns captured (grammar, context, topic, style, sentiment, etc.)
                             </p>
                         </div>
                     </div>
@@ -361,9 +325,9 @@ window.phase2 = {
                         <p style="font-size: 11px; line-height: 1.6;">${example.hint}</p>
                     </div>
                     
-                    <div style="padding: 10px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; margin-top: 12px;">
-                        <p style="font-size: 11px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
-                            <strong>Task:</strong> Drag tokens that appear in similar patterns close together!
+                    <div style="padding: 12px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; margin-top: 12px;">
+                        <p style="font-size: 11px; color: var(--text-secondary); margin: 0; line-height: 1.6;">
+                            <strong>Reality Check:</strong> You're grouping by patterns, not meaning! You don't "understand" these words - you just learned which ones appear in similar contexts.
                         </p>
                     </div>
                 </div>
@@ -727,7 +691,7 @@ window.phase2 = {
     initializeGroups() {
         const tokens = Game.state.tokens;
         
-        // Filter out noise: suffixes, articles, spaces, punctuation, common words
+        // Filter out noise: suffixes, punctuation, common words (spaces are attached to words now)
         const noiseWords = ['ed', 'ing', 's', 'the', 'a', 'an', 'is', 'was', 'were', 'are', 
                            'very', 'much', 'indeed', 'today', 'tonight', 'daily', 'originally', 
                            'constantly', 'successfully', 'gracefully', 'brightly', 'beautifully', 
@@ -736,10 +700,12 @@ window.phase2 = {
         const words = [];
         
         tokens.forEach(token => {
+            // Strip leading space and convert to lowercase for comparison
             const t = token.toLowerCase().trim();
             // Only include meaningful content words (length > 1, not in noise list)
-            if (token.trim().length > 1 && !noiseWords.includes(t)) {
-                words.push(token);
+            if (t.length > 1 && !noiseWords.includes(t)) {
+                // Store the TRIMMED version (without leading space)
+                words.push(t);
             }
         });
         
@@ -758,10 +724,10 @@ window.phase2 = {
         uniqueWords.forEach(token => {
             const t = token.toLowerCase();
             
-            // SUBJECTS - Nouns that perform actions
+            // SUBJECTS - Nouns that perform actions (animate beings that DO things)
             if (['chef', 'player', 'programmer', 'cat', 'dog', 'bird', 'rocket', 'astronaut', 
-                 'team', 'coach', 'pizza', 'pasta', 'restaurant', 'satellite', 'moon', 'stars', 
-                 'Earth', 'planet', 'oven', 'computer', 'developer', 'mat'].includes(t)) {
+                 'team', 'coach', 'satellite', 'moon', 'stars', 
+                 'Earth', 'planet', 'computer', 'developer'].includes(t)) {
                 this.targetGroups.subjects.push(token);
             }
             // ACTIONS - Verbs (complete words, not suffixes)
@@ -782,18 +748,19 @@ window.phase2 = {
                      'of', 'out', 'by', 'about', 'near', 'against'].includes(t)) {
                 this.targetGroups.prepositions.push(token);
             }
-            // OBJECTS/DESCRIPTORS - Things, places, qualities
+            // OBJECTS/DESCRIPTORS - Things, places, qualities (things acted upon)
             else if (['ball', 'goal', 'fish', 'milk', 'bones', 'treats', 'window', 'garden', 
                      'sofa', 'toy', 'tree', 'seeds', 'water', 'friends',
                      'code', 'data', 'software', 'features', 'calculations', 'programs', 
                      'applications', 'documentation', 'users', 'task', 'problems',
-                     'cuisine', 'meal', 'meals', 'cheese', 'tomatoes', 'ingredients',
+                     'pizza', 'pasta', 'cuisine', 'meal', 'meals', 'cheese', 'tomatoes', 'ingredients',
                      'sauce', 'Italy', 'recipes', 'people', 'food', 'kitchen', 'customers', 'fresh', 'hot',
+                     'restaurant', 'oven', 'mat',
                      'space', 'sky', 'night', 'suit', 'equipment', 'patterns',
                      'fuel', 'sunlight', 'years', 'today',
                      'football', 'games', 'victory', 'skill', 'training', 'rivals', 
                      'championship', 'minute', 'matches', 'dedication', 'project', 
-                     'solutions', 'editor', 'feedback', 'mat', 'branch', 'dawn'].includes(t)) {
+                     'solutions', 'editor', 'feedback', 'branch', 'dawn'].includes(t)) {
                 this.targetGroups.objects.push(token);
             }
         });
@@ -1207,7 +1174,7 @@ window.phase2 = {
                 
                 // Auto-advance after showing completion message
                 setTimeout(() => {
-                    this.currentStep = 'recap1';
+                    this.currentStep = 'recap';
                     this.render(document.getElementById('phaseContainer'));
                 }, 2500);
             }, 300);
@@ -1282,7 +1249,7 @@ window.phase2 = {
             Game.state.embeddings = this.generateEmbeddings();
             
             setTimeout(() => {
-                this.currentStep = 'recap1';
+                this.currentStep = 'recap';
                 this.render(document.getElementById('phaseContainer'));
             }, 2000);
         } else {
@@ -1354,132 +1321,102 @@ window.phase2 = {
         return embeddings;
     },
     
-    renderRecap1(container) {
+    renderRecap(container) {
         const embeddings = Game.state.embeddings;
         const embeddingCount = Object.keys(embeddings).length;
         
         container.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 30px; overflow-y: auto;">
-                <div style="max-width: 900px; width: 100%;">
+            <div style="height: 100%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
+                <div style="max-width: 1000px; width: 100%;">
                     
-                    <h1 style="font-size: 32px; text-align: center; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-                               -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                        ✓ Phase 2 Complete: Embeddings
-                    </h1>
-                    
-                    <p style="font-size: 15px; color: var(--text-secondary); text-align: center; margin-bottom: 32px;">
-                        You converted ${embeddingCount} unique tokens into numerical vectors
+                    <h2 style="font-size: 28px; margin-bottom: 14px; text-align: center; color: var(--primary);">
+                        ✅ Embeddings Complete!
+                    </h2>
+                    <p style="font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 24px;">
+                        You converted ${embeddingCount} tokens into 2D vectors
                     </p>
                     
-                    <!-- Vectors Display -->
-                    <div style="padding: 20px; background: rgba(0, 212, 255, 0.08); border: 2px solid var(--primary); border-radius: 12px; margin-bottom: 24px;">
-                        <div style="text-align: center; margin-bottom: 12px;">
-                            <span style="font-size: 12px; color: var(--text-secondary);">🔢 SAMPLE EMBEDDINGS (2D vectors)</span>
+                    <!-- ANIMATED SCALE COMPARISON -->
+                    <div style="margin: 40px 0; padding: 32px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.05)); 
+                               border: 3px solid rgba(139, 92, 246, 0.3); border-radius: 16px;">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <h3 style="font-size: 22px; color: #a855f7; margin-bottom: 10px; font-weight: 700;">
+                                🔬 Scale Comparison: Your Model vs. Real LLMs
+                            </h3>
+                            <p style="font-size: 14px; color: var(--text-secondary);">
+                                Watch your 2D vectors expand to thousands of dimensions
+                            </p>
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
-                            ${Object.entries(embeddings).slice(0, 6).map(([token, vec]) => `
-                                <div style="padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 6px; font-size: 12px; font-family: 'JetBrains Mono', monospace;">
-                                    <div style="color: var(--primary); margin-bottom: 4px;">"${token}"</div>
-                                    <div style="color: var(--text-secondary);">[${vec[0].toFixed(1)}, ${vec[1].toFixed(1)}]</div>
-                                </div>
-                            `).join('')}
-                        </div>
+                        <div id="embeddingScaleAnimation" style="min-height: 500px;"></div>
                     </div>
                     
-                    <!-- What Happened -->
-                    <div style="padding: 20px; background: rgba(255, 255, 255, 0.02); border-radius: 12px; margin-bottom: 32px;">
-                        <h3 style="font-size: 16px; color: var(--primary); margin-bottom: 12px;">📊 What Just Happened:</h3>
-                        <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary); font-size: 14px; line-height: 1.8;">
-                            <li>You grouped tokens into <strong>4 pattern categories</strong> based on usage in training data</li>
-                            <li>Each category clustered in a <strong>different corner</strong> of vector space</li>
-                            <li>👥 Subjects (who/what acts) → Top-left | ⚡ Actions (verbs) → Top-right</li>
-                            <li>📦 Objects (acted upon) → Bottom-left | 🔗 Prepositions (connectors) → Bottom-right</li>
-                            <li>You didn't "understand" meanings - you recognized <strong>positional patterns</strong></li>
-                            <li>These vectors are now <strong>stored</strong> for use in next phases</li>
-                        </ul>
+                    <div style="text-align: center;">
+                        <button id="continueToJourneyBtn"
+                                style="padding: 14px 42px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                       border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; 
+                                       cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
+                            Continue →
+                        </button>
                     </div>
-                    
-                    <button class="btn-primary" onclick="phase2.nextRecapPage()" style="width: 100%; font-size: 17px; padding: 14px;">
-                        Continue (1/2) →
-                    </button>
                     
                 </div>
             </div>
         `;
-    },
-    
-    renderRecap2(container) {
-        const embeddings = Game.state.embeddings;
-        const embeddingCount = Object.keys(embeddings).length;
         
-        container.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 30px; overflow-y: auto;">
-                <div style="max-width: 900px; width: 100%;">
-                    
-                    <h1 style="font-size: 32px; text-align: center; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-                               -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                        ✓ Phase 2 Complete: Embeddings
-                    </h1>
-                    
-                    <p style="font-size: 15px; color: var(--text-secondary); text-align: center; margin-bottom: 32px;">
-                        Understanding your progress (2/2)
-                    </p>
-                    
-                    <!-- Journey Checkpoint -->
-                    <div style="padding: 24px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.08)); 
-                               border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 14px; margin-bottom: 32px;">
-                        <div style="text-align: center; margin-bottom: 16px;">
-                            <span style="font-size: 32px;">🗺️</span>
-                            <h3 style="font-size: 18px; color: #fbbf24; margin: 8px 0 0 0; font-weight: 700;">Journey Checkpoint</h3>
-                        </div>
-                        
-                        <div style="display: grid; gap: 14px;">
-                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #22c55e; border-radius: 6px;">
-                                <div style="font-size: 13px; font-weight: 600; color: #22c55e; margin-bottom: 6px;">📍 Where You Are</div>
-                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    Your data is now <strong>vectorized</strong>. Each token has become a point in mathematical space, positioned based on usage patterns.
-                                </div>
-                            </div>
-                            
-                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--primary); border-radius: 6px;">
-                                <div style="font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 6px;">✅ What You Did</div>
-                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    You converted ${embeddingCount} tokens into 2D vectors. Tokens appearing in similar contexts got similar coordinates. 
-                                    No "understanding" needed - just pattern recognition from training data!
-                                </div>
-                            </div>
-                            
-                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--secondary); border-radius: 6px;">
-                                <div style="font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px;">🎯 What's Next</div>
-                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    <strong>Attention mechanism:</strong> Calculate which tokens should "attend to" each other based on vector similarity. 
-                                    This helps the model understand context - "chef" + "cooked" = related concepts.
-                                </div>
-                            </div>
-                            
-                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #fbbf24; border-radius: 6px;">
-                                <div style="font-size: 13px; font-weight: 600; color: #fbbf24; margin-bottom: 6px;">💡 Why It Matters</div>
-                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    Without embeddings, "cat" is just ID #42. With embeddings, "cat" is near "dog" and "pet" in vector space - 
-                                    the model can now recognize relationships! This is how LLMs capture "meaning" through pure mathematics.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <button class="btn-primary" onclick="phase2.completePhase()" style="width: 100%; font-size: 17px; padding: 14px;">
-                        Continue to Attention →
-                    </button>
-                    
-                </div>
-            </div>
-        `;
+        // Trigger the animation after a short delay
+        setTimeout(() => {
+            if (window.ScaleAnimations && window.ScaleAnimations.animateEmbeddingComparison) {
+                ScaleAnimations.animateEmbeddingComparison();
+            }
+        }, 500);
+        
+        // Add event listener after rendering
+        setTimeout(() => {
+            const btn = document.getElementById('continueToJourneyBtn');
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    // Go to Journey Checkpoint page
+                    this.currentStep = 'journey_checkpoint';
+                    this.render(document.getElementById('phaseContainer'));
+                });
+            }
+        }, 0);
     },
     
-    nextRecapPage() {
-        this.currentStep = 'recap2';
-        SoundManager.play('click');
-        this.render(document.getElementById('phaseContainer'));
+    // Journey Checkpoint Page
+    renderJourneyCheckpoint(container) {
+        const phaseData = {
+            title: 'Embeddings',
+            subtitle: `You converted ${Object.keys(Game.state.embeddings).length} tokens into numerical vectors`,
+            whereYouAre: 'Your data is now <strong>vectorized</strong>. Each token has become a point in mathematical space, positioned based on usage patterns from training data.',
+            whatYouDid: `You converted ${Object.keys(Game.state.embeddings).length} tokens into 2D vectors by grouping tokens that appear in similar contexts. "cat" and "dog" got similar vectors not because you understand them, but because they appear near similar words.`,
+            whatsNext: '<strong>Attention:</strong> Calculate which tokens should "attend to" each other based on vector similarity. This lets the model understand context - "chef" near "cooked" means they\'re related.',
+            whyItMatters: 'Without embeddings, "cat" is just ID #42. With embeddings, "cat" is near "dog" and "pet" in vector space - the model can now recognize relationships! This is how LLMs capture "meaning" through pure mathematics.',
+            buttonText: 'Continue to Attention',
+            onContinue: 'phase2.completePhaseAndAdvance()'
+        };
+        
+        Game.renderJourneyCheckpoint(2, phaseData);
+    },
+    
+    // Complete Phase and Advance
+    completePhaseAndAdvance() {
+        // Mark phase 2 as complete
+        if (!Game.state.phaseCompleted[2]) {
+            Game.state.phaseCompleted[2] = true;
+            Game.saveState();
+        }
+        
+        // Award transition bonus only once
+        if (!Game.state.pointsAwarded['phase2_transition']) {
+            Game.addScore(100); // Phase transition bonus
+            Game.state.pointsAwarded['phase2_transition'] = true;
+            Game.saveState();
+        }
+        
+        // Advance to next phase
+        SoundManager.play('success');
+        Game.nextPhase();
     },
     
     completePhase() {
