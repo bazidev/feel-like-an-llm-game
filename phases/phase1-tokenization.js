@@ -59,7 +59,7 @@ window.phase1 = {
             explanation: "<strong style='color: var(--primary);'>Rule:</strong> Spaces attach to the word that follows them (most common pattern in training data)",
             options: [
                 { tokens: ["Hello World"], correct: false, why: "❌ Must split into tokens! 'Hello World' is two separate concepts." },
-                { tokens: ["Hello", " World"], correct: true, why: "✓ Perfect! The space attaches to 'World' because ' World' (with space) appears more frequently in training data than 'World' alone. Token 1='Hello', Token 2='␣World'." },
+                { tokens: ["Hello", "␣World"], correct: true, why: "✓ Perfect! The space attaches to 'World' because ' World' (with space) appears more frequently in training data than 'World' alone. Token 1='Hello', Token 2='␣World'." },
                 { tokens: ["Hel", "lo", "Wor", "ld"], correct: false, why: "❌ Random splits don't follow learned patterns from training data" }
             ]
         },
@@ -217,7 +217,7 @@ window.phase1 = {
                             </div>
                             <div style="padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
                                 <div style="font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 3px;">2. Spaces attach to words</div>
-                                <div style="font-size: 11px; color: var(--text-secondary);">Space goes with next word: "Hello World" → ["Hello", " World"]</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">Space goes with next word: "Hello World" → ["Hello", "␣World"]</div>
                             </div>
                             <div style="padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
                                 <div style="font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 3px;">3. Punctuation splits</div>

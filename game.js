@@ -186,6 +186,25 @@ const Game = {
         // Play success sound
         SoundManager.play('success');
         
+        // Save score to scoreboard BEFORE jumping to finale
+        const scoreboardResult = this.saveToScoreboard();
+        
+        // Save to API asynchronously (non-blocking)
+        if (window.ScoreboardAPI) {
+            ScoreboardAPI.saveScore().then(result => {
+                if (result.success) {
+                    if (result.isHighScore) {
+                        ScoreboardAPI.showSuccess(`🎉 Score saved! ${this.state.score} points`);
+                        SoundManager.play('powerup');
+                    } else {
+                        console.log('ℹ️ Score submitted from End Game');
+                    }
+                } else {
+                    console.warn('⚠️ Score not saved to API:', result.error);
+                }
+            });
+        }
+        
         // Jump directly to phase 6 (finale) and specifically to the 'resources' step
         // This way users can see the summary and read more resources
         setTimeout(() => {
@@ -1373,13 +1392,24 @@ const Game = {
     },
     
     calculateRating(score, timeSeconds, tokens) {
-        // Formula: Higher score = better, Lower time = better, More tokens = better
-        // Rating = Score * (1 + tokens/100) / (timeSeconds/60)
-        // This rewards high scores, processing more tokens, and doing it quickly
+        // 50/50 Formula: Score and Time each contribute 50% to final rating
+        // Higher score = better | Lower time = better | More tokens = small bonus
         
-        const timeMinutes = Math.max(timeSeconds / 60, 0.1); // Avoid division by zero
-        const tokenBonus = 1 + (tokens / 100); // Each 100 tokens adds 100% bonus
-        const rating = (score * tokenBonus) / timeMinutes;
+        const maxScore = 2000; // Maximum achievable score
+        const targetTime = 900; // 15 minutes in seconds (target completion time)
+        
+        // Score Component (0-100 scale) - 50% weight
+        const scoreComponent = Math.min((score / maxScore) * 100, 100);
+        
+        // Time Component (0-100 scale) - 50% weight
+        // Fast completion gets bonus, slow gets penalty
+        const timeComponent = Math.max(0, Math.min(100, (targetTime / timeSeconds) * 100));
+        
+        // Token Bonus (small multiplier for engagement)
+        const tokenBonus = 1 + (tokens / 1000); // Each 1000 tokens adds 100% bonus
+        
+        // Final Rating: 50% score + 50% time, with token multiplier
+        const rating = ((scoreComponent * 0.5) + (timeComponent * 0.5)) * tokenBonus;
         
         return Math.round(rating * 10) / 10; // Round to 1 decimal
     },

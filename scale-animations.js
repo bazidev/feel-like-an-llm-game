@@ -48,7 +48,7 @@ window.ScaleAnimations = {
         
         container.innerHTML = `
             <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 20px; color: var(--primary); font-weight: 700; margin-bottom: 12px; text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);">
+                <div id="yourVocabulary" style="font-size: 20px; color: var(--primary); font-weight: 700; margin-bottom: 12px; text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);">
                     YOUR VOCABULARY
                 </div>
                 <div id="userTokenCloud" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; min-height: 80px; align-items: center; perspective: 1000px;">
@@ -188,9 +188,13 @@ window.ScaleAnimations = {
                     gsap.to('#userTokenCloud', {
                         scale: 0.25,
                         y: -60,
-                        opacity: 0.5,
+                        opacity: 0,
                         duration: 1.2,
-                        ease: 'power2.inOut'
+                        ease: 'power2.inOut',
+                        onComplete: () => {
+                            // Completely remove from layout
+                            document.getElementById('yourVocabulary').style.visibility = 'hidden';
+                        }
                     });
                     
                     gsap.to('#scaleComparison', {
@@ -236,109 +240,116 @@ window.ScaleAnimations = {
         if (!container) return;
         
         container.innerHTML = `
-            <div style="text-align: center; margin-bottom: 50px;">
-                <div style="font-size: 24px; color: var(--primary); font-weight: 700; margin-bottom: 25px; text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);">
+            <div id="userSection" style="text-align: center; margin-bottom: 30px;">
+                <div style="font-size: 20px; color: var(--primary); font-weight: 700; margin-bottom: 20px; text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);">
                     YOUR 2D EMBEDDING SPACE
                 </div>
-                <div id="userEmbedding" style="position: relative; height: 240px; display: flex; align-items: center; justify-content: center;">
-                    <div style="position: relative; width: 350px; height: 240px;">
+                <div id="userEmbedding" style="position: relative; height: 160px; display: flex; align-items: center; justify-content: center;">
+                    <div style="position: relative; width: 280px; height: 160px;">
                         <!-- X axis -->
-                        <div style="position: absolute; bottom: 30px; left: 10px; right: 10px; height: 3px; background: linear-gradient(90deg, var(--primary), rgba(0, 212, 255, 0.3));"></div>
-                        <div style="position: absolute; bottom: 5px; right: 10px; color: var(--primary); font-size: 18px; font-weight: 700;">X</div>
+                        <div style="position: absolute; bottom: 20px; left: 10px; right: 10px; height: 2px; background: linear-gradient(90deg, var(--primary), rgba(0, 212, 255, 0.3));"></div>
+                        <div style="position: absolute; bottom: 3px; right: 10px; color: var(--primary); font-size: 14px; font-weight: 700;">X</div>
                         
                         <!-- Y axis -->
-                        <div style="position: absolute; top: 10px; bottom: 30px; left: 30px; width: 3px; background: linear-gradient(180deg, var(--secondary), rgba(168, 85, 247, 0.3));"></div>
-                        <div style="position: absolute; top: 5px; left: 5px; color: var(--secondary); font-size: 18px; font-weight: 700;">Y</div>
+                        <div style="position: absolute; top: 10px; bottom: 20px; left: 20px; width: 2px; background: linear-gradient(180deg, var(--secondary), rgba(168, 85, 247, 0.3));"></div>
+                        <div style="position: absolute; top: 3px; left: 3px; color: var(--secondary); font-size: 14px; font-weight: 700;">Y</div>
                         
-                        <!-- Sample embedding points with labels -->
-                        <div class="embed-point" style="position: absolute; left: 80px; top: 50px; width: 16px; height: 16px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 20px #22c55e, 0 4px 15px rgba(34, 197, 94, 0.5);"></div>
-                        <div class="embed-point" style="position: absolute; left: 160px; top: 90px; width: 16px; height: 16px; background: #3b82f6; border-radius: 50%; box-shadow: 0 0 20px #3b82f6, 0 4px 15px rgba(59, 130, 246, 0.5);"></div>
-                        <div class="embed-point" style="position: absolute; left: 250px; top: 130px; width: 16px; height: 16px; background: #f59e0b; border-radius: 50%; box-shadow: 0 0 20px #f59e0b, 0 4px 15px rgba(245, 158, 11, 0.5);"></div>
-                        <div class="embed-point" style="position: absolute; left: 120px; top: 160px; width: 16px; height: 16px; background: #ec4899; border-radius: 50%; box-shadow: 0 0 20px #ec4899, 0 4px 15px rgba(236, 72, 153, 0.5);"></div>
-                        <div class="embed-point" style="position: absolute; left: 210px; top: 70px; width: 16px; height: 16px; background: #8b5cf6; border-radius: 50%; box-shadow: 0 0 20px #8b5cf6, 0 4px 15px rgba(139, 92, 246, 0.5);"></div>
+                        <!-- Sample embedding points -->
+                        <div class="embed-point" style="position: absolute; left: 60px; top: 35px; width: 12px; height: 12px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 15px #22c55e;"></div>
+                        <div class="embed-point" style="position: absolute; left: 120px; top: 60px; width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; box-shadow: 0 0 15px #3b82f6;"></div>
+                        <div class="embed-point" style="position: absolute; left: 190px; top: 85px; width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; box-shadow: 0 0 15px #f59e0b;"></div>
+                        <div class="embed-point" style="position: absolute; left: 90px; top: 105px; width: 12px; height: 12px; background: #ec4899; border-radius: 50%; box-shadow: 0 0 15px #ec4899;"></div>
+                        <div class="embed-point" style="position: absolute; left: 160px; top: 45px; width: 12px; height: 12px; background: #8b5cf6; border-radius: 50%; box-shadow: 0 0 15px #8b5cf6;"></div>
                         
-                        <div style="position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); font-size: 18px; color: var(--primary); font-weight: 700; font-family: 'JetBrains Mono', monospace;">
+                        <div style="position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 14px; color: var(--primary); font-weight: 700; font-family: 'JetBrains Mono', monospace;">
                             2 Dimensions
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div id="dimensionExplosion" style="position: relative; min-height: 320px; opacity: 0; padding: 20px;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="font-size: 22px; color: var(--secondary); font-weight: 700; text-shadow: 0 0 15px rgba(168, 85, 247, 0.5);">
+            <div id="dimensionExplosion" style="position: relative; opacity: 0; padding: 0 15px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 20px; color: var(--secondary); font-weight: 700; text-shadow: 0 0 15px rgba(168, 85, 247, 0.5);">
                         REAL LLM DIMENSIONS
                     </div>
                 </div>
                 
-                <div style="display: flex; justify-content: space-around; align-items: flex-end; height: 240px;">
+                <div style="display: flex; justify-content: space-around; align-items: flex-end; height: 350px;">
                     <!-- Your Model (tiny) -->
                     <div style="text-align: center;">
-                        <div id="yourDims" style="width: 35px; height: 35px; background: linear-gradient(135deg, var(--primary), var(--secondary)); margin: 0 auto 12px auto; border-radius: 4px; box-shadow: 0 4px 15px rgba(0, 212, 255, 0.6); position: relative;">
-                            <div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: 700; color: var(--primary); white-space: nowrap;">2D</div>
+                        <div id="yourDims" style="width: 28px; height: 28px; background: linear-gradient(135deg, var(--primary), var(--secondary)); margin: 0 auto 10px auto; border-radius: 4px; box-shadow: 0 4px 15px rgba(0, 212, 255, 0.6); position: relative;">
+                            <div style="position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: 700; color: var(--primary); white-space: nowrap;">2D</div>
                         </div>
-                        <div style="font-size: 13px; color: var(--text-secondary);">Your Model</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Your Model</div>
                     </div>
                     
                     <!-- GPT-2 -->
                     <div style="text-align: center;" class="dimension-bar" data-model="gpt2">
-                        <div style="width: 70px; height: 0; background: linear-gradient(180deg, #8b5cf6, #6b46c1); margin: 0 auto 12px auto; position: relative; transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 8px 8px 0 0; box-shadow: 0 4px 30px rgba(139, 92, 246, 0.6);">
-                            <div style="position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: 700; color: #8b5cf6; white-space: nowrap; opacity: 0;" class="dim-label">768D</div>
+                        <div style="width: 60px; height: 0; background: linear-gradient(180deg, #8b5cf6, #6b46c1); margin: 0 auto 10px auto; position: relative; transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 6px 6px 0 0; box-shadow: 0 4px 30px rgba(139, 92, 246, 0.6);">
+                            <div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: 700; color: #8b5cf6; white-space: nowrap; opacity: 0;" class="dim-label">768D</div>
                         </div>
-                        <div style="font-size: 13px; color: #8b5cf6; font-weight: 600;">GPT-2</div>
+                        <div style="font-size: 11px; color: #8b5cf6; font-weight: 600;">GPT-2</div>
                     </div>
                     
                     <!-- GPT-3 -->
                     <div style="text-align: center;" class="dimension-bar" data-model="gpt3">
-                        <div style="width: 90px; height: 0; background: linear-gradient(180deg, #ec4899, #db2777); margin: 0 auto 12px auto; position: relative; transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 8px 8px 0 0; box-shadow: 0 6px 35px rgba(236, 72, 153, 0.7);">
-                            <div style="position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: 700; color: #ec4899; white-space: nowrap; opacity: 0;" class="dim-label">12,288D</div>
+                        <div style="width: 75px; height: 0; background: linear-gradient(180deg, #ec4899, #db2777); margin: 0 auto 10px auto; position: relative; transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 6px 6px 0 0; box-shadow: 0 6px 35px rgba(236, 72, 153, 0.7);">
+                            <div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: 700; color: #ec4899; white-space: nowrap; opacity: 0;" class="dim-label">12,288D</div>
                         </div>
-                        <div style="font-size: 14px; color: #ec4899; font-weight: 600;">GPT-3</div>
+                        <div style="font-size: 12px; color: #ec4899; font-weight: 600;">GPT-3</div>
                     </div>
                     
                     <!-- GPT-4 -->
                     <div style="text-align: center;" class="dimension-bar" data-model="gpt4">
-                        <div style="width: 110px; height: 0; background: linear-gradient(180deg, #f59e0b, #ef4444); margin: 0 auto 12px auto; position: relative; transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 8px 8px 0 0; box-shadow: 0 8px 40px rgba(245, 158, 11, 0.8);">
-                            <div style="position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-size: 19px; font-weight: 700; color: #f59e0b; white-space: nowrap; opacity: 0;" class="dim-label">~18,000D</div>
+                        <div style="width: 90px; height: 0; background: linear-gradient(180deg, #f59e0b, #ef4444); margin: 0 auto 10px auto; position: relative; transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 6px 6px 0 0; box-shadow: 0 8px 40px rgba(245, 158, 11, 0.8);">
+                            <div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 15px; font-weight: 700; color: #f59e0b; white-space: nowrap; opacity: 0;" class="dim-label">~18,000D</div>
                         </div>
-                        <div style="font-size: 15px; color: #f59e0b; font-weight: 700;">GPT-4</div>
+                        <div style="font-size: 13px; color: #f59e0b; font-weight: 700;">GPT-4</div>
                     </div>
                 </div>
                 
-                <div style="margin-top: 40px; text-align: center; font-size: 14px; color: var(--text-secondary); opacity: 0; padding: 16px; background: rgba(251, 191, 36, 0.1); border: 2px solid rgba(251, 191, 36, 0.3); border-radius: 12px;" id="dimensionNote">
-                    💡 <strong style="color: #fbbf24;">Each dimension</strong> captures different patterns: grammar, meaning, context, style, sentiment, topic, syntax, and thousands more subtle linguistic features!
+                <div style="margin-top: 20px; text-align: center; font-size: 12px; color: var(--text-secondary); opacity: 0; padding: 12px; background: rgba(251, 191, 36, 0.1); border: 2px solid rgba(251, 191, 36, 0.3); border-radius: 10px;" id="dimensionNote">
+                    💡 <strong style="color: #fbbf24;">Each dimension</strong> captures different patterns: grammar, meaning, context, style, sentiment, and thousands more!
                 </div>
             </div>
         `;
         
-        // Animate embedding points pulsing and connecting
+        // Animate embedding points pulsing
         gsap.to('.embed-point', {
-            scale: 1.8,
-            duration: 0.8,
-            repeat: 3,
+            scale: 1.6,
+            duration: 0.7,
+            repeat: 2,
             yoyo: true,
-            stagger: 0.15,
+            stagger: 0.12,
             ease: 'sine.inOut',
             onComplete: () => {
-                // Shrink user embedding
+                // Shrink and COMPLETELY HIDE entire user section
                 setTimeout(() => {
-                    gsap.to('#userEmbedding', {
-                        scale: 0.4,
-                        y: -40,
-                        opacity: 0.4,
-                        duration: 1.2,
-                        ease: 'power2.inOut'
+                    gsap.to('#userSection', {
+                        scale: 0.1,
+                        y: -100,
+                        opacity: 0,
+                        height: 0,
+                        marginBottom: 0,
+                        duration: 0.4,
+                        ease: 'power2.inOut',
+                        onComplete: () => {
+                            // Completely remove from layout
+                            document.getElementById('userSection').style.display = 'none';
+                        }
                     });
                     
-                    // Show dimension explosion
+                    // Show dimension explosion and move it UP to fill the space
                     gsap.to('#dimensionExplosion', {
                         opacity: 1,
+                        y: -100,
                         duration: 0.6,
-                        delay: 0.5,
+                        delay: 0.4,
                         onComplete: () => {
-                            // Animate bars growing dramatically
+                            // Animate bars growing - now with more room!
                             const bars = document.querySelectorAll('.dimension-bar');
-                            const heightValues = [80, 160, 200]; // Different heights
+                            const heightValues = [80, 140, 180]; // Taller bars since 2D is gone!
                             
                             bars.forEach((bar, i) => {
                                 const barElement = bar.querySelector('div');
@@ -358,24 +369,24 @@ window.ScaleAnimations = {
                                     
                                     gsap.to(label, {
                                         opacity: 1,
-                                        y: -10,
+                                        y: -8,
                                         duration: 0.6,
                                         delay: 0.6,
                                         ease: 'back.out(2)'
                                     });
-                                }, i * 400);
+                                }, i * 350);
                             });
                             
                             gsap.to('#dimensionNote', {
                                 opacity: 1,
-                                y: -10,
+                                y: -8,
                                 duration: 0.7,
-                                delay: 2,
+                                delay: 1.8,
                                 ease: 'power2.out'
                             });
                         }
                     });
-                }, 1800);
+                }, 533);
             }
         });
     },
@@ -658,7 +669,7 @@ window.ScaleAnimations = {
                     gsap.to('#modelComparison', {
                         opacity: 1,
                         duration: 0.6,
-                        delay: 0.5
+                        delay: 0.4
                     });
                     
                     // Explode models into view with dramatic effect

@@ -69,10 +69,10 @@ window.phase3 = {
                     <!-- Reality Check -->
                     <div style="padding: 12px; background: rgba(239, 68, 68, 0.08); border: 2px solid rgba(239, 68, 68, 0.25); 
                                border-radius: 10px; margin-bottom: 16px;">
-                        <div style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+                        <div style="display: flex; gap: 8px; justify-content: center;">
                             <span style="font-size: 16px;">⚡</span>
-                            <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">
-                                Reality Check: You're doing matrix math, not thinking. "Chef" and "cooked" have high attention because their vectors are similar. For each word pair, attention = <strong>vector similarity</strong>. 
+                            <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600; text-align:left">
+                                <strong>Reality Check:</strong> You're doing matrix math, not thinking. "Chef" and "cooked" have high attention because their vectors are similar. For each word pair, attention = <strong>vector similarity</strong>. 
                             Higher score = more important context<br>
                             It's all mathematical - no "understanding"
                             </span>
@@ -91,7 +91,7 @@ window.phase3 = {
                                 Real LLMs use <strong style="color: #a855f7;">Multi-Head Attention</strong> - a more sophisticated approach:
                             </p>
                             <div style="background: rgba(0, 0, 0, 0.3); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
-                                <div style="font-size: 10px; line-height: 1.6;">
+                                <div style="font-size: 12px; line-height: 1.6;">
                                     • <strong style="color: #fbbf24;">Multiple attention heads</strong> work in parallel (GPT-3 has 96 heads!)<br>
                                     • Each head focuses on different relationships: grammar, syntax, meaning, etc.<br>
                                     • All heads run simultaneously and their results are combined<br>
@@ -343,13 +343,6 @@ window.phase3 = {
                 <div class="phase-content">
                     <div style="width: 100%; max-width: 780px;">
                         
-                        <!-- Explanation -->
-                        <div style="padding: 10px; background: rgba(0, 212, 255, 0.08); border-radius: 10px; margin-bottom: 10px; text-align: center;">
-                            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
-                                🎯 We're building an attention pattern for <strong style="color: var(--secondary);">"${focusedWord}"</strong><br>
-                                <span style="font-size: 10px;">Set how much it should pay attention to each other word</span>
-                            </div>
-                        </div>
                         
                         <!-- Linear Visualization with Curves -->
                         <div style="padding: 12px; background: rgba(0, 212, 255, 0.08); border-radius: 12px; margin-bottom: 12px;">

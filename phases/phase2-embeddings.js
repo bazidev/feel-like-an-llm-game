@@ -13,7 +13,7 @@ window.phase2 = {
     exampleSets: [
         {
             language: "English",
-            title: "Learn from Context (with data)",
+            title: "Learn from Context",
             trainingData: [
                 "The <span class='highlight-token' data-token='cat'>cat</span> likes <span class='highlight-token' data-token='fish'>fish</span>.",
                 "The <span class='highlight-token' data-token='dog'>dog</span> likes <span class='highlight-token' data-token='bones'>bones</span>.",
@@ -34,7 +34,7 @@ window.phase2 = {
         },
         {
             language: "العربية (Arabic)",
-            title: "Pattern Recognition (no understanding needed)",
+            title: "no understanding needed",
             trainingData: [
                 "<span class='highlight-token' data-token='القط'>القط</span> <span class='highlight-token' data-token='يلعب'>يلعب</span> في البيت.",
                 "<span class='highlight-token' data-token='الكلب'>الكلب</span> <span class='highlight-token' data-token='يجري'>يجري</span> في الحديقة.",
@@ -55,7 +55,7 @@ window.phase2 = {
         },
         {
             language: "中文 (Chinese)",
-            title: "Pure Pattern Matching (hardest)",
+            title: "hardest",
             trainingData: [
                 "我的<span class='highlight-token' data-token='猫'>猫</span>在<span class='highlight-token' data-token='睡觉'>睡觉</span>。",
                 "我的<span class='highlight-token' data-token='狗'>狗</span>在<span class='highlight-token' data-token='跑步'>跑步</span>。",
@@ -358,7 +358,7 @@ window.phase2 = {
                     
                     <div style="padding: 12px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; margin-top: 12px;">
                         <p style="font-size: 11px; color: var(--text-secondary); margin: 0; line-height: 1.6;">
-                            <strong>Reality Check:</strong> You're grouping by patterns, not meaning! You don't "understand" these words - you just learned which ones appear in similar contexts.
+                            <strong>⚡ Reality Check:</strong> You're grouping by patterns, not meaning! You don't "understand" these words - you just learned which ones appear in similar contexts.
                         </p>
                     </div>
                 </div>
@@ -774,10 +774,13 @@ window.phase2 = {
         uniqueWords.forEach(token => {
             const t = token.toLowerCase();
             
-            // SUBJECTS - Nouns that perform actions (animate beings that DO things)
-            if (['chef', 'player', 'programmer', 'cat', 'dog', 'bird', 'rocket', 'astronaut', 
-                 'team', 'coach', 'satellite', 'moon', 'stars', 
-                 'Earth', 'planet', 'computer', 'developer'].includes(t)) {
+            // SUBJECTS - Nouns that perform actions (things that DO actions in the training data)
+            // Based on ACTUAL sentence patterns: "The X verbed..." where X performs the action
+            if (['chef', 'pizza', 'restaurant', 'meal',  // Food: chef cooked, pizza came/has, restaurant serves, meal includes
+                 'player', 'team', 'coach',              // Sports: player kicked/trains, team scored/celebrates, coach trains/celebrates
+                 'programmer', 'computer', 'developer',  // Tech: programmer wrote/loves, computer processed/runs, developer builds/wrote
+                 'cat', 'dog', 'bird',                   // Animals: cat sat/likes/watched/sleeps, dog played/likes/chased, bird sang/likes/chirped
+                 'rocket', 'astronaut', 'satellite', 'moon', 'stars'].includes(t)) {  // Space: rocket launched/carried, astronaut floated/wore, satellite orbits/monitors, moon orbits/reflects, stars shine/form
                 this.targetGroups.subjects.push(token);
             }
             // ACTIONS - Verbs (complete words, not suffixes)
@@ -798,19 +801,20 @@ window.phase2 = {
                      'of', 'out', 'by', 'about', 'near', 'against'].includes(t)) {
                 this.targetGroups.prepositions.push(token);
             }
-            // OBJECTS/DESCRIPTORS - Things, places, qualities (things acted upon)
+            // OBJECTS/DESCRIPTORS - Things, places, qualities (things acted upon or locations)
             else if (['ball', 'goal', 'fish', 'milk', 'bones', 'treats', 'window', 'garden', 
-                     'sofa', 'toy', 'tree', 'seeds', 'water', 'friends',
+                     'sofa', 'toy', 'tree', 'seeds', 'water', 'friends', 'branch',
                      'code', 'data', 'software', 'features', 'calculations', 'programs', 
                      'applications', 'documentation', 'users', 'task', 'problems',
-                     'pizza', 'pasta', 'cuisine', 'meal', 'meals', 'cheese', 'tomatoes', 'ingredients',
+                     'pasta', 'cuisine', 'meals', 'cheese', 'tomatoes', 'ingredients',  // pasta is object in "cooked pasta"
                      'sauce', 'Italy', 'recipes', 'people', 'food', 'kitchen', 'customers', 'fresh', 'hot',
-                     'restaurant', 'oven', 'mat',
+                     'oven', 'mat',
                      'space', 'sky', 'night', 'suit', 'equipment', 'patterns',
+                     'orbit', 'Earth', 'planet',  // Earth/planet are objects (things orbited)
                      'fuel', 'sunlight', 'years', 'today',
                      'football', 'games', 'victory', 'skill', 'training', 'rivals', 
                      'championship', 'minute', 'matches', 'dedication', 'project', 
-                     'solutions', 'editor', 'feedback', 'branch', 'dawn'].includes(t)) {
+                     'solutions', 'editor', 'feedback', 'dawn', 'strategies'].includes(t)) {
                 this.targetGroups.objects.push(token);
             }
         });
@@ -881,7 +885,7 @@ window.phase2 = {
                                border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 12px; margin-top: 12px;">
                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
                             <span style="font-size: 18px;">⚡</span>
-                            <h4 style="font-size: 13px; color: #ef4444; margin: 0; font-weight: 700;">Reality Check: How Real LLMs Learn Embeddings</h4>
+                            <h4 style="font-size: 13px; color: #ef4444; margin: 0; font-weight: 700;">Reality Check:</h4>
                         </div>
                         <div style="font-size: 11px; line-height: 1.6; color: var(--text-secondary);">
                             <ul style="margin: 0; padding-left: 20px; list-style: none;">
@@ -913,11 +917,6 @@ window.phase2 = {
                                            cursor: default;">
                             </canvas>
                         </div>
-                        
-                        <button class="btn-primary" onclick="phase2.checkGrouping()" style="width: 100%; padding: 12px;">
-                            ✓ Check My Grouping
-                        </button>
-                        
                         <div id="groupingFeedback" style="display: none; margin-top: 14px; padding: 14px; border-radius: 10px;"></div>
                         
                     </div>
@@ -1385,36 +1384,29 @@ window.phase2 = {
         const embeddingCount = Object.keys(embeddings).length;
         
         container.innerHTML = `
-            <div style="height: 100%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
-                <div style="max-width: 1000px; width: 100%;">
-                    
-                    <h2 style="font-size: 28px; margin-bottom: 14px; text-align: center; color: var(--primary);">
-                        ✅ Embeddings Complete!
-                    </h2>
-                    <p style="font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 24px;">
-                        You converted ${embeddingCount} tokens into 2D vectors
-                    </p>
+            <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;">
+                <div style="max-width: 950px; width: 100%;">
                     
                     <!-- ANIMATED SCALE COMPARISON -->
-                    <div style="margin: 40px 0; padding: 32px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.05)); 
-                               border: 3px solid rgba(139, 92, 246, 0.3); border-radius: 16px;">
-                        <div style="text-align: center; margin-bottom: 30px;">
-                            <h3 style="font-size: 22px; color: #a855f7; margin-bottom: 10px; font-weight: 700;">
+                    <div style="margin: 20px 0; padding: 24px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.05)); 
+                               border: 3px solid rgba(139, 92, 246, 0.3); border-radius: 16px; overflow: hidden;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <h3 style="font-size: 20px; color: #a855f7; margin-bottom: 8px; font-weight: 700;">
                                 🔬 Scale Comparison: Your Model vs. Real LLMs
                             </h3>
-                            <p style="font-size: 14px; color: var(--text-secondary);">
+                            <p style="font-size: 13px; color: var(--text-secondary);">
                                 Watch your 2D vectors expand to thousands of dimensions
                             </p>
                         </div>
-                        <div id="embeddingScaleAnimation" style="min-height: 500px;"></div>
+                        <div id="embeddingScaleAnimation" style="min-height: 380px; max-height: 380px; overflow: hidden;"></div>
                     </div>
                     
-                    <div style="text-align: center;">
+                    <div style="text-align: center; margin-top: 20px;">
                         <button id="continueToJourneyBtn"
-                                style="padding: 14px 42px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-                                       border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; 
+                                style="padding: 12px 36px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                       border: none; border-radius: 12px; color: white; font-size: 15px; font-weight: 600; 
                                        cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
-                            Continue →
+                            Continue: View Progress →
                         </button>
                     </div>
                     
