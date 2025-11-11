@@ -386,7 +386,7 @@ window.phase4 = {
                     
                     <div class="hint-section">
                         <h4>💡 How to Count</h4>
-                        <p>Read through the training data. Every time you see "<strong>${target}</strong>", look at what word comes next. Tally it up!</p>
+                        <p>Read through the training data. Every time you see "<strong style="color: #fbbf24;">${target}</strong>" (highlighted in <span style="color: #fbbf24;">yellow</span>), look at what word comes next (highlighted in <span style="color: #a855f7;">purple</span>). Tally up each purple word!</p>
                     </div>
                 </div>
                 
@@ -404,7 +404,7 @@ window.phase4 = {
                         <!-- Counting Interface -->
                         <div style="padding: 14px; background: rgba(255, 255, 255, 0.02); border-radius: 10px; margin-bottom: 14px;">
                             <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">
-                                After "<strong style="color: var(--primary);">${target}</strong>", count occurrences:
+                                Count how many times each <span style="color: #a855f7; font-weight: 600;">purple word</span> appears after "<strong style="color: #fbbf24;">${target}</strong>":
                             </div>
                             ${uniqueFollowing.map(word => `
                                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 8px; background: rgba(0, 0, 0, 0.3); border-radius: 6px;">
@@ -452,7 +452,11 @@ window.phase4 = {
         for (let i = 0; i < tokens.length; i++) {
             const token = tokens[i];
             if (token === target) {
-                html += `<span style="background: rgba(191, 0, 255, 0.4); padding: 2px 6px; border-radius: 4px; font-weight: 700;">${token}</span> `;
+                // Highlight the target word (e.g., "The") in yellow/gold
+                html += `<span style="background: rgba(251, 191, 36, 0.5); padding: 2px 6px; border-radius: 4px; font-weight: 700; color: #fbbf24;">${token}</span> `;
+            } else if (i > 0 && tokens[i-1] === target) {
+                // Highlight the word AFTER target in purple/magenta
+                html += `<span style="background: rgba(168, 85, 247, 0.5); padding: 2px 6px; border-radius: 4px; font-weight: 700; color: #a855f7;">${token}</span> `;
             } else {
                 html += `${token} `;
             }
