@@ -397,67 +397,121 @@ window.ScaleAnimations = {
         if (!container) return;
         
         container.innerHTML = `
-            <div style="text-align: center; margin-bottom: 40px;">
-                <div style="font-size: 24px; color: var(--primary); font-weight: 700; margin-bottom: 25px; text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);">
+            <div id="userSection" style="text-align: center; margin-bottom: 500px;">
+                <div style="font-size: 18px; color: var(--primary); font-weight: 700; margin-bottom: 15px; text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);">
                     YOUR SINGLE-HEAD ATTENTION
                 </div>
-                <canvas id="yourAttentionCanvas" width="400" height="200" style="border: 3px solid rgba(0, 212, 255, 0.4); border-radius: 12px; background: rgba(0, 0, 0, 0.3); box-shadow: 0 8px 30px rgba(0, 212, 255, 0.3);"></canvas>
-                <div style="margin-top: 15px; font-size: 14px; color: var(--text-secondary);">
-                    Simple single-head attention across ~5 tokens
+                <div style="padding: 12px; background: rgba(0, 212, 255, 0.08); border-radius: 10px; margin-bottom: 60px;">
+                    <canvas id="yourAttentionCanvas" width="450" height="140" style="display: block; margin: 0 auto;"></canvas>
+                </div>
+                <div style="padding: 5px; margin-top: 10px; margin-bottom:20px">
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        💡 <strong style="color: #fbbf24;">One head</strong> captures one relationship pattern
+                    </div>
                 </div>
             </div>
             
-            <div id="multiHeadViz" style="opacity: 0; margin-top: 50px;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="font-size: 22px; color: var(--secondary); font-weight: 700; text-shadow: 0 0 15px rgba(168, 85, 247, 0.5);">
-                        GPT-3: MULTI-HEAD ATTENTION
+            <div id="multiHeadViz" style="opacity: 0; padding: 0 10px; margin: 130px;">
+                <div style="text-align: center; margin-bottom: 16px;">
+                    <div style="font-size: 18px; color: var(--text-primary); font-weight: 700; text-shadow: 0 0 15px rgba(201, 120, 255, 0.5);">
+                        GPT-3: 96 PARALLEL ATTENTION HEADS
                     </div>
-                    <div style="font-size: 14px; color: var(--text-secondary); margin-top: 10px;">
-                        <strong style="color: #ec4899;">96 attention heads</strong> × <strong style="color: #f59e0b;">96 layers</strong> = 
-                        <strong style="color: #22c55e; font-size: 16px;">9,216 parallel attention mechanisms!</strong>
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; line-height: 1.4;">
+                        <strong style="color: #f59e0b;">96 layers</strong> × <strong style="color: #ec4899;">96 heads/layer</strong> = 
+                        <strong style="color: #ffffffff;">9,216 specialized mechanisms!</strong>
                     </div>
                 </div>
                 
-                <div id="attentionHeadGrid" style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 8px; max-width: 650px; margin: 0 auto 30px auto;">
-                    ${Array(96).fill(0).map((_, i) => `
-                        <div class="attention-head" data-index="${i}" style="
-                            width: 45px; 
-                            height: 45px; 
-                            background: linear-gradient(135deg, #ec4899, #8b5cf6); 
-                            border-radius: 10px;
-                            opacity: 0;
-                            transform: scale(0) rotate(-180deg);
-                            box-shadow: 0 3px 12px rgba(236, 72, 153, 0.5);
-                            position: relative;
-                            overflow: hidden;
-                        ">
-                            <div class="shimmer" style="position: absolute; inset: 0; background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%); 
-                                       transform: translateX(-100%);"></div>
-                        </div>
-                    `).join('')}
+                <!-- Show 12 pattern boxes in 2 rows of 6 -->
+                <div style="margin-bottom: 14px;">
+                    <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 8px;">
+                        ${[
+                            { name: 'Subject-Verb', color: '#8b5cf6' },
+                            { name: 'Modifiers', color: '#ec4899' },
+                            { name: 'Pronouns', color: '#f59e0b' },
+                            { name: 'Prepositions', color: '#22c55e' },
+                            { name: 'Long Distance', color: '#3b82f6' },
+                            { name: 'Short Range', color: '#14b8a6' }
+                        ].map((pattern, i) => `
+                            <div class="pattern-box" data-index="${i}" style="
+                                opacity: 0;
+                                padding: 8px 6px;
+                                background: ${pattern.color}20;
+                                border: 2px solid ${pattern.color}60;
+                                border-radius: 8px;
+                                text-align: center;
+                                transform: scale(0);
+                            ">
+                                <div style="font-size: 10px; color: ${pattern.color}; font-weight: 700; line-height: 1.3;">
+                                    ${pattern.name}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;">
+                        ${[
+                            { name: 'Punctuation', color: '#f97316' },
+                            { name: 'Named Entities', color: '#a855f7' },
+                            { name: 'Coreference', color: '#06b6d4' },
+                            { name: 'Syntax Trees', color: '#84cc16' },
+                            { name: 'Semantics', color: '#f43f5e' },
+                            { name: 'Context', color: '#10b981' }
+                        ].map((pattern, i) => `
+                            <div class="pattern-box" data-index="${i + 6}" style="
+                                opacity: 0;
+                                padding: 8px 6px;
+                                background: ${pattern.color}20;
+                                border: 2px solid ${pattern.color}60;
+                                border-radius: 8px;
+                                text-align: center;
+                                transform: scale(0);
+                            ">
+                                <div style="font-size: 10px; color: ${pattern.color}; font-weight: 700; line-height: 1.3;">
+                                    ${pattern.name}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
                 
-                <div style="margin-top: 30px; padding: 24px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(245, 158, 11, 0.08)); border: 3px solid rgba(239, 68, 68, 0.4); border-radius: 12px; opacity: 0;" id="attentionNote">
-                    <div style="font-size: 15px; color: var(--text-secondary); line-height: 1.8; text-align: center;">
-                        <div style="font-size: 18px; color: #ef4444; font-weight: 700; margin-bottom: 12px;">Each Head Learns Different Patterns</div>
-                        <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 16px;">
-                            ${['Grammar', 'Syntax', 'Semantics', 'Context', 'Coreference', 'Dependencies', 'Style', 'Tone'].map(pattern => `
-                                <span style="background: rgba(239, 68, 68, 0.2); padding: 8px 16px; border-radius: 20px; font-size: 13px; color: white; border: 2px solid rgba(239, 68, 68, 0.4);">${pattern}</span>
-                            `).join('')}
-                        </div>
+                <!-- 90 tiny boxes representing the rest of the heads -->
+                <div style="padding: 12px; background: rgba(0, 0, 0, 0.2); border-radius: 10px; margin-bottom: 12px;">
+                    <div style="text-align: center; margin-bottom: 10px; font-size: 10px; color: var(--text-secondary);">
+                        + 84 more specialized attention patterns per layer!
+                    </div>
+                    <div id="attentionHeadGrid" style="display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;">
+                        ${Array(90).fill(0).map((_, i) => `
+                            <div class="tiny-head" data-index="${i}" style="
+                                width: 16px;
+                                height: 16px;
+                                background: linear-gradient(135deg, #ec4899, #8b5cf6); 
+                                border-radius: 3px;
+                                opacity: 0;
+                                transform: scale(0);
+                                box-shadow: 0 2px 6px rgba(236, 72, 153, 0.4);
+                            "></div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div style="padding: 12px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(245, 158, 11, 0.08)); border: 2px solid rgba(239, 68, 68, 0.4); border-radius: 10px; opacity: 0;" id="attentionNote">
+                    <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.6; text-align: center;">
+                        <strong style="color: #ffffffff; font-size: 12px;">🧠 Why Multiple Heads Matter:</strong>
+                        Each head specializes in <strong style="color: #fbbf24;">different patterns</strong> - 
+                        grammar, dependencies, relationships, coreferences, and more!
                     </div>
                 </div>
             </div>
         `;
         
-        // Draw simple attention connections on canvas
+        // Draw YOUR attention on main canvas
         const canvas = document.getElementById('yourAttentionCanvas');
         const ctx = canvas.getContext('2d');
-        const tokens = ['The', 'cat', 'sat', 'on', 'mat'];
-        const tokenRadius = 20;
+        const tokens = ['The', 'chef', 'cooked', 'fresh', 'pasta'];
+        const tokenRadius = 18;
         const startX = 80;
-        const spacing = 60;
-        const y = 100;
+        const spacing = 70;
+        const y = 80;
         
         // Draw tokens as circles
         tokens.forEach((token, i) => {
@@ -472,89 +526,110 @@ window.ScaleAnimations = {
             ctx.stroke();
             
             ctx.fillStyle = 'white';
-            ctx.font = 'bold 12px monospace';
+            ctx.font = 'bold 13px monospace';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(token, x, y);
         });
         
-        // Animate attention connections appearing
-        let connectionIndex = 0;
-        const totalConnections = tokens.length * (tokens.length - 1);
+        // Animate strong attention connections with weights
+        const strongConnections = [
+            { from: 1, to: 2, weight: 0.9, label: '0.9' }, // chef → cooked
+            { from: 2, to: 4, weight: 0.8, label: '0.8' }, // cooked → pasta
+            { from: 3, to: 4, weight: 0.7, label: '0.7' }, // fresh → pasta
+        ];
         
-        const drawNextConnection = () => {
-            if (connectionIndex >= totalConnections) {
-                // All connections drawn, show multi-head viz
-                setTimeout(showMultiHead, 1000);
+        let connIndex = 0;
+        const drawConnection = () => {
+            if (connIndex >= strongConnections.length) {
+                setTimeout(showMultiHead, 3000);
                 return;
             }
             
-            const i = Math.floor(connectionIndex / (tokens.length - 1));
-            const rawJ = connectionIndex % (tokens.length - 1);
-            const j = rawJ >= i ? rawJ + 1 : rawJ;
+            const conn = strongConnections[connIndex];
+            const x1 = startX + conn.from * spacing;
+            const x2 = startX + conn.to * spacing;
+            const midX = (x1 + x2) / 2;
+            const midY = y - 35;
             
-            const x1 = startX + i * spacing;
-            const x2 = startX + j * spacing;
-            
+            // Draw curved connection
             ctx.beginPath();
             ctx.moveTo(x1, y);
-            ctx.lineTo(x2, y);
-            
-            const gradient = ctx.createLinearGradient(x1, y, x2, y);
-            gradient.addColorStop(0, 'rgba(0, 212, 255, 0.4)');
-            gradient.addColorStop(1, 'rgba(168, 85, 247, 0.4)');
-            ctx.strokeStyle = gradient;
-            ctx.lineWidth = 2;
+            ctx.quadraticCurveTo(midX, midY, x2, y);
+            ctx.strokeStyle = `rgba(0, 212, 255, ${conn.weight})`;
+            ctx.lineWidth = 2 + conn.weight * 3;
             ctx.stroke();
             
-            connectionIndex++;
-            setTimeout(drawNextConnection, 50);
+            // Draw weight label
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(midX - 18, midY - 10, 36, 20);
+            ctx.fillStyle = conn.weight > 0.8 ? '#22c55e' : conn.weight > 0.6 ? '#fbbf24' : '#9ca3af';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText(conn.label, midX, midY);
+            
+            connIndex++;
+            setTimeout(drawConnection, 600);
         };
         
-        setTimeout(drawNextConnection, 800);
+        setTimeout(drawConnection, 800);
         
         const showMultiHead = () => {
-            gsap.to('#multiHeadViz', {
-                opacity: 1,
-                duration: 0.6
+            // Smoothly move user section up and fade out
+            gsap.to('#userSection', {
+                y: -200,
+                opacity: 0,
+                duration: 1.2,
+                ease: 'power2.inOut',
+                onComplete: () => {
+                    document.getElementById('userSection').style.display = 'none';
+                }
             });
             
-            // Animate attention heads appearing in waves
-            const heads = document.querySelectorAll('.attention-head');
-            gsap.to(heads, {
+            // Show multi-head viz with smooth fade in
+            gsap.to('#multiHeadViz', {
                 opacity: 1,
-                scale: 1,
-                rotation: 0,
-                duration: 0.5,
-                stagger: {
-                    amount: 2.5,
-                    from: 'center',
-                    grid: [8, 12]
-                },
-                ease: 'back.out(1.7)',
+                y: -120,
+                duration: 0.8,
+                delay: 0.6,
                 onComplete: () => {
-                    // Random shimmer effects
-                    const shimmerInterval = setInterval(() => {
-                        const randomHeads = Array.from(heads)
-                            .sort(() => Math.random() - 0.5)
-                            .slice(0, 5);
-                        
-                        randomHeads.forEach(head => {
-                            const shimmer = head.querySelector('.shimmer');
-                            gsap.fromTo(shimmer, 
-                                { x: '-100%' },
-                                { x: '100%', duration: 0.6, ease: 'power2.inOut' }
-                            );
-                        });
-                    }, 300);
-                    
-                    gsap.to('#attentionNote', {
-                        opacity: 1,
-                        y: -10,
-                        duration: 0.7,
-                        delay: 1,
-                        ease: 'power2.out'
+                    // Show 12 pattern boxes first
+                    const patternBoxes = document.querySelectorAll('.pattern-box');
+                    patternBoxes.forEach((box, i) => {
+                        setTimeout(() => {
+                            gsap.to(box, { 
+                                opacity: 1, 
+                                scale: 1,
+                                duration: 0.3,
+                                ease: 'back.out(1.5)'
+                            });
+                        }, i * 80);
                     });
+                    
+                    // After pattern boxes, show the 90 tiny heads
+                    setTimeout(() => {
+                        const tinyHeads = document.querySelectorAll('.tiny-head');
+                        tinyHeads.forEach((head, i) => {
+                            setTimeout(() => {
+                                gsap.to(head, {
+                                    opacity: 1,
+                                    scale: 1,
+                                    duration: 0.3,
+                                    ease: 'back.out(1.2)'
+                                });
+                            }, i * 10);
+                        });
+                        
+                        // Show explanation note after all heads appear
+                        setTimeout(() => {
+                            gsap.to('#attentionNote', {
+                                opacity: 1,
+                                y: -10,
+                                duration: 0.6,
+                                ease: 'power2.out'
+                            });
+                        }, tinyHeads.length * 10 + 400);
+                        
+                    }, patternBoxes.length * 80 + 400);
                 }
             });
         };
