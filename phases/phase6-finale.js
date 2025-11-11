@@ -70,45 +70,43 @@ window.phase6 = {
         
         // Get score data
         const scoreboardResult = Game.saveToScoreboard();
-        const ratingData = Game.getRatingGrade(scoreboardResult.record.rating);
         
         container.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100%; padding: 20px;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100%; padding: 40px 20px 20px 20px;">
                 <div style="max-width: 550px; width: 100%;">
                     
                     <!-- Header -->
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <div style="font-size: 36px; margin-bottom: 6px;">🏁</div>
-                        <h1 style="font-size: 26px; margin-bottom: 4px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <h1 style="font-size: 32px; margin-bottom: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
                                    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                            Game Complete
+                            🏁 Game Completed!
                         </h1>
                     </div>
                     
                     <!-- Score Card -->
-                    <div id="copyableScore" style="padding: 20px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(191, 0, 255, 0.08)); 
-                               border: 2px solid rgba(0, 212, 255, 0.4); border-radius: 12px; margin-bottom: 16px; text-align: center;">
+                    <div id="copyableScore" style="padding: 24px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(191, 0, 255, 0.08)); 
+                               border: 2px solid rgba(0, 212, 255, 0.4); border-radius: 12px; margin-bottom: 20px; text-align: center;">
                         
-                        <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;">
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">
                             TOTAL SCORE
                         </div>
                         
-                        <div style="font-size: 42px; font-weight: 700; color: var(--primary); margin-bottom: 12px;">
-                            ${Math.round(Game.state.finalRating || scoreboardResult.record.rating)}
+                        <div style="font-size: 52px; font-weight: 700; color: var(--primary); margin-bottom: 16px;">
+                            ${Game.state.finalRating}
                         </div>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
                             <div>
                                 <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">POINTS</div>
-                                <div style="font-size: 18px; font-weight: 600; color: white;">${Game.state.finalScore || Game.state.score}</div>
+                                <div style="font-size: 18px; font-weight: 600; color: white;">${Game.state.finalScore}</div>
                             </div>
                             <div>
                                 <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">TIME</div>
-                                <div style="font-size: 18px; font-weight: 600; color: white;">${Game.state.finalTime || Game.getElapsedTime()}</div>
+                                <div style="font-size: 18px; font-weight: 600; color: white;">${Game.state.finalTime}</div>
                             </div>
                             <div>
                                 <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">MODEL</div>
-                                <div style="font-size: 14px; font-weight: 600; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Game.state.modelName || 'Anonymous'}</div>
+                                <div style="font-size: 14px; font-weight: 600; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Game.state.modelName}</div>
                             </div>
                         </div>
                         
@@ -125,26 +123,10 @@ window.phase6 = {
                             🏆 Leaderboard
                         </button>
                     </div>
-                    
-                    <!-- Learn More Compact Section -->
-                    <div style="padding: 16px; background: linear-gradient(135deg, rgba(191, 0, 255, 0.1), rgba(0, 212, 255, 0.05)); 
-                               border: 2px solid rgba(191, 0, 255, 0.3); border-radius: 10px; margin-bottom: 16px; text-align: center;">
-                        <div style="font-size: 24px; margin-bottom: 6px;">🎓</div>
-                        <h2 style="font-size: 16px; color: var(--secondary); margin-bottom: 6px;">
-                            Want to Learn More?
-                        </h2>
-                        <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px;">
-                            Explore resources on transformers, attention, and AI
-                        </p>
-                        
-                        <button onclick="window.phase6.currentStep = 'resources'; window.phase6.render(document.getElementById('phaseContainer')); window.scrollTo({top: 0, behavior: 'smooth'});" 
-                                class="btn-primary" style="width: 100%; padding: 10px; font-size: 13px;">
-                            📚 Explore Resources
-                        </button>
-                    </div>
+
                     
                     <!-- Play Again Button -->
-                    <button onclick="Game.performReset()" class="btn-secondary" 
+                    <button class="btn-primary" onclick="Game.performReset()" class="btn-secondary" 
                             style="width: 100%; padding: 12px; font-size: 14px;">
                         🔄 Play Again
                     </button>
@@ -156,18 +138,20 @@ window.phase6 = {
     
     copyEndGameScore() {
         // Use frozen values for consistency
-        const rating = Game.state.finalRating || Game.calculateRating(Game.state.score, 0);
-        const ratingData = Game.getRatingGrade(rating);
+        const totalScore = Game.state.finalRating;
+        
+        // Get the game URL - remove any query params
+        const gameURL = window.location.href.split('?')[0];
         
         const text = `🎮 Feel like an LLM - Score Summary
 
-Total Score: ${Math.round(rating)}
-Points: ${Game.state.finalScore || Game.state.score}
-Time: ${Game.state.finalTime || Game.getElapsedTime()}
-Model: ${Game.state.modelName || 'Anonymous'}
-Grade: ${ratingData.label} (${ratingData.grade})
+Total Score: ${totalScore}
+Points: ${Game.state.finalScore}
+Time: ${Game.state.finalTime}
+Model Name: ${Game.state.modelName}
+User ID: ${Game.state.uniqueUserId}
 
-Try it yourself: [Add your game URL here]`;
+Try it yourself: ${gameURL}`;
         
         navigator.clipboard.writeText(text).then(() => {
             SoundManager.play('success');
@@ -180,7 +164,7 @@ Try it yourself: [Add your game URL here]`;
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                background: linear-gradient(135deg, var(--success), #10b981);
+                background:  #10b981d6;
                 color: white;
                 padding: 20px 40px;
                 border-radius: 12px;
@@ -227,11 +211,10 @@ Try it yourself: [Add your game URL here]`;
         
         // Save to local scoreboard
         const scoreboardResult = Game.saveToScoreboard();
-        const ratingData = Game.getRatingGrade(scoreboardResult.record.rating);
         const generatedText = Game.state.generatedText || '(Generation phase not completed)';
         
-        // 🎯 LOG TOTAL SCORE (RATING) FOR GAME COMPLETION
-        console.log('🎉 GAME COMPLETE - TOTAL SCORE (RATING):', scoreboardResult.record.rating);
+        // 🎯 LOG TOTAL SCORE FOR GAME COMPLETION
+        console.log('🎉 GAME COMPLETE - TOTAL SCORE:', scoreboardResult.record.rating);
         console.log('   Raw Score:', scoreboardResult.record.score);
         console.log('   Time:', scoreboardResult.record.timeFormatted);
         console.log('   Tokens:', scoreboardResult.record.tokens);
@@ -242,10 +225,10 @@ Try it yourself: [Add your game URL here]`;
             ScoreboardAPI.saveScore().then(result => {
                 if (result.success) {
                     if (result.isHighScore) {
-                        // Calculate rating for display
+                        // Get total score for display
                         const elapsedSeconds = scoreboardResult.record.time;
-                        const rating = scoreboardResult.record.rating;
-                        ScoreboardAPI.showSuccess(`🎉 New high score! Rating: ${rating} (${Game.state.score} pts, ${Game.getElapsedTime()})`);
+                        const totalScore = scoreboardResult.record.rating;
+                        ScoreboardAPI.showSuccess(`🎉 New high score! Total: ${totalScore} (${Game.state.score} pts, ${Game.getElapsedTime()})`);
                         // Play powerup for high score!
                         SoundManager.play('powerup');
                     } else {
@@ -259,17 +242,17 @@ Try it yourself: [Add your game URL here]`;
         }
         
         container.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100%; padding: 20px;">
-                <div style="max-width: 600px; width: 100%;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100%; padding: 40px 20px 20px 20px;">
+                <div style="max-width: 650px; width: 100%;">
                     
                     <!-- Celebration Header -->
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <div style="font-size: 48px; margin-bottom: 8px;">🎉</div>
-                        <h1 style="font-size: 32px; margin-bottom: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                    <div style="text-align: center; margin-bottom: 28px;">
+                        <div style="font-size: 64px; margin-bottom: 12px;">🎉</div>
+                        <h1 style="font-size: 38px; margin-bottom: 12px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
                                    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
                             Congratulations!
                         </h1>
-                        <p style="font-size: 15px; color: var(--text-secondary); line-height: 1.4;">
+                        <p style="font-size: 16px; color: var(--text-secondary); line-height: 1.5;">
                             You built a working mini-LLM from scratch
                         </p>
                     </div>
@@ -310,7 +293,7 @@ Try it yourself: [Add your game URL here]`;
                                    background: rgba(0, 212, 255, 0.08); border: 2px solid rgba(0, 212, 255, 0.3); 
                                    border-radius: 16px;">
                             <div style="font-size: 28px; font-weight: 700; color: #00d4ff;">
-                                ${Game.state.modelName || 'My AI Model'}
+                                ${Game.state.modelName}
                             </div>
                         </div>
                         
@@ -345,7 +328,7 @@ Try it yourself: [Add your game URL here]`;
                     <div id="scoreCard" style="padding: 18px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(191, 0, 255, 0.06)); 
                                border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 12px; margin-bottom: 16px; text-align: center;">
                         <div style="font-size: 20px; font-weight: 700; color: var(--primary); margin-bottom: 12px;">
-                            ${Game.state.modelName || 'My AI Model'}
+                            ${Game.state.modelName}
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
                             <div>
@@ -405,7 +388,7 @@ Try it yourself: [Add your game URL here]`;
             const copyTextBtn = document.getElementById('copyTextBtn');
             if (copyTextBtn) {
                 copyTextBtn.addEventListener('click', () => {
-                    window.phase6.copyScoreAsText(scoreboardResult, ratingData);
+                    window.phase6.copyScoreAsText(scoreboardResult);
                 });
             }
             
@@ -431,13 +414,13 @@ Try it yourself: [Add your game URL here]`;
         const sentenceCount = trainingText.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
         
         container.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100%; padding: 40px 30px;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100%; padding: 40px 30px 20px 30px;">
                 <div style="max-width: 950px; width: 100%;">
                     
                     <!-- LLM Size Comparison -->
-                    <div style="padding: 28px; background: rgba(139, 92, 246, 0.1); border: 2px solid rgba(139, 92, 246, 0.4); 
-                               border-radius: 16px; margin-bottom: 36px;">
-                        <h2 style="font-size: 28px; color: #a855f7; margin-bottom: 26px; text-align: center;">🔬 Your LLM vs Real LLMs</h2>
+                    <div style="padding: 32px; background: rgba(139, 92, 246, 0.1); border: 2px solid rgba(139, 92, 246, 0.4); 
+                               border-radius: 16px; margin-bottom: 40px;">
+                        <h2 style="font-size: 32px; color: #a855f7; margin-bottom: 30px; text-align: center;">🔬 Your LLM vs Real LLMs</h2>
                         
                         <!-- Visual Size Comparison -->
                         <div style="position: relative; height: 220px; display: flex; align-items: flex-end; justify-content: center; gap: 26px; margin-bottom: 32px; padding: 20px; background: rgba(0, 0, 0, 0.2); border-radius: 12px;">
@@ -566,17 +549,18 @@ Try it yourself: [Add your game URL here]`;
     
     renderResources(container) {
         container.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100%; padding: 40px 30px;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100%; padding: 40px 30px 20px 30px;">
                 <div style="max-width: 900px; width: 100%;">
                     
                     <!-- Learning Resources -->
-                    <div style="padding: 32px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(191, 0, 255, 0.06)); 
-                               border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 16px; margin-bottom: 36px;">
-                        <div style="text-align: center; margin-bottom: 24px;">
-                            <h2 style="font-size: 18px; color: var(--primary); margin: 0 0 8px 0;">
+                    <div style="padding: 36px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(191, 0, 255, 0.06)); 
+                               border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 16px; margin-bottom: 40px;">
+                        <div style="text-align: center; margin-bottom: 28px;">
+                            <div style="font-size: 52px; margin-bottom: 12px;">📚</div>
+                            <h2 style="font-size: 28px; color: var(--primary); margin: 0 0 12px 0;">
                                 🎓 Ready to Go Deeper?
                             </h2>
-                            <p style="font-size: 14px; color: var(--text-secondary); margin: 0;">
+                            <p style="font-size: 15px; color: var(--text-secondary); margin: 0;">
                                 Continue your LLM learning journey with these world-class resources
                             </p>
                         </div>
@@ -682,8 +666,9 @@ Try it yourself: [Add your game URL here]`;
     },
     
     // Copy score as text
-    copyScoreAsText(scoreboardResult, ratingData) {
-        const modelName = Game.state.modelName || 'My AI Model';
+    copyScoreAsText(scoreboardResult) {
+        const modelName = Game.state.modelName;
+        const uniqueUserId = Game.state.uniqueUserId;
         const score = Game.state.score;
         const time = Game.getElapsedTime();
         const rank = scoreboardResult.rank;
@@ -694,7 +679,8 @@ Try it yourself: [Add your game URL here]`;
         
         const textToShare = `🎉 I just completed "Feel Like an LLM"!
 
-🤖 Model: ${modelName}
+🤖 Model Name: ${modelName}
+👤 User ID: ${uniqueUserId}
 ⏱️ Time: ${time}
 🎯 Score: ${score} points
 🏆 Rank: #${rank}

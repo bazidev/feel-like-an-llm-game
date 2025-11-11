@@ -174,19 +174,19 @@ const Game = {
             return;
         }
         
-        // Calculate rating for display
+        // Calculate total score for display
         let totalElapsed = 0;
         if (this.state.startTime) {
             const currentSessionElapsed = Date.now() - this.state.startTime;
-            totalElapsed = (this.state.elapsedTimeBeforePause || 0) + currentSessionElapsed;
+            totalElapsed = (this.state.elapsedTimeBeforePause) + currentSessionElapsed;
         } else if (this.state.elapsedTimeBeforePause) {
             totalElapsed = this.state.elapsedTimeBeforePause;
         }
         const elapsedSeconds = Math.floor(totalElapsed / 1000);
-        const rating = this.calculateRating(this.state.score, elapsedSeconds, this.state.tokensProcessed);
+        const totalScore = this.calculateRating(this.state.score, elapsedSeconds, this.state.tokensProcessed);
         
-        // Update the score display in the modal to show rating
-        document.getElementById('endGameScoreDisplay').textContent = Math.round(rating);
+        // Update the score display in the modal to show total score
+        document.getElementById('endGameScoreDisplay').textContent = totalScore;
         document.getElementById('endGameScoreRaw').textContent = this.state.score;
         document.getElementById('endGameTimeDisplay').textContent = this.getElapsedTime();
         
@@ -208,8 +208,8 @@ const Game = {
         // Save score to scoreboard BEFORE jumping to end game page
         const scoreboardResult = this.saveToScoreboard();
         
-        // 🎯 LOG TOTAL SCORE (RATING) FOR END GAME
-        console.log('🏁 END GAME - TOTAL SCORE (RATING):', scoreboardResult.record.rating);
+        // 🎯 LOG TOTAL SCORE FOR END GAME
+        console.log('🏁 END GAME - TOTAL SCORE:', scoreboardResult.record.rating);
         console.log('   Raw Score:', scoreboardResult.record.score);
         console.log('   Time:', scoreboardResult.record.timeFormatted);
         console.log('   Tokens:', scoreboardResult.record.tokens);
@@ -219,9 +219,9 @@ const Game = {
             ScoreboardAPI.saveScore().then(result => {
                 if (result.success) {
                     if (result.isHighScore) {
-                        // Calculate rating for display
-                        const rating = scoreboardResult.record.rating;
-                        ScoreboardAPI.showSuccess(`🎉 Score saved! Rating: ${rating} (${this.state.score} pts, ${this.getElapsedTime()})`);
+                        // Get total score for display
+                        const totalScore = scoreboardResult.record.rating;
+                        ScoreboardAPI.showSuccess(`🎉 Score saved! Total: ${totalScore} (${this.state.score} pts, ${this.getElapsedTime()})`);
                         SoundManager.play('powerup');
                     } else {
                         console.log('ℹ️ Score submitted from End Game');
@@ -1126,13 +1126,13 @@ const Game = {
         const seconds = elapsedSeconds % 60;
         const timeFormatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         
-        // Calculate final rating
-        const rating = this.calculateRating(this.state.score, elapsedSeconds);
+        // Calculate final total score
+        const totalScore = this.calculateRating(this.state.score, elapsedSeconds);
         
         // Freeze the values
         this.state.finalScore = this.state.score;
         this.state.finalTime = timeFormatted;
-        this.state.finalRating = rating;
+        this.state.finalRating = totalScore;
         this.state.gameCompleted = true;
         
         // Clear timing values to stop any further calculations
@@ -1140,7 +1140,7 @@ const Game = {
         
         this.saveState();
         
-        console.log('✅ Game frozen - Score:', this.state.finalScore, 'Time:', this.state.finalTime, 'Rating:', Math.round(this.state.finalRating));
+        console.log('✅ Game frozen - Score:', this.state.finalScore, 'Time:', this.state.finalTime, 'Total Score:', this.state.finalRating);
     },
     
     // Animate stats intro on first game start
@@ -1501,48 +1501,33 @@ const Game = {
     },
     
     calculateRating(score, timeSeconds, tokens) {
-        // NEW PERMISSIVE FORMULA: Base score with time multiplier
-        // Start with raw score, then apply time bonus/penalty
+        // Total score formula: score + (score - time penalty) if positive, otherwise just score
+        // This ensures total score is never below current score
         
-        const targetTime = 180; // 3 minutes (180 seconds) = 1.0x multiplier
-        const fastTime = 90;    // 1.5 minutes (90 seconds) = 2.0x multiplier (very fast!)
-        const slowTime = 600;   // 10 minutes (600 seconds) = 0.8x multiplier
+        const minutes = Math.floor(timeSeconds / 60);
+        const seconds = timeSeconds % 60;
         
-        // Calculate time multiplier based on completion speed
-        let timeMultiplier;
+        // Calculate time-adjusted score
+        const timeAdjustedScore = score - (minutes * 10) - seconds;
         
-        if (timeSeconds <= fastTime) {
-            // Super fast: 2.0x multiplier
-            timeMultiplier = 2.0;
-        } else if (timeSeconds <= targetTime) {
-            // Fast to target: Linear scale from 2.0x to 1.0x
-            // (fastTime to targetTime) → (2.0 to 1.0)
-            timeMultiplier = 2.0 - ((timeSeconds - fastTime) / (targetTime - fastTime));
-        } else if (timeSeconds <= slowTime) {
-            // Slow: Linear scale from 1.0x to 0.8x
-            // (targetTime to slowTime) → (1.0 to 0.8)
-            timeMultiplier = 1.0 - (0.2 * (timeSeconds - targetTime) / (slowTime - targetTime));
-        } else {
-            // Very slow: 0.8x multiplier (still generous!)
-            timeMultiplier = 0.8;
-        }
+        // If time-adjusted score is positive, add it to base score
+        // Otherwise, just return the base score (no penalty)
+        const totalScore = timeAdjustedScore > 0 
+            ? score + timeAdjustedScore 
+            : score;
         
-        // Token Bonus (small addition, not multiplier)
-        const tokenBonus = tokens * 0.1; // Each token adds 0.1 points
-        
-        // Final Rating: Base score × time multiplier + token bonus
-        const rating = (score * timeMultiplier) + tokenBonus;
-        
-        return Math.round(rating * 10) / 10; // Round to 1 decimal
+        return totalScore;
     },
     
-    getRatingGrade(rating) {
-        // Updated grades for new permissive formula
-        if (rating >= 3000) return {grade: 'S', color: '#fbbf24', label: 'Legendary'};
-        if (rating >= 2000) return {grade: 'A+', color: '#22c55e', label: 'Excellent'};
-        if (rating >= 1200) return {grade: 'A', color: '#3b82f6', label: 'Great'};
-        if (rating >= 800) return {grade: 'B', color: '#8b5cf6', label: 'Good'};
-        if (rating >= 400) return {grade: 'C', color: '#ec4899', label: 'Fair'};
+    getRatingGrade(totalScore) {
+        // Grade thresholds for total score
+        // Formula: score + (score - time penalty) if positive, else score
+        // Note: This function is kept for potential future use but not currently displayed
+        if (totalScore >= 3000) return {grade: 'S', color: '#fbbf24', label: 'Legendary'};
+        if (totalScore >= 2000) return {grade: 'A+', color: '#22c55e', label: 'Excellent'};
+        if (totalScore >= 1200) return {grade: 'A', color: '#3b82f6', label: 'Great'};
+        if (totalScore >= 800) return {grade: 'B', color: '#8b5cf6', label: 'Good'};
+        if (totalScore >= 400) return {grade: 'C', color: '#ec4899', label: 'Fair'};
         return {grade: 'D', color: '#ef4444', label: 'Needs Practice'};
     },
     
@@ -1597,7 +1582,6 @@ const Game = {
                     
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         ${localRecords.map((record, index) => {
-                            const ratingData = this.getRatingGrade(record.rating);
                             const avatarData = window.phase0 && window.phase0.avatars 
                                 ? window.phase0.avatars.find(a => a.id === record.avatar)
                                 : null;
@@ -1614,8 +1598,8 @@ const Game = {
                                             </div>
                                         </div>
                                         <div style="text-align: right;">
-                                            <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${record.score}</div>
-                                            <div style="font-size: 11px; color: ${ratingData.color};">${ratingData.label}</div>
+                                            <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${record.rating}</div>
+                                            <div style="font-size: 11px; color: var(--text-secondary);">Total Score</div>
                                         </div>
                                     </div>
                                 </div>
@@ -1671,10 +1655,10 @@ const Game = {
                         const isCurrentUser = entry.user_name === currentUserId;
                         
                         // Handle null values with fallbacks
-                        const displayName = entry.name || 'Anonymous';
-                        const displayScore = entry.totale_score || entry.score || 0;
-                        const displayTime = entry.counter_time || 0;
-                        const displayUserId = entry.user_name || 'unknown';
+                        const displayName = entry.name;
+                        const displayScore = entry.totale_score;
+                        const displayTime = entry.counter_time;
+                        const displayUserId = entry.user_name;
                         
                         // Get avatar icon - use 🎮 for users without avatar
                         let avatarIcon = '🎮'; // Gaming controller for anonymous
@@ -1732,7 +1716,7 @@ const Game = {
                                     <!-- Center: Time + Score (100% Centered) -->
                                     <div style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                                         <div style="font-size: 16px; font-weight: 600; color: #a78bfa; margin-bottom: 4px;">⏱️ ${Math.floor(displayTime / 60)}:${(displayTime % 60).toString().padStart(2, '0')}</div>
-                                        <div style="font-size: 11px; color: rgba(148, 163, 184, 0.8);">score: ${(entry.score || 0).toLocaleString()}</div>
+                                        <div style="font-size: 11px; color: rgba(148, 163, 184, 0.8);">score: ${entry.score.toLocaleString()}</div>
                                     </div>
                                     
                                     <!-- Right: Total Score + Date (Right-aligned) -->

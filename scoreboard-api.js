@@ -62,9 +62,9 @@ const ScoreboardAPI = {
             return { success: false, error: 'Score is 0' };
         }
         
-        // Calculate elapsed time and rating
+        // Calculate elapsed time and total score
         const elapsedTimeSeconds = this.getElapsedTime();
-        const rating = Game.calculateRating(Game.state.score, elapsedTimeSeconds, Game.state.tokensProcessed);
+        const totalScore = Game.calculateRating(Game.state.score, elapsedTimeSeconds, Game.state.tokensProcessed);
         
         // Prepare score data
         const scoreData = {
@@ -72,7 +72,7 @@ const ScoreboardAPI = {
             user_name: Game.state.uniqueUserId, // Unique username
             game_name: this.config.gameName,
             game_version: this.config.gameVersion,
-            totale_score: rating, // Combined rating (score + time)
+            totale_score: totalScore, // Total score (score - time penalty)
             
             // Optional fields
             name: Game.state.modelName || 'Anonymous', // Display name
@@ -91,7 +91,7 @@ const ScoreboardAPI = {
         console.log('   avatar_code:', scoreData.avatar_code);
         console.log('   game_name:', scoreData.game_name);
         console.log('   game_version:', scoreData.game_version);
-        console.log('   totale_score (rating):', scoreData.totale_score);
+        console.log('   totale_score (total score):', scoreData.totale_score);
         console.log('   score (raw):', scoreData.score);
         console.log('   counter_time:', scoreData.counter_time);
         console.log('   playedAt:', scoreData.playedAt);
@@ -142,11 +142,11 @@ const ScoreboardAPI = {
             if (result.result && result.result.updated) {
                 console.log('✅ Score saved successfully!');
                 console.log('   Object ID:', result.result.objectId);
-                console.log('   New high rating:', result.result.totale_score);
+                console.log('   New high score:', result.result.totale_score);
                 console.log('   Score:', result.result.score);
                 console.log('   Time:', result.result.counter_time);
                 if (result.result.previousTotaleScore) {
-                    console.log('   Previous rating:', result.result.previousTotaleScore);
+                    console.log('   Previous high score:', result.result.previousTotaleScore);
                 }
                 return { 
                     success: true, 
@@ -155,7 +155,7 @@ const ScoreboardAPI = {
                 };
             } else if (result.result && result.result.updated === false) {
                 console.log('ℹ️ Score submitted but not high enough');
-                console.log('   Current high rating:', result.result.totale_score);
+                console.log('   Current high score:', result.result.totale_score);
                 return { 
                     success: true, 
                     data: result.result,
