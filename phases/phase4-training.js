@@ -91,7 +91,7 @@ window.phase4 = {
                             </p>
                             <p style="margin: 0;">
                                 <strong style="color: var(--primary);">What about context?</strong> 
-                                This bigram model only looks at one word. Real LLMs use <strong>attention</strong> to weigh the importance of ALL previous words, not just the last one!
+                                This bigram model only looks at one word. Real LLMs use <strong>attention</strong> to weigh the importance of all previous words, not just the last one!
                             </p>
                         </div>
                     </div>
@@ -181,7 +181,7 @@ window.phase4 = {
                     
                     <div class="hint-section">
                         <h4>💡 What to Notice</h4>
-                        <p>Watch how we count what comes AFTER "<strong style="color: var(--primary);">${targetWord}</strong>". 
+                        <p>Watch how we count what comes after "<strong style="color: var(--primary);">${targetWord}</strong>". 
                         The frequency determines the probability!</p>
                     </div>
                     
@@ -192,7 +192,7 @@ window.phase4 = {
                             <h4 style="font-size: 13px; color: #ef4444; margin: 0; font-weight: 700;">Reality Check</h4>
                         </div>
                         <p style="font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.6;">
-                            This is <strong style="color: #ef4444;">ALL</strong> that training is—just counting co-occurrences! 
+                            This is <strong style="color: #ef4444;">All</strong> that training is—just counting co-occurrences! 
                             No intelligence, no understanding, no reasoning. Just math: 
                             <strong style="color: #ef4444;">Probability = Count ÷ Total</strong>. 
                             Scale this to billions of word pairs and you get GPT!
@@ -746,7 +746,7 @@ window.phase4 = {
             subtitle: `You trained a bigram model with ${totalPatterns} word patterns`,
             whereYouAre: 'Your model is <strong>trained</strong>! It now knows the probability of every word following every other word, based on your training data.',
             whatYouDid: `You built a bigram model by counting word pairs: "chef"→"cooked" (3 times), "chef"→"loves" (2 times), etc. Then calculated probabilities: 60% "cooked", 40% "loves". Pure statistics from ${totalPatterns} patterns!`,
-            whatsNext: '<strong>Text Generation:</strong> Use your trained probabilities to generate NEW sentences! Start with a word, pick the next based on learned odds, repeat. Watch your AI write!',
+            whatsNext: '<strong>Text Generation:</strong> Use your trained probabilities to generate new sentences! Start with a word, pick the next based on learned odds, repeat. Watch your AI write!',
             whyItMatters: 'This IS the "AI"! There\'s no magic - just counting and probabilities. The model doesn\'t "know" that chefs cook. It just learned that "chef" is often followed by "cooked" in the training data. Scale this to trillions of examples, and you get GPT-4!',
             buttonText: 'Continue to Generation',
             onContinue: 'phase4.completePhaseAndAdvance()'

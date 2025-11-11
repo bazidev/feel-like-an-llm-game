@@ -10,7 +10,7 @@ window.phase5 = {
     challenges: [
         {
             type: 'predict',
-            question: 'Which word is MORE LIKELY after "chef" based on training?',
+            question: 'Which word is more likely after "chef" based on training?',
             context: 'chef',
             options: ['cooked', 'swimming', 'rocket'],
             correct: 0,
@@ -36,7 +36,7 @@ window.phase5 = {
                 'The model is broken'
             ],
             correct: 1,
-            explanation: 'Dead ends happen when a word only appeared at the END of sentences in training! The model never learned what comes after it.'
+            explanation: 'Dead ends happen when a word only appeared at the end of sentences in training! The model never learned what comes after it.'
         },
         {
             type: 'concept',
@@ -47,7 +47,7 @@ window.phase5 = {
                 'Sometimes yes, sometimes no'
             ],
             correct: 1,
-            explanation: 'LLMs generate ONE token at a time with NO ability to plan or revise! That\'s why they sometimes start sentences they can\'t finish logically.'
+            explanation: 'LLMs generate one token at a time with no ability to plan or revise! That\'s why they sometimes start sentences they can\'t finish logically.'
         }
     ],
     
@@ -170,7 +170,7 @@ window.phase5 = {
                         <div style="font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
                             <p style="margin-bottom: 10px;">
                                 <strong style="color: #fbbf24;">No planning ahead!</strong> 
-                                LLMs generate ONE token at a time with NO ability to plan or revise future tokens.
+                                LLMs generate one token at a time with no ability to plan or revise future tokens.
                             </p>
                             <p style="margin-bottom: 10px;">
                                 <strong style="color: #fbbf24;">That's why they sometimes start sentences they can't finish logically!</strong> 
@@ -206,7 +206,7 @@ window.phase5 = {
                                 </li>
                                 <li style="margin: 0; padding-left: 16px; position: relative;">
                                     <span style="position: absolute; left: 0; color: #ef4444;">•</span>
-                                    <strong style="color: #ef4444;">Massive parallelism:</strong> GPT-4 processes ALL previous tokens in parallel using attention, but generates new tokens one at a time
+                                    <strong style="color: #ef4444;">Massive parallelism:</strong> GPT-4 processes all previous tokens in parallel using attention, but generates new tokens one at a time
                                 </li>
                             </ul>
                         </div>
@@ -478,7 +478,7 @@ window.phase5 = {
                     
                     <div class="hint-section">
                         <h4>💡 How It Works</h4>
-                        <p>Each word shows possible next words with their probabilities. Click to add to your sequence. The model only knows what it learned from YOUR training data!</p>
+                        <p>Each word shows possible next words with their probabilities. Click to add to your sequence. The model only knows what it learned from your training data!</p>
                     </div>
                 </div>
                 
@@ -644,7 +644,7 @@ window.phase5 = {
                     </h1>
                     
                     <p style="font-size: 12px; color: var(--text-secondary); text-align: center; margin-bottom: 16px;">
-                        You generated NEW text using your trained model!
+                        You generated new text using your trained model!
                     </p>
                     
                     <!-- Quiz Performance -->
@@ -690,7 +690,7 @@ window.phase5 = {
                                 the model has seen very few word combinations. Real LLMs train on trillions of tokens!
                             </p>
                             <p style="margin: 0;">
-                                <strong style="color: #22c55e;">What's impressive:</strong> Despite the tiny dataset, your text still makes SOME sense! 
+                                <strong style="color: #22c55e;">What's impressive:</strong> Despite the tiny dataset, your text still makes some sense! 
                                 The statistical patterns guide it toward sensible output.
                             </p>
                         </div>
@@ -738,8 +738,8 @@ window.phase5 = {
             subtitle: `You generated ${wordCount} words of new text`,
             whereYouAre: 'You have a <strong>complete working LLM</strong>! From tokenization to embeddings, attention to training, and now generation - you built the full pipeline used by GPT, Claude, and all modern LLMs.',
             whatYouDid: `You generated "${generated}" by sampling from probability distributions. Each word was picked based on training patterns, not rules. The model learned "which words follow which" and used that to create new text!`,
-            whatsNext: '<strong>Sampling Parameters:</strong> Learn about Temperature, Top-p, Repetition Penalty, and Presence Penalty. These knobs control HOW the model picks tokens - turning deterministic math into creative generation!',
-            whyItMatters: 'Generation is where everything comes together! Tokenization broke text into pieces, embeddings captured patterns, attention found relationships, training learned probabilities - and now generation CREATES new text from all that knowledge. This is what makes LLMs "AI"!',
+            whatsNext: '<strong>Sampling Parameters:</strong> Learn about Temperature, Top-p, Repetition Penalty, and Presence Penalty. These knobs control how the model picks tokens - turning deterministic math into creative generation!',
+            whyItMatters: 'Generation is where everything comes together! Tokenization broke text into pieces, embeddings captured patterns, attention found relationships, training learned probabilities - and now generation creates new text from all that knowledge. This is what makes LLMs "AI"!',
             buttonText: 'Continue to Sampling Parameters',
             onContinue: 'phase5.completePhaseAndAdvance()'
         };

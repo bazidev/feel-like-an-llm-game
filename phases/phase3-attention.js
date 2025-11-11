@@ -12,21 +12,21 @@ window.phase3 = {
             words: ["chef", "cooked", "pasta"],
             explanation: "Focus: 'cooked'. Set attention to show contextual relationships",
             hints: {
-                "chef": "High (0.8-1.0) - WHO performs the action",
-                "pasta": "High (0.8-1.0) - WHAT is being acted upon"
+                "chef": "High (0.8-1.0) - Who performs the action",
+                "pasta": "High (0.8-1.0) - What is being acted upon"
             }
         },
         {
             words: ["set", "morning", "alarm"],
-            explanation: "Focus: 'alarm'. Notice how some words relate MORE to each other than to the focus",
+            explanation: "Focus: 'alarm'. Notice how some words relate more to each other than to the focus",
             hints: {
                 "morning": "High (0.8-1.0) - Directly modifies which alarm (strong relationship)",
-                "set": "Low (0.2-0.4) - The action is less important than WHAT KIND of alarm"
+                "set": "Low (0.2-0.4) - The action is less important than what kind of alarm"
             }
         },
         {
             words: ["very", "bright", "star"],
-            explanation: "Focus: 'bright'. Notice how modifiers create DIFFERENT attention patterns",
+            explanation: "Focus: 'bright'. Notice how modifiers create different attention patterns",
             hints: {
                 "very": "High (0.8-1.0) - Directly modifies brightness (strong relationship)",
                 "star": "Low (0.2-0.4) - 'bright' describes the star, but weak direct attention"
@@ -783,9 +783,9 @@ window.phase3 = {
                 
                 let errorMsg = 'Set different attention values to show meaningful relationships!';
                 if (allVeryLow) {
-                    errorMsg = 'Not all words should have near-zero attention! Some words ARE contextually related.';
+                    errorMsg = 'Not all words should have near-zero attention! Some words are contextually related.';
                 } else if (noHighWeights) {
-                    errorMsg = 'You need at least some HIGH attention weights (0.6+) for words that relate strongly to "' + currentWord + '".';
+                    errorMsg = 'You need at least some High attention weights (0.6+) for words that relate strongly to "' + currentWord + '".';
                 } else if (tooFewUnique || lowVariance) {
                     errorMsg = 'All your weights are too similar! Different words should have different attention levels.';
                 }
@@ -1211,7 +1211,7 @@ window.phase3 = {
             whereYouAre: 'Your tokens now have <strong>relationships</strong>. The attention mechanism calculated how much each token should "focus on" others based on their vector similarity.',
             whatYouDid: `You computed ${totalWeights} attention scores through pure math (dot products, softmax). "Chef" pays high attention to "cooked" because their vectors are similar - discovered from training data, not programmed!`,
             whatsNext: '<strong>Training:</strong> Build a language model that learns "which words follow which" from your training data. This creates the statistical patterns needed for text generation!',
-            whyItMatters: 'Attention is the BREAKTHROUGH that made modern LLMs possible! It allows the model to dynamically focus on relevant context. "The chef who trained in Paris cooked" - attention helps "cooked" focus on "chef", not just the nearest word "Paris".',
+            whyItMatters: 'Attention is the breakthrough that made modern LLMs possible! It allows the model to dynamically focus on relevant context. "The chef who trained in Paris cooked" - attention helps "cooked" focus on "chef", not just the nearest word "Paris".',
             buttonText: 'Continue to Training',
             onContinue: 'phase3.completePhaseAndAdvance()'
         };

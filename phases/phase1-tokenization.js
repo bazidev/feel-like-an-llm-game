@@ -1381,7 +1381,7 @@ window.phase1 = {
             whereYouAre: 'Your text is now split into tokens - the basic building blocks that neural networks can process. Each word, punctuation mark, and space has become a discrete unit with an ID and a position.',
             whatYouDid: `You successfully tokenized your training data into ${Game.state.tokens.length} tokens using space-attached tokenization (mimicking real LLM behavior). You learned that spaces attach to following words, suffixes are split ("-ing", "-ed"), and each token gets a unique ID.`,
             whatsNext: '<strong>Embeddings:</strong> Convert each token into a numerical vector (embedding). These vectors capture semantic meaning - similar words get similar vectors, allowing the model to understand relationships.',
-            whyItMatters: 'Tokenization is the FIRST step of every LLM! Without it, AI cannot process text. Good tokenization leads to efficient learning. GPT uses ~50K tokens to handle all of English + code + multilingual text efficiently.',
+            whyItMatters: 'Tokenization is the First step of every LLM! Without it, AI cannot process text. Good tokenization leads to efficient learning. GPT uses ~50K tokens to handle all of English + code + multilingual text efficiently.',
             buttonText: 'Continue to Embeddings',
             onContinue: 'phase1.completePhaseAndAdvance()'
         };

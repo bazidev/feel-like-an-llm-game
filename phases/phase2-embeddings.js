@@ -28,7 +28,7 @@ window.phase2 = {
                 { word: "fish", vector: [0.7, 0.3], color: "#f59e0b", targetGroup: "group2" },
                 { word: "bones", vector: [0.75, 0.35], color: "#ec4899", targetGroup: "group2" }
             ],
-            hint: "Count the patterns! 'cat' and 'dog' BOTH appear 3 times at START (after The/A/My). 'fish' and 'bones' BOTH appear 3 times at END (after verbs).",
+            hint: "Count the patterns! 'cat' and 'dog' Both appear 3 times at Start (after The/A/My). 'fish' and 'bones' Both appear 3 times at End (after verbs).",
             correctPairs: [["cat", "dog"], ["fish", "bones"]],
             showData: true
         },
@@ -49,7 +49,7 @@ window.phase2 = {
                 { word: "يلعب", vector: [0.7, 0.25], color: "#f59e0b", targetGroup: "group2" },
                 { word: "يجري", vector: [0.75, 0.3], color: "#ec4899", targetGroup: "group2" }
             ],
-            hint: "🌍 Can't read Arabic? Perfect! Count: القط and الكلب BOTH appear 3 times at START. يلعب and يجري BOTH appear 3 times AFTER القط/الكلب.",
+            hint: "🌍 Can't read Arabic? Perfect! Count: القط and الكلب Both appear 3 times at Start. يلعب and يجري Both appear 3 times After القط/الكلب.",
             correctPairs: [["القط", "الكلب"], ["يلعب", "يجري"]],
             showData: true
         },
@@ -70,7 +70,7 @@ window.phase2 = {
                 { word: "睡觉", vector: [0.7, 0.25], color: "#f59e0b", targetGroup: "group2" },
                 { word: "跑步", vector: [0.75, 0.3], color: "#ec4899", targetGroup: "group2" }
             ],
-            hint: "🎯 Can't read Chinese? Count symbols: 猫 and 狗 BOTH appear 3 times after (我的/这只/小). 睡觉 and 跑步 BOTH appear 3 times at END.",
+            hint: "🎯 Can't read Chinese? Count symbols: 猫 and 狗 Both appear 3 times after (我的/这只/小). 睡觉 and 跑步 Both appear 3 times at end.",
             correctPairs: [["猫", "狗"], ["睡觉", "跑步"]],
             showData: true
         }
@@ -124,7 +124,7 @@ window.phase2 = {
                                 Each token becomes a <strong style="color: var(--primary);">vector</strong> - a list of numbers like [0.8, 0.3, 0.5].
                             </p>
                             <p style="margin-bottom: 10px;">
-                                <strong style="color: var(--primary);">Similar tokens get similar vectors</strong> - NOT because you "understand" meaning, but because they appeared in <strong>similar contexts</strong> during training.
+                                <strong style="color: var(--primary);">Similar tokens get similar vectors</strong> - Not because you "understand" meaning, but because they appeared in <strong>similar contexts</strong> during training.
                             </p>
                             <p style="margin: 0;">
                                 Example: "cat" → [0.8, 0.3] and "dog" → [0.75, 0.35] are close because both appeared after "The" and before verbs like "sat" or "played".
@@ -267,7 +267,7 @@ window.phase2 = {
                             <h3 style="font-size: 18px; color: var(--primary); margin: 0;">How Embeddings Work</h3>
                         </div>
                         <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.8; margin: 0;">
-                            Every token becomes a <strong>vector</strong> (list of numbers). Similar tokens get similar vectors - NOT because you "understand" them, but because they appeared in <strong>similar contexts</strong> during training. You don't know "cat" and "dog" are animals - you just learned they appear near similar words.
+                            Every token becomes a <strong>vector</strong> (list of numbers). Similar tokens get similar vectors - Not because you "understand" them, but because they appeared in <strong>similar contexts</strong> during training. You don't know "cat" and "dog" are animals - you just learned they appear near similar words.
                         </p>
                     </div>
                     
