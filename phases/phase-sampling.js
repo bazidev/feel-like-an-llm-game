@@ -1,6 +1,6 @@
 // Phase: Sampling Parameters - INTERACTIVE PARAMETER CONTROL
 window.phaseSampling = {
-    currentStep: 'intro', // 'intro' -> 'temperature' -> 'top_p' -> 'repetition' -> 'presence' -> 'challenge' -> 'recap'
+    currentStep: 'concept1', // 'concept1' -> 'concept2' -> 'temperature' -> 'top_p' -> 'repetition' -> 'presence' -> 'challenge' -> 'recap' -> 'journey_checkpoint'
     
     // Game state
     temperatureValue: 0.7,
@@ -13,37 +13,65 @@ window.phaseSampling = {
         {
             goal: "Creative storytelling with variety",
             hint: "High randomness, diverse topics",
-            correctTemp: { min: 0.8, max: 1.5 },
-            correctTopP: { min: 0.85, max: 1.0 },
-            correctRep: { min: 1.0, max: 1.3 },
-            correctPres: { min: 0.5, max: 1.5 }
+            correctTemp: { min: 0.7, max: 1.8 },
+            correctTopP: { min: 0.8, max: 1.0 },
+            correctRep: { min: 1.0, max: 1.5 },
+            correctPres: { min: 0.3, max: 2.0 },
+            explanations: {
+                temp: "High temperature (0.7-1.8) creates unpredictable, creative outputs",
+                topP: "High top-p (0.8-1.0) allows sampling from more diverse token choices",
+                rep: "Moderate repetition (1.0-1.5) prevents excessive loops while allowing natural repetition",
+                pres: "Higher presence penalty (0.3-2.0) encourages exploring diverse topics and words"
+            }
         },
         {
             goal: "Deterministic code generation",
             hint: "Low randomness, predictable output",
-            correctTemp: { min: 0.0, max: 0.4 },
-            correctTopP: { min: 0.9, max: 1.0 },
-            correctRep: { min: 1.0, max: 1.2 },
-            correctPres: { min: 0.0, max: 0.5 }
+            correctTemp: { min: 0.0, max: 0.5 },
+            correctTopP: { min: 0.85, max: 1.0 },
+            correctRep: { min: 1.0, max: 1.3 },
+            correctPres: { min: 0.0, max: 0.6 },
+            explanations: {
+                temp: "Low temperature (0.0-0.5) makes output predictable and deterministic",
+                topP: "High top-p (0.85-1.0) ensures the most likely tokens are consistently chosen",
+                rep: "Low repetition penalty (1.0-1.3) allows natural code patterns like repeated keywords",
+                pres: "Low presence penalty (0.0-0.6) permits reusing variables/functions as needed in code"
+            }
         },
         {
             goal: "Balanced conversation without repetition",
             hint: "Moderate randomness, prevent loops",
-            correctTemp: { min: 0.6, max: 0.9 },
-            correctTopP: { min: 0.85, max: 0.95 },
-            correctRep: { min: 1.2, max: 1.8 },
-            correctPres: { min: 0.3, max: 0.8 }
+            correctTemp: { min: 0.5, max: 1.0 },
+            correctTopP: { min: 0.8, max: 1.0 },
+            correctRep: { min: 1.1, max: 2.0 },
+            correctPres: { min: 0.2, max: 1.0 },
+            explanations: {
+                temp: "Moderate temperature (0.5-1.0) balances creativity with coherence",
+                topP: "High top-p (0.8-1.0) maintains natural conversation flow",
+                rep: "Higher repetition penalty (1.1-2.0) strongly prevents word/phrase loops",
+                pres: "Moderate presence penalty (0.2-1.0) encourages varied vocabulary without random jumps"
+            }
         }
     ],
     currentScenario: 0,
+    isCheckingChallenge: false, // Prevent multiple simultaneous checks
     
     // For interactive demonstrations
     sampleText: "The cat",
     generationAttempts: 0,
     
     render(container) {
-        if (this.currentStep === 'intro') {
-            this.renderIntro(container);
+        // Safety check: if currentStep is invalid, reset to concept1
+        const validSteps = ['concept1', 'concept2', 'temperature', 'top_p', 'repetition', 'presence', 'challenge', 'recap', 'journey_checkpoint'];
+        if (!validSteps.includes(this.currentStep)) {
+            console.warn(`⚠️ phaseSampling: Invalid currentStep "${this.currentStep}", resetting to "concept1"`);
+            this.currentStep = 'concept1';
+        }
+        
+        if (this.currentStep === 'concept1') {
+            this.renderConcept1(container);
+        } else if (this.currentStep === 'concept2') {
+            this.renderConcept2(container);
         } else if (this.currentStep === 'temperature') {
             this.renderTemperature(container);
         } else if (this.currentStep === 'top_p') {
@@ -56,10 +84,12 @@ window.phaseSampling = {
             this.renderChallenge(container);
         } else if (this.currentStep === 'recap') {
             this.renderRecap(container);
+        } else if (this.currentStep === 'journey_checkpoint') {
+            this.renderJourneyCheckpoint(container);
         }
     },
     
-    renderIntro(container) {
+    renderConcept1(container) {
         container.innerHTML = `
             <div style="height: 100%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
                 <div style="max-width: 900px; width: 100%;">
@@ -84,18 +114,73 @@ window.phaseSampling = {
                                 When generating text, LLMs have <strong style="color: var(--primary);">probabilities for each possible next token</strong>. 
                                 Sampling parameters control HOW you pick from these probabilities.
                             </p>
+                            <p style="margin-bottom: 10px;">
+                                <strong style="color: var(--primary);">Without these knobs, every generation would be identical and boring!</strong> 
+                                These parameters add creativity, variety, and control.
+                            </p>
                             <p style="margin: 0;">
-                                Without these knobs, every generation would be identical and boring! These parameters add creativity, variety, and control.
+                                <strong style="color: var(--primary);">It's like rolling weighted dice.</strong> 
+                                You can make the dice more random (temperature), limit which sides can land (top-p), or penalize rolling the same number repeatedly (repetition/presence).
                             </p>
                         </div>
                     </div>
                     
-                    <!-- The 4 Key Parameters -->
+                    <!-- Why They Matter -->
                     <div style="background: linear-gradient(135deg, rgba(191, 0, 255, 0.1), rgba(139, 92, 246, 0.05)); 
                                border: 2px solid rgba(191, 0, 255, 0.3); border-radius: 14px; padding: 20px; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <span style="font-size: 24px;">💡</span>
+                            <h2 style="font-size: 18px; color: var(--secondary); margin: 0;">Why Sampling Parameters Matter</h2>
+                        </div>
+                        <div style="font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
+                            <p style="margin-bottom: 10px;">
+                                <strong style="color: var(--secondary);">Same model, completely different personalities!</strong> 
+                                ChatGPT with temperature=0.1 gives factual, boring answers. Temperature=1.5? Wild, creative, unpredictable.
+                            </p>
+                            <p style="margin-bottom: 10px;">
+                                <strong style="color: var(--secondary);">These are the knobs that make AI "feel intelligent".</strong> 
+                                Without randomness and creativity controls, every question gets the exact same response.
+                            </p>
+                            <p style="margin: 0;">
+                                <strong style="color: var(--secondary);">You're learning to drive an LLM!</strong> 
+                                These parameters are like steering wheel, gas pedal, and brakes - they control how the model behaves.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <button onclick="phaseSampling.nextConceptStep()" 
+                                style="padding: 12px 36px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                       border: none; border-radius: 12px; color: white; font-size: 15px; font-weight: 600; 
+                                       cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
+                            Next →
+                        </button>
+                    </div>
+                    
+                </div>
+            </div>
+        `;
+    },
+    
+    renderConcept2(container) {
+        container.innerHTML = `
+            <div style="height: 100%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
+                <div style="max-width: 900px; width: 100%;">
+                    
+                    <h1 style="font-size: 28px; margin-bottom: 12px; text-align: center; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                               -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        🎛️ Sampling Parameters
+                    </h1>
+                    <p style="font-size: 15px; color: var(--text-secondary); text-align: center; margin-bottom: 24px;">
+                        The 4 control knobs for text generation
+                    </p>
+                    
+                    <!-- The 4 Key Parameters -->
+                    <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(191, 0, 255, 0.05)); 
+                               border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 14px; padding: 20px; margin-bottom: 18px;">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
                             <span style="font-size: 24px;">🔧</span>
-                            <h2 style="font-size: 18px; color: var(--secondary); margin: 0;">The 4 Key Controls</h2>
+                            <h2 style="font-size: 18px; color: var(--primary); margin: 0;">The 4 Key Controls</h2>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                             <div style="padding: 12px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
@@ -117,8 +202,37 @@ window.phaseSampling = {
                         </div>
                     </div>
                     
+                    <!-- Reality Check: How Real LLMs Use These -->
+                    <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05)); 
+                               border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 14px; padding: 20px; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <span style="font-size: 24px;">⚡</span>
+                            <h2 style="font-size: 18px; color: #ef4444; margin: 0;">Reality Check: Real LLMs</h2>
+                        </div>
+                        <div style="font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
+                            <ul style="margin: 0; padding-left: 20px; list-style: none;">
+                                <li style="margin-bottom: 8px; padding-left: 16px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #ef4444;">•</span>
+                                    <strong style="color: #ef4444;">Every commercial LLM API exposes these parameters:</strong> ChatGPT, Claude, GPT-4, Gemini - they all let you tune temperature, top-p, and penalties
+                                </li>
+                                <li style="margin-bottom: 8px; padding-left: 16px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #ef4444;">•</span>
+                                    <strong style="color: #ef4444;">Different tasks need different settings:</strong> Code generation uses low temp (0.2), creative writing uses high temp (0.8-1.2)
+                                </li>
+                                <li style="margin-bottom: 8px; padding-left: 16px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #ef4444;">•</span>
+                                    <strong style="color: #ef4444;">No magic formulas:</strong> Finding the right parameters is trial and error - every use case is different!
+                                </li>
+                                <li style="margin: 0; padding-left: 16px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #ef4444;">•</span>
+                                    <strong style="color: #ef4444;">Advanced techniques exist:</strong> Beam search, constrained decoding, and guided generation add even more control
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
                     <div style="text-align: center;">
-                        <button onclick="phaseSampling.nextStep()" 
+                        <button onclick="phaseSampling.startExploring()" 
                                 style="padding: 12px 36px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
                                        border: none; border-radius: 12px; color: white; font-size: 15px; font-weight: 600; 
                                        cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
@@ -129,6 +243,20 @@ window.phaseSampling = {
                 </div>
             </div>
         `;
+    },
+    
+    nextConceptStep() {
+        this.currentStep = 'concept2';
+        const container = document.getElementById('phaseContainer');
+        this.render(container);
+        SoundManager.play('click');
+    },
+    
+    startExploring() {
+        this.currentStep = 'temperature';
+        const container = document.getElementById('phaseContainer');
+        this.render(container);
+        SoundManager.play('click');
     },
     
     renderTemperature(container) {
@@ -196,12 +324,6 @@ window.phaseSampling = {
                             </canvas>
                         </div>
                         
-                        <!-- Sample Outputs -->
-                        <div style="padding: 16px; background: rgba(191, 0, 255, 0.08); border-radius: 10px; margin-bottom: 20px;">
-                            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">📝 Sample generations:</div>
-                            <div id="tempSamples" style="display: flex; flex-direction: column; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
-                            </div>
-                        </div>
                         
                         <button class="btn-primary" onclick="phaseSampling.nextStep()" style="width: 100%; padding: 12px;">
                             Next: Top-p →
@@ -487,22 +609,22 @@ window.phaseSampling = {
                 <div class="phase-content">
                     <div style="width: 100%; max-width: 680px;">
                         
-                        <div style="margin-bottom: 20px; text-align: center;">
-                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 10px;">
+                        <div style="margin-bottom: 14px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
                                 🎮 Adjust repetition penalty and generate text
                             </div>
                         </div>
                         
                         <!-- Repetition Penalty Slider -->
-                        <div style="padding: 24px; background: rgba(245, 158, 11, 0.08); border-radius: 12px; margin-bottom: 20px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                                <label style="font-size: 14px; color: #f59e0b; font-weight: 600;">Repetition Penalty</label>
-                                <span id="repValue" style="font-size: 24px; font-weight: 700; color: #f59e0b; font-family: 'JetBrains Mono', monospace;">1.2</span>
+                        <div style="padding: 16px; background: rgba(245, 158, 11, 0.08); border-radius: 10px; margin-bottom: 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <label style="font-size: 12px; color: #f59e0b; font-weight: 600;">Repetition Penalty</label>
+                                <span id="repValue" style="font-size: 18px; font-weight: 700; color: #f59e0b; font-family: 'JetBrains Mono', monospace;">1.2</span>
                             </div>
                             <input type="range" id="repSlider" min="1.0" max="2.0" step="0.1" value="1.2" 
                                    oninput="phaseSampling.updateRepetition(this.value)"
-                                   style="width: 100%; height: 8px; cursor: pointer; appearance: none; background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444); border-radius: 4px;">
-                            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-secondary);">
+                                   style="width: 100%; height: 6px; cursor: pointer; appearance: none; background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444); border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-secondary);">
                                 <span>1.0 (No penalty)</span>
                                 <span>1.5 (Moderate)</span>
                                 <span>2.0 (Strong)</span>
@@ -510,22 +632,22 @@ window.phaseSampling = {
                         </div>
                         
                         <!-- Interactive Example -->
-                        <div style="padding: 20px; background: rgba(255, 255, 255, 0.02); border-radius: 12px; margin-bottom: 20px;">
-                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; text-align: center;">
+                        <div style="padding: 14px; background: rgba(255, 255, 255, 0.02); border-radius: 10px; margin-bottom: 14px;">
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; text-align: center;">
                                 Watch how penalty affects generation
                             </div>
-                            <div style="padding: 16px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; margin-bottom: 12px;">
-                                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Starting text:</div>
-                                <div style="font-family: 'JetBrains Mono', monospace; color: white; font-size: 14px;">
+                            <div style="padding: 12px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; margin-bottom: 10px;">
+                                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 6px;">Starting text:</div>
+                                <div style="font-family: 'JetBrains Mono', monospace; color: white; font-size: 12px;">
                                     "The cat sat. The"
                                 </div>
                             </div>
                             
-                            <div id="repComparison" style="display: grid; gap: 12px;">
+                            <div id="repComparison" style="display: grid; gap: 10px;">
                             </div>
                         </div>
                         
-                        <button class="btn-primary" onclick="phaseSampling.nextStep()" style="width: 100%; padding: 12px;">
+                        <button class="btn-primary" onclick="phaseSampling.nextStep()" style="width: 100%; padding: 10px;">
                             Next: Presence Penalty →
                         </button>
                         
@@ -562,17 +684,17 @@ window.phaseSampling = {
         container.innerHTML = examples.map(ex => {
             const isActive = ex === closest;
             return `
-                <div style="padding: 14px; background: ${isActive ? 'rgba(245, 158, 11, 0.2)' : 'rgba(0, 0, 0, 0.3)'}; 
+                <div style="padding: 10px; background: ${isActive ? 'rgba(245, 158, 11, 0.2)' : 'rgba(0, 0, 0, 0.3)'}; 
                            border: 1px solid ${isActive ? '#f59e0b' : 'rgba(255, 255, 255, 0.1)'}; border-radius: 8px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-size: 12px; color: ${isActive ? '#f59e0b' : 'var(--text-secondary)'}; font-weight: 600;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 11px; color: ${isActive ? '#f59e0b' : 'var(--text-secondary)'}; font-weight: 600;">
                             ${ex.label}
                         </span>
-                        <span style="font-size: 11px; color: ${ex.problem.startsWith('✓') ? '#22c55e' : '#ef4444'};">
+                        <span style="font-size: 10px; color: ${ex.problem.startsWith('✓') ? '#22c55e' : '#ef4444'};">
                             ${ex.problem}
                         </span>
                     </div>
-                    <div style="font-family: 'JetBrains Mono', monospace; color: white; font-size: 13px; line-height: 1.6;">
+                    <div style="font-family: 'JetBrains Mono', monospace; color: white; font-size: 11px; line-height: 1.5;">
                         "${ex.text}"
                     </div>
                 </div>
@@ -605,6 +727,15 @@ window.phaseSampling = {
                     <div style="padding: 12px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; margin-top: 12px;">
                         <p style="font-size: 11px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
                             <strong>Difference:</strong> Repetition penalty cares about HOW OFTEN. Presence penalty just cares IF IT APPEARED (binary).
+                        </p>
+                    </div>
+                    
+                    <!-- Pro Tip -->
+                    <div style="padding: 12px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.08)); 
+                               border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 8px; margin-top: 12px;">
+                        <p style="font-size: 11px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                            💡 <strong style="color: #fbbf24;">Pro Tip:</strong> Use <strong>repetition penalty</strong> to stop loops. 
+                            Use <strong>presence penalty</strong> to explore diverse topics. Combine both for best results!
                         </p>
                     </div>
                 </div>
@@ -640,15 +771,6 @@ window.phaseSampling = {
                                 How topics evolve with presence penalty
                             </div>
                             <div id="presComparison" style="display: grid; gap: 12px;">
-                            </div>
-                        </div>
-                        
-                        <!-- Summary Box -->
-                        <div style="padding: 16px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.08)); 
-                                   border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 12px; margin-bottom: 20px;">
-                            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.7;">
-                                💡 <strong style="color: #fbbf24;">Pro Tip:</strong> Use <strong>repetition penalty</strong> to stop loops. 
-                                Use <strong>presence penalty</strong> to explore diverse topics. Combine both for best results!
                             </div>
                         </div>
                         
@@ -708,6 +830,9 @@ window.phaseSampling = {
     },
     
     renderChallenge(container) {
+        // Reset checking flag when rendering new scenario
+        this.isCheckingChallenge = false;
+        
         const scenario = this.challengeScenarios[this.currentScenario];
         const scenarioNum = this.currentScenario + 1;
         const totalScenarios = this.challengeScenarios.length;
@@ -735,6 +860,13 @@ window.phaseSampling = {
                         <p style="font-size: 11px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
                             <strong>Reality Check:</strong> Think about what each parameter does and how they work together!
                         </p>
+                    </div>
+                    
+                    <!-- Error Feedback in Sidebar -->
+                    <div id="sidebarFeedback" style="display: none; padding: 12px; background: rgba(239, 68, 68, 0.1); 
+                               border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 8px; margin-top: 12px;">
+                        <div style="font-size: 13px; color: #ef4444; font-weight: 700; margin-bottom: 8px;">Not quite right!</div>
+                        <div id="sidebarErrorList" style="font-size: 11px; color: var(--text-secondary); line-height: 1.6;"></div>
                     </div>
                 </div>
                 
@@ -847,8 +979,16 @@ window.phaseSampling = {
     },
     
     checkChallenge() {
+        // Prevent multiple simultaneous checks
+        if (this.isCheckingChallenge) {
+            return;
+        }
+        this.isCheckingChallenge = true;
+        
         const scenario = this.challengeScenarios[this.currentScenario];
         const feedback = document.getElementById('challengeFeedback');
+        const sidebarFeedback = document.getElementById('sidebarFeedback');
+        const sidebarErrorList = document.getElementById('sidebarErrorList');
         
         // Check if all parameters are within acceptable range
         const tempCorrect = this.temperatureValue >= scenario.correctTemp.min && 
@@ -865,6 +1005,11 @@ window.phaseSampling = {
         feedback.style.display = 'block';
         
         if (allCorrect) {
+            // Hide sidebar error feedback
+            if (sidebarFeedback) {
+                sidebarFeedback.style.display = 'none';
+            }
+            
             feedback.style.background = 'rgba(34, 197, 94, 0.1)';
             feedback.style.border = '2px solid rgba(34, 197, 94, 0.3)';
             feedback.innerHTML = `
@@ -889,25 +1034,39 @@ window.phaseSampling = {
                     const container = document.getElementById('phaseContainer');
                     this.render(container);
                 }
+                this.isCheckingChallenge = false; // Reset flag after advancing
             }, 1500);
         } else {
-            // Show which parameters are wrong
-            const errors = [];
-            if (!tempCorrect) errors.push(`🌡️ Temperature should be ${scenario.correctTemp.min}-${scenario.correctTemp.max}`);
-            if (!topPCorrect) errors.push(`🎯 Top-p should be ${scenario.correctTopP.min}-${scenario.correctTopP.max}`);
-            if (!repCorrect) errors.push(`🔁 Repetition should be ${scenario.correctRep.min}-${scenario.correctRep.max}`);
-            if (!presCorrect) errors.push(`✨ Presence should be ${scenario.correctPres.min}-${scenario.correctPres.max}`);
+            // Hide main feedback, show errors in sidebar
+            feedback.style.display = 'none';
             
-            feedback.style.background = 'rgba(239, 68, 68, 0.1)';
-            feedback.style.border = '2px solid rgba(239, 68, 68, 0.3)';
-            feedback.innerHTML = `
-                <div style="font-size: 16px; color: #ef4444; font-weight: 700; margin-bottom: 8px;">Not quite right!</div>
-                <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.7;">
-                    ${errors.map(e => `• ${e}`).join('<br>')}
-                    <br><br>💡 Think about the goal: "${scenario.goal}"
-                </div>
-            `;
+            // Show which parameters are wrong in sidebar WITH EXPLANATIONS
+            const errors = [];
+            if (!tempCorrect) {
+                errors.push(`<div style="margin-bottom: 8px;"><strong>🌡️ Temperature should be ${scenario.correctTemp.min}-${scenario.correctTemp.max}</strong><br><span style="font-size: 10px; color: #9ca3af;">${scenario.explanations.temp}</span></div>`);
+            }
+            if (!topPCorrect) {
+                errors.push(`<div style="margin-bottom: 8px;"><strong>🎯 Top-p should be ${scenario.correctTopP.min}-${scenario.correctTopP.max}</strong><br><span style="font-size: 10px; color: #9ca3af;">${scenario.explanations.topP}</span></div>`);
+            }
+            if (!repCorrect) {
+                errors.push(`<div style="margin-bottom: 8px;"><strong>🔁 Repetition should be ${scenario.correctRep.min}-${scenario.correctRep.max}</strong><br><span style="font-size: 10px; color: #9ca3af;">${scenario.explanations.rep}</span></div>`);
+            }
+            if (!presCorrect) {
+                errors.push(`<div style="margin-bottom: 8px;"><strong>✨ Presence should be ${scenario.correctPres.min}-${scenario.correctPres.max}</strong><br><span style="font-size: 10px; color: #9ca3af;">${scenario.explanations.pres}</span></div>`);
+            }
+            
+            if (sidebarFeedback && sidebarErrorList) {
+                sidebarFeedback.style.display = 'block';
+                sidebarErrorList.innerHTML = `
+                    ${errors.join('')}
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(239, 68, 68, 0.3);">
+                        💡 Think about the goal: <strong style="color: #fbbf24;">"${scenario.goal}"</strong>
+                    </div>
+                `;
+            }
+            
             SoundManager.play('error');
+            this.isCheckingChallenge = false; // Reset flag immediately for wrong answers
         }
     },
     
@@ -916,7 +1075,7 @@ window.phaseSampling = {
             <div style="height: 100%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px;">
                 <div style="max-width: 900px; width: 100%;">
                     
-                    <h1 style="font-size: 32px; text-align: center; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                    <h1 style="font-size: 25px; text-align: center; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
                                -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
                         ✓ Sampling Parameters Mastered!
                     </h1>
@@ -970,75 +1129,75 @@ window.phaseSampling = {
                         </ul>
                     </div>
                     
-                    <!-- Journey Checkpoint -->
-                    <div style="padding: 24px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.08)); 
-                               border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 14px; margin-bottom: 24px;">
-                        <div style="text-align: center; margin-bottom: 16px;">
-                            <span style="font-size: 32px;">🗺️</span>
-                            <h3 style="font-size: 18px; color: #fbbf24; margin: 8px 0 0 0; font-weight: 700;">Journey Checkpoint</h3>
-                        </div>
-                        
-                        <div style="display: grid; gap: 14px;">
-                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #22c55e; border-radius: 6px;">
-                                <div style="font-size: 13px; font-weight: 600; color: #22c55e; margin-bottom: 6px;">📍 Where You Are</div>
-                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    You've completed the <strong>full LLM pipeline</strong>! From text to tokens, vectors to attention, training to generation, and now fine-tuned control with sampling parameters.
-                                </div>
-                            </div>
                             
-                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--primary); border-radius: 6px;">
-                                <div style="font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 6px;">✅ What You Did</div>
-                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    You mastered the 4 sampling parameters: Temperature (randomness), Top-p (token selection), Repetition penalty (avoid loops), and Presence penalty (topic diversity). These are the same controls used in ChatGPT, Claude, and all production LLMs!
-                                </div>
-                            </div>
-                            
-                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--secondary); border-radius: 6px;">
-                                <div style="font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px;">🎯 What's Next</div>
-                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    <strong>The Finale:</strong> Reflect on your complete journey, see how all pieces fit together, and understand what separates your tiny model from billion-parameter giants like GPT-4. Celebrate what you've built!
-                                </div>
-                            </div>
-                            
-                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #fbbf24; border-radius: 6px;">
-                                <div style="font-size: 13px; font-weight: 600; color: #fbbf24; margin-bottom: 6px;">💡 Why It Matters</div>
-                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    Sampling parameters are why LLMs feel "intelligent" and "creative." Without them, every response would be identical and deterministic. Temperature=0? Boring but accurate. Temperature=1.5? Creative but unpredictable. You now control the personality of AI!
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Real World Usage -->
-                    <div style="padding: 20px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.05)); 
-                               border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 12px; margin-bottom: 32px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                            <span style="font-size: 20px;">🎯</span>
-                            <h3 style="font-size: 15px; color: #a855f7; margin: 0;">Real-World Recommendations</h3>
-                        </div>
-                        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.7;">
-                            <strong style="color: #fbbf24;">For creative writing:</strong> Temp 0.8-1.0, Top-p 0.9<br>
-                            <strong style="color: #fbbf24;">For code generation:</strong> Temp 0.2-0.4, Top-p 0.95<br>
-                            <strong style="color: #fbbf24;">For factual answers:</strong> Temp 0.1, Top-p 1.0<br>
-                            <strong style="color: #fbbf24;">To avoid repetition:</strong> Repetition penalty 1.1-1.3<br>
-                            <strong style="color: #fbbf24;">For diverse topics:</strong> Presence penalty 0.5-1.0
-                        </div>
-                    </div>
-                    
                     <div style="text-align: center;">
-                        <button onclick="phaseSampling.completePhase()" 
-                                class="btn-primary" style="padding: 16px 48px; font-size: 16px;">
-                            Continue Journey →
+                        <button id="continueToJourneyBtn"
+                                style="padding: 12px 36px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                       border: none; border-radius: 12px; color: white; font-size: 15px; font-weight: 600; 
+                                       cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
+                            Continue: View Progress →
                         </button>
-                    </div>
-                    
-                </div>
-            </div>
+                            </div>
+                            
+                                </div>
+                            </div>
         `;
+        
+        // Trigger the animation after a short delay
+        setTimeout(() => {
+            if (window.ScaleAnimations && window.ScaleAnimations.animateSamplingComparison) {
+                ScaleAnimations.animateSamplingComparison();
+            }
+        }, 500);
+        
+        // Add event listener for continue button after rendering
+        setTimeout(() => {
+            const btn = document.getElementById('continueToJourneyBtn');
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    this.currentStep = 'journey_checkpoint';
+                    this.render(document.getElementById('phaseContainer'));
+                });
+            }
+        }, 0);
+    },
+    
+    renderJourneyCheckpoint(container) {
+        const phaseData = {
+            title: 'Sampling Parameters',
+            subtitle: 'You mastered the 4 control knobs for text generation',
+            whereYouAre: 'You\'ve completed the <strong>full LLM pipeline</strong>! From text to tokens, vectors to attention, training to generation, and now fine-tuned control with sampling parameters.',
+            whatYouDid: 'You mastered the 4 sampling parameters: Temperature (randomness), Top-p (token selection), Repetition penalty (avoid loops), and Presence penalty (topic diversity). These are the same controls used in ChatGPT, Claude, and all production LLMs!',
+            whatsNext: '<strong>The Finale:</strong> Reflect on your complete journey, see how all pieces fit together, and understand what separates your tiny model from billion-parameter giants like GPT-4. Celebrate what you\'ve built!',
+            whyItMatters: 'Sampling parameters are why LLMs feel "intelligent" and "creative." Without them, every response would be identical and deterministic. Temperature=0? Boring but accurate. Temperature=1.5? Creative but unpredictable. You now control the personality of AI!',
+            buttonText: 'Continue to Finale',
+            onContinue: 'phaseSampling.completePhaseAndAdvance()'
+        };
+        
+        Game.renderJourneyCheckpoint(6, phaseData);
+    },
+    
+    completePhaseAndAdvance() {
+        // Mark phase 6 as complete
+        if (!Game.state.phaseCompleted[6]) {
+            Game.state.phaseCompleted[6] = true;
+            Game.saveState();
+        }
+        
+        // Award transition bonus only once
+        if (!Game.state.pointsAwarded['phase6_transition']) {
+            Game.addScore(100); // Phase transition bonus
+            Game.state.pointsAwarded['phase6_transition'] = true;
+            Game.saveState();
+        }
+        
+        // Advance to next phase
+        SoundManager.play('success');
+        Game.nextPhase();
     },
     
     nextStep() {
-        const steps = ['intro', 'temperature', 'top_p', 'repetition', 'presence', 'challenge', 'recap'];
+        const steps = ['temperature', 'top_p', 'repetition', 'presence', 'challenge', 'recap'];
         const currentIndex = steps.indexOf(this.currentStep);
         if (currentIndex < steps.length - 1) {
             this.currentStep = steps[currentIndex + 1];

@@ -257,6 +257,7 @@ window.phase0 = {
         const dataset = this.datasets[datasetKey];
         
         // Store in game state
+        Game.state.selectedDataset = datasetKey;
         Game.state.trainingText = dataset.text;
         Game.saveState();
         

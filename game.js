@@ -14,6 +14,12 @@ const Game = {
         startTime: null,
         finaleStep: null, // Track which step of finale phase user is on (for page refresh)
         
+        // Frozen final values (set when game completes)
+        finalScore: null,
+        finalTime: null,
+        finalRating: null,
+        gameCompleted: false,
+        
         // Training Data - Connected Journey (expanded for richer patterns)
         trainingText: "A cat sat on the mat. The dog played with the ball. The cat likes fish. The dog likes bones.",
         tokens: [],           // Filled in Phase 1 (Tokenization)
@@ -87,8 +93,8 @@ const Game = {
         // Setup visibility listener for pause/resume
         this.setupVisibilityListener();
         
-        // Restart timer if game has already started
-        if (this.state.currentPhase > 0 && (this.state.startTime || this.state.elapsedTimeBeforePause)) {
+        // Restart timer if game has already started (but not if completed)
+        if (this.state.currentPhase > 0 && !this.state.gameCompleted && (this.state.startTime || this.state.elapsedTimeBeforePause)) {
             console.log('🔄 Page refreshed - resuming timer');
             
             // If we had a startTime from before refresh, we need to account for time that passed
@@ -168,8 +174,21 @@ const Game = {
             return;
         }
         
-        // Update the score display in the modal
-        document.getElementById('endGameScoreDisplay').textContent = this.state.score;
+        // Calculate rating for display
+        let totalElapsed = 0;
+        if (this.state.startTime) {
+            const currentSessionElapsed = Date.now() - this.state.startTime;
+            totalElapsed = (this.state.elapsedTimeBeforePause || 0) + currentSessionElapsed;
+        } else if (this.state.elapsedTimeBeforePause) {
+            totalElapsed = this.state.elapsedTimeBeforePause;
+        }
+        const elapsedSeconds = Math.floor(totalElapsed / 1000);
+        const rating = this.calculateRating(this.state.score, elapsedSeconds, this.state.tokensProcessed);
+        
+        // Update the score display in the modal to show rating
+        document.getElementById('endGameScoreDisplay').textContent = Math.round(rating);
+        document.getElementById('endGameScoreRaw').textContent = this.state.score;
+        document.getElementById('endGameTimeDisplay').textContent = this.getElapsedTime();
         
         // Show confirmation modal
         document.getElementById('endGameModal').classList.add('active');
@@ -186,15 +205,23 @@ const Game = {
         // Play success sound
         SoundManager.play('success');
         
-        // Save score to scoreboard BEFORE jumping to finale
+        // Save score to scoreboard BEFORE jumping to end game page
         const scoreboardResult = this.saveToScoreboard();
+        
+        // 🎯 LOG TOTAL SCORE (RATING) FOR END GAME
+        console.log('🏁 END GAME - TOTAL SCORE (RATING):', scoreboardResult.record.rating);
+        console.log('   Raw Score:', scoreboardResult.record.score);
+        console.log('   Time:', scoreboardResult.record.timeFormatted);
+        console.log('   Tokens:', scoreboardResult.record.tokens);
         
         // Save to API asynchronously (non-blocking)
         if (window.ScoreboardAPI) {
             ScoreboardAPI.saveScore().then(result => {
                 if (result.success) {
                     if (result.isHighScore) {
-                        ScoreboardAPI.showSuccess(`🎉 Score saved! ${this.state.score} points`);
+                        // Calculate rating for display
+                        const rating = scoreboardResult.record.rating;
+                        ScoreboardAPI.showSuccess(`🎉 Score saved! Rating: ${rating} (${this.state.score} pts, ${this.getElapsedTime()})`);
                         SoundManager.play('powerup');
                     } else {
                         console.log('ℹ️ Score submitted from End Game');
@@ -205,11 +232,10 @@ const Game = {
             });
         }
         
-        // Jump directly to phase 6 (finale) and specifically to the 'resources' step
-        // This way users can see the summary and read more resources
+        // Jump to end game score page (new intermediate page)
         setTimeout(() => {
             this.state.currentPhase = 7; // Set to finale phase
-            this.state.finaleStep = 'resources'; // Save the step for page refresh
+            this.state.finaleStep = 'endgame'; // NEW: Show end game score page
             
             // Mark all phases as completed to allow full finale access
             for (let i = 0; i <= 7; i++) {
@@ -221,9 +247,9 @@ const Game = {
             this.saveState();
             this.updateUI();
             
-            // Set phase6 to show resources step directly
+            // Set phase6 to show endgame step
             if (window.phase6) {
-                phase6.currentStep = 'resources';
+                phase6.currentStep = 'endgame';
             }
             
             this.renderCurrentPhase();
@@ -256,6 +282,12 @@ const Game = {
                 pointsAwarded: {}, // Reset points tracking
                 startTime: null,
                 elapsedTimeBeforePause: 0, // Reset pause tracking
+                
+                // Reset frozen final values
+                finalScore: null,
+                finalTime: null,
+                finalRating: null,
+                gameCompleted: false,
                 
                 // Reset training data
                 trainingText: "A cat sat on the mat. The dog played with the ball. The cat likes fish. The dog likes bones.",
@@ -318,13 +350,24 @@ const Game = {
             
             // Reset phase5 (generation)
             if (window.phase5) {
-                window.phase5.currentStep = 'intro';
+                window.phase5.currentStep = 'concept1';
                 window.phase5.generatedSequence = [];
+                window.phase5.currentChallenge = 0;
+                window.phase5.challengeCorrect = 0;
+                window.phase5.challengeWrong = 0;
+            }
+            
+            // Reset phaseSampling (sampling parameters)
+            if (window.phaseSampling) {
+                window.phaseSampling.currentStep = 'concept1';
+                window.phaseSampling.temperatureValue = 0.7;
+                window.phaseSampling.topPValue = 0.9;
+                window.phaseSampling.repetitionValue = 1.2;
+                window.phaseSampling.presenceValue = 0.5;
+                window.phaseSampling.currentScenario = 0;
             }
             
             // Reset phase6 (finale) - no persistent state
-            
-            // Reset phase-sampling - will be added when implemented
             
             // Clear avatar display
             document.getElementById('modelAvatar').textContent = '';
@@ -521,7 +564,9 @@ const Game = {
         this.updateButtonVisibility();
         
         // Update header stats (no journey tracker anymore)
-        document.getElementById('scoreValue').textContent = this.state.score;
+        // Use frozen score if game is completed
+        const displayScore = this.state.gameCompleted ? this.state.finalScore : this.state.score;
+        document.getElementById('scoreValue').textContent = displayScore;
         document.getElementById('tokensValue').textContent = this.state.tokensProcessed.toLocaleString();
         
         // Update model name with unique ID if exists
@@ -558,14 +603,10 @@ const Game = {
         const modelName = this.state.modelName || this.getCreativeDefaultName();
         const phaseName = this.getPhaseName(this.state.currentPhase);
         
-        document.getElementById('modelName').innerHTML = this.state.selectedAvatar 
+        document.getElementById('modelName').innerHTML = this.state.avatar 
             ? `${modelName} <span style="font-size: 11px; color: var(--text-secondary); font-weight: 400; opacity: 0.7;">(${this.state.uniqueUserId})</span>`
             : modelName;
         document.getElementById('modelVersion').textContent = `v1.0.0 - ${phaseName}`;
-        
-        if (this.state.selectedAvatar) {
-            document.getElementById('modelAvatar').textContent = this.state.selectedAvatar;
-        }
     },
     
     showPhaseTransition(fromPhase, toPhase, callback) {
@@ -1014,6 +1055,12 @@ const Game = {
     updateTimerDisplay() {
         const timerElement = document.getElementById('gameTimer');
         if (timerElement) {
+            // If game is completed, show frozen time
+            if (this.state.gameCompleted && this.state.finalTime) {
+                timerElement.textContent = this.state.finalTime;
+                return;
+            }
+            
             let totalElapsed = 0;
             
             if (this.state.startTime) {
@@ -1034,6 +1081,11 @@ const Game = {
     },
     
     getElapsedTime() {
+        // If game is completed, return frozen time
+        if (this.state.gameCompleted && this.state.finalTime) {
+            return this.state.finalTime;
+        }
+        
         if (!this.state.startTime && !this.state.elapsedTimeBeforePause) return '00:00';
         
         let totalElapsed = 0;
@@ -1048,6 +1100,47 @@ const Game = {
         const minutes = Math.floor(elapsedSeconds / 60);
         const seconds = elapsedSeconds % 60;
         return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    },
+    
+    // Stop timer and freeze final values
+    freezeGameComplete() {
+        console.log('🏁 Freezing game completion state...');
+        
+        // Stop the timer interval
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        
+        // Calculate final values
+        let totalElapsed = 0;
+        if (this.state.startTime) {
+            const currentSessionElapsed = Date.now() - this.state.startTime;
+            totalElapsed = (this.state.elapsedTimeBeforePause || 0) + currentSessionElapsed;
+        } else if (this.state.elapsedTimeBeforePause) {
+            totalElapsed = this.state.elapsedTimeBeforePause;
+        }
+        
+        const elapsedSeconds = Math.floor(totalElapsed / 1000);
+        const minutes = Math.floor(elapsedSeconds / 60);
+        const seconds = elapsedSeconds % 60;
+        const timeFormatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        // Calculate final rating
+        const rating = this.calculateRating(this.state.score, elapsedSeconds);
+        
+        // Freeze the values
+        this.state.finalScore = this.state.score;
+        this.state.finalTime = timeFormatted;
+        this.state.finalRating = rating;
+        this.state.gameCompleted = true;
+        
+        // Clear timing values to stop any further calculations
+        this.state.startTime = null;
+        
+        this.saveState();
+        
+        console.log('✅ Game frozen - Score:', this.state.finalScore, 'Time:', this.state.finalTime, 'Rating:', Math.round(this.state.finalRating));
     },
     
     // Animate stats intro on first game start
@@ -1345,25 +1438,41 @@ const Game = {
     saveToScoreboard() {
         const records = this.getScoreboardRecords();
         
-        // Calculate total elapsed time correctly
-        let totalElapsed = 0;
-        if (this.state.startTime) {
-            const currentSessionElapsed = Date.now() - this.state.startTime;
-            totalElapsed = (this.state.elapsedTimeBeforePause || 0) + currentSessionElapsed;
-        } else if (this.state.elapsedTimeBeforePause) {
-            totalElapsed = this.state.elapsedTimeBeforePause;
-        }
+        // Use frozen values if game is completed, otherwise calculate
+        let score, timeFormatted, rating, elapsedSeconds;
         
-        const elapsedSeconds = Math.floor(totalElapsed / 1000);
-        const rating = this.calculateRating(this.state.score, elapsedSeconds, this.state.tokensProcessed);
+        if (this.state.gameCompleted) {
+            // Use frozen values
+            score = this.state.finalScore;
+            timeFormatted = this.state.finalTime;
+            rating = this.state.finalRating;
+            
+            // Parse time back to seconds for storage
+            const timeParts = timeFormatted.split(':');
+            elapsedSeconds = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
+        } else {
+            // Calculate dynamically
+            let totalElapsed = 0;
+            if (this.state.startTime) {
+                const currentSessionElapsed = Date.now() - this.state.startTime;
+                totalElapsed = (this.state.elapsedTimeBeforePause || 0) + currentSessionElapsed;
+            } else if (this.state.elapsedTimeBeforePause) {
+                totalElapsed = this.state.elapsedTimeBeforePause;
+            }
+            
+            elapsedSeconds = Math.floor(totalElapsed / 1000);
+            score = this.state.score;
+            timeFormatted = this.getElapsedTime();
+            rating = this.calculateRating(score, elapsedSeconds, this.state.tokensProcessed);
+        }
         
         const record = {
             id: Date.now(),
             modelName: this.state.modelName || this.getCreativeDefaultName(),
             avatar: this.state.avatar,
-            score: this.state.score,
+            score: score,
             time: elapsedSeconds,
-            timeFormatted: this.getElapsedTime(),
+            timeFormatted: timeFormatted,
             tokens: this.state.tokensProcessed,
             rating: rating,
             date: new Date().toLocaleDateString(),
@@ -1392,34 +1501,48 @@ const Game = {
     },
     
     calculateRating(score, timeSeconds, tokens) {
-        // 50/50 Formula: Score and Time each contribute 50% to final rating
-        // Higher score = better | Lower time = better | More tokens = small bonus
+        // NEW PERMISSIVE FORMULA: Base score with time multiplier
+        // Start with raw score, then apply time bonus/penalty
         
-        const maxScore = 2000; // Maximum achievable score
-        const targetTime = 900; // 15 minutes in seconds (target completion time)
+        const targetTime = 180; // 3 minutes (180 seconds) = 1.0x multiplier
+        const fastTime = 90;    // 1.5 minutes (90 seconds) = 2.0x multiplier (very fast!)
+        const slowTime = 600;   // 10 minutes (600 seconds) = 0.8x multiplier
         
-        // Score Component (0-100 scale) - 50% weight
-        const scoreComponent = Math.min((score / maxScore) * 100, 100);
+        // Calculate time multiplier based on completion speed
+        let timeMultiplier;
         
-        // Time Component (0-100 scale) - 50% weight
-        // Fast completion gets bonus, slow gets penalty
-        const timeComponent = Math.max(0, Math.min(100, (targetTime / timeSeconds) * 100));
+        if (timeSeconds <= fastTime) {
+            // Super fast: 2.0x multiplier
+            timeMultiplier = 2.0;
+        } else if (timeSeconds <= targetTime) {
+            // Fast to target: Linear scale from 2.0x to 1.0x
+            // (fastTime to targetTime) → (2.0 to 1.0)
+            timeMultiplier = 2.0 - ((timeSeconds - fastTime) / (targetTime - fastTime));
+        } else if (timeSeconds <= slowTime) {
+            // Slow: Linear scale from 1.0x to 0.8x
+            // (targetTime to slowTime) → (1.0 to 0.8)
+            timeMultiplier = 1.0 - (0.2 * (timeSeconds - targetTime) / (slowTime - targetTime));
+        } else {
+            // Very slow: 0.8x multiplier (still generous!)
+            timeMultiplier = 0.8;
+        }
         
-        // Token Bonus (small multiplier for engagement)
-        const tokenBonus = 1 + (tokens / 1000); // Each 1000 tokens adds 100% bonus
+        // Token Bonus (small addition, not multiplier)
+        const tokenBonus = tokens * 0.1; // Each token adds 0.1 points
         
-        // Final Rating: 50% score + 50% time, with token multiplier
-        const rating = ((scoreComponent * 0.5) + (timeComponent * 0.5)) * tokenBonus;
+        // Final Rating: Base score × time multiplier + token bonus
+        const rating = (score * timeMultiplier) + tokenBonus;
         
         return Math.round(rating * 10) / 10; // Round to 1 decimal
     },
     
     getRatingGrade(rating) {
-        if (rating >= 200) return {grade: 'S', color: '#fbbf24', label: 'Legendary'};
-        if (rating >= 150) return {grade: 'A+', color: '#22c55e', label: 'Excellent'};
-        if (rating >= 100) return {grade: 'A', color: '#3b82f6', label: 'Great'};
-        if (rating >= 70) return {grade: 'B', color: '#8b5cf6', label: 'Good'};
-        if (rating >= 50) return {grade: 'C', color: '#ec4899', label: 'Fair'};
+        // Updated grades for new permissive formula
+        if (rating >= 3000) return {grade: 'S', color: '#fbbf24', label: 'Legendary'};
+        if (rating >= 2000) return {grade: 'A+', color: '#22c55e', label: 'Excellent'};
+        if (rating >= 1200) return {grade: 'A', color: '#3b82f6', label: 'Great'};
+        if (rating >= 800) return {grade: 'B', color: '#8b5cf6', label: 'Good'};
+        if (rating >= 400) return {grade: 'C', color: '#ec4899', label: 'Fair'};
         return {grade: 'D', color: '#ef4444', label: 'Needs Practice'};
     },
     

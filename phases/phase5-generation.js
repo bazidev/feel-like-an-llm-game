@@ -1,6 +1,6 @@
 // Phase 5: Generation - USER GENERATES TEXT WITH THE MODEL
 window.phase5 = {
-    currentStep: 'intro', // 'intro' -> 'challenge' -> 'generate' -> 'recap'
+    currentStep: 'concept1', // 'concept1' -> 'concept2' -> 'challenge' -> 'generate' -> 'recap' -> 'journey_checkpoint'
     generatedSequence: [],
     currentChallenge: 0,
     challengeCorrect: 0,
@@ -52,92 +52,189 @@ window.phase5 = {
     ],
     
     render(container) {
-        if (this.currentStep === 'intro') {
-            this.renderIntro(container);
+        // Safety check: if currentStep is invalid, reset to concept1
+        const validSteps = ['concept1', 'concept2', 'challenge', 'generate', 'recap', 'journey_checkpoint'];
+        if (!validSteps.includes(this.currentStep)) {
+            console.warn(`⚠️ phase5: Invalid currentStep "${this.currentStep}", resetting to "concept1"`);
+            this.currentStep = 'concept1';
+        }
+        
+        if (this.currentStep === 'concept1') {
+            this.renderConcept1(container);
+        } else if (this.currentStep === 'concept2') {
+            this.renderConcept2(container);
         } else if (this.currentStep === 'challenge') {
             this.renderChallenge(container);
         } else if (this.currentStep === 'generate') {
             this.renderGenerate(container);
         } else if (this.currentStep === 'recap') {
             this.renderRecap(container);
+        } else if (this.currentStep === 'journey_checkpoint') {
+            this.renderJourneyCheckpoint(container);
         }
     },
     
-    renderIntro(container) {
+    renderConcept1(container) {
         container.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 30px;">
-                <div style="max-width: 800px; text-align: center;">
+            <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                <div style="max-width: 900px; width: 100%;">
                     
-                    <h1 style="font-size: 32px; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-                               -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                        ✨ Generation: Create New Text!
+                    <h1 style="font-size: 28px; margin-bottom: 12px; text-align: center; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                               -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        ✨ Generation
                     </h1>
-                    <p style="font-size: 16px; color: var(--text-secondary); margin-bottom: 32px;">
-                        Use your trained model to generate text
+                    <p style="font-size: 15px; color: var(--text-secondary); text-align: center; margin-bottom: 24px;">
+                        Create new text by sampling from probabilities
                     </p>
                     
-                    <!-- Explanation Card -->
+                    <!-- What is Generation -->
                     <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(191, 0, 255, 0.05)); 
-                               border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 16px; padding: 24px; margin-bottom: 24px; text-align: left;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
-                            <span style="font-size: 24px;">✍️</span>
-                            <h3 style="font-size: 18px; color: var(--primary); margin: 0;">How Generation Works</h3>
+                               border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 14px; padding: 20px; margin-bottom: 18px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <span style="font-size: 24px;">🎲</span>
+                            <h2 style="font-size: 18px; color: var(--primary); margin: 0;">What is Generation?</h2>
                         </div>
-                        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.8; margin-bottom: 12px;">
-                            Pick a starting word. Your model looks up: "What words came after this in training?" Then picks one based on <strong>probability</strong>. Repeat! You're not "thinking" - you're sampling from statistics.
-                        </p>
-                        <div style="padding: 12px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--primary);">
-                            Start: "chef" → Model says: 50% "cooked", 50% "loves"<br>
-                            Pick "cooked" → repeat with "cooked"<br>
-                            Build sentence word by word!
-                        </div>
-                    </div>
-                    
-                    <!-- Reality Check -->
-                    <div style="padding: 16px; background: rgba(239, 68, 68, 0.08); border: 2px solid rgba(239, 68, 68, 0.25); 
-                               border-radius: 12px; margin-bottom: 20px;">
-                        <div style="display: flex; align-items: center; gap: 8px; justify-content: center;">
-                            <span style="font-size: 18px;">⚡</span>
-                            <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">
-                                Reality Check: You're rolling dice weighted by training data. No creativity - just probability!
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <!-- Real LLM Concept -->
-                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.05)); 
-                               border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 32px; text-align: left;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                            <span style="font-size: 20px;">🧠</span>
-                            <h3 style="font-size: 15px; color: #a855f7; margin: 0;">Real LLM Concept: Sampling & Temperature</h3>
-                        </div>
-                        <div style="font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
+                        <div style="font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
                             <p style="margin-bottom: 10px;">
-                                This game always picks from probabilities. Real LLMs have <strong style="color: #a855f7;">parameters to control creativity</strong>:
+                                <strong style="color: var(--primary);">Pick a starting word.</strong> 
+                                Your model looks up: "What words came after this in training?" Then picks one based on probability.
                             </p>
-                            <div style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
-                                <div style="font-size: 11px; line-height: 1.8;">
-                                    • <strong style="color: #fbbf24;">Temperature (0-2):</strong> Controls randomness. Low = predictable, High = creative/chaotic<br>
-                                    • <strong style="color: #fbbf24;">Top-K sampling:</strong> Only consider the top K most likely tokens<br>
-                                    • <strong style="color: #fbbf24;">Top-P (nucleus) sampling:</strong> Consider tokens until cumulative probability reaches P<br>
-                                    • <strong style="color: #fbbf24;">Beam search:</strong> Explore multiple generation paths simultaneously
-                                </div>
-                            </div>
-                            <p style="margin: 0; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border-left: 3px solid #fbbf24;">
-                                💡 <strong>Key Insight:</strong> LLMs don't "plan" sentences! They generate one token at a time, with NO ability to revise. 
-                                That's why they sometimes start sentences they can't finish logically. It's pure statistical prediction!
+                            <p style="margin-bottom: 10px;">
+                                <strong style="color: var(--primary);">Repeat the process.</strong> 
+                                Take that new word, look up what comes next, pick again. Build text word by word!
+                            </p>
+                            <p style="margin: 0;">
+                                <strong style="color: var(--primary);">No creativity happens.</strong> 
+                                You're rolling dice weighted by training data. If "chef" was followed by "cooked" 80% of the time, you'll mostly pick "cooked".
                             </p>
                         </div>
                     </div>
                     
-                    <button class="btn-primary" onclick="phase5.startChallenges()" 
-                            style="font-size: 17px; padding: 14px 40px;">
-                        🎮 Test Your Understanding
-                    </button>
+                    <!-- The Process -->
+                    <div style="background: linear-gradient(135deg, rgba(191, 0, 255, 0.1), rgba(139, 92, 246, 0.05)); 
+                               border: 2px solid rgba(191, 0, 255, 0.3); border-radius: 14px; padding: 20px; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <span style="font-size: 24px;">🔄</span>
+                            <h2 style="font-size: 18px; color: var(--secondary); margin: 0;">The Generation Loop</h2>
+                        </div>
+                        <div style="font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
+                            <p style="margin-bottom: 10px;">
+                                <strong style="color: var(--secondary);">Step 1:</strong> Look at current context (generated tokens so far)
+                            </p>
+                            <p style="margin-bottom: 10px;">
+                                <strong style="color: var(--secondary);">Step 2:</strong> Model predicts probability distribution over all possible next tokens
+                            </p>
+                            <p style="margin-bottom: 10px;">
+                                <strong style="color: var(--secondary);">Step 3:</strong> Sample one token from that distribution (weighted random choice)
+                            </p>
+                            <p style="margin: 0;">
+                                <strong style="color: var(--secondary);">Step 4:</strong> Add token to sequence, repeat from Step 1 until stopping condition
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <button onclick="phase5.nextStep()" 
+                                style="padding: 12px 36px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                       border: none; border-radius: 12px; color: white; font-size: 15px; font-weight: 600; 
+                                       cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
+                            Next →
+                        </button>
+                    </div>
                     
                 </div>
             </div>
         `;
+    },
+    
+    renderConcept2(container) {
+        container.innerHTML = `
+            <div style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                <div style="max-width: 900px; width: 100%;">
+                    
+                    <h1 style="font-size: 28px; margin-bottom: 12px; text-align: center; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                               -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        ✨ Generation
+                    </h1>
+                    <p style="font-size: 15px; color: var(--text-secondary); text-align: center; margin-bottom: 24px;">
+                        Token-by-token text creation from learned patterns
+                    </p>
+                    
+                    <!-- Key Insight -->
+                    <div style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05)); 
+                               border: 2px solid rgba(251, 191, 36, 0.3); border-radius: 14px; padding: 20px; margin-bottom: 18px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <span style="font-size: 24px;">💡</span>
+                            <h2 style="font-size: 18px; color: #fbbf24; margin: 0;">Key Insight: One Token at a Time</h2>
+                        </div>
+                        <div style="font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
+                            <p style="margin-bottom: 10px;">
+                                <strong style="color: #fbbf24;">No planning ahead!</strong> 
+                                LLMs generate ONE token at a time with NO ability to plan or revise future tokens.
+                            </p>
+                            <p style="margin-bottom: 10px;">
+                                <strong style="color: #fbbf24;">That's why they sometimes start sentences they can't finish logically!</strong> 
+                                The model commits to each word before knowing what comes next.
+                            </p>
+                            <p style="margin: 0;">
+                                <strong style="color: #fbbf24;">Everything is probability.</strong> 
+                                If "chef" was followed by "cooked" 80% of the time in training, you'll pick "cooked" with 80% probability.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Reality Check: How Real LLMs Do It -->
+                    <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05)); 
+                               border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 14px; padding: 20px; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <span style="font-size: 24px;">⚡</span>
+                            <h2 style="font-size: 18px; color: #ef4444; margin: 0;">Reality Check: How Real LLMs Generate</h2>
+                        </div>
+                        <div style="font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
+                            <ul style="margin: 0; padding-left: 20px; list-style: none;">
+                                <li style="margin-bottom: 8px; padding-left: 16px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #ef4444;">•</span>
+                                    <strong style="color: #ef4444;">Sampling parameters control generation:</strong> Temperature (0-2) controls randomness - low = predictable, high = creative chaos
+                                </li>
+                                <li style="margin-bottom: 8px; padding-left: 16px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #ef4444;">•</span>
+                                    <strong style="color: #ef4444;">Top-p (nucleus sampling):</strong> Only sample from top probable tokens whose cumulative probability reaches p (typically 0.9)
+                                </li>
+                                <li style="margin-bottom: 8px; padding-left: 16px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #ef4444;">•</span>
+                                    <strong style="color: #ef4444;">Autoregressive generation:</strong> Each new token gets fed back into the model as context for the next prediction
+                                </li>
+                                <li style="margin: 0; padding-left: 16px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #ef4444;">•</span>
+                                    <strong style="color: #ef4444;">Massive parallelism:</strong> GPT-4 processes ALL previous tokens in parallel using attention, but generates new tokens one at a time
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <button onclick="phase5.startChallenges()" 
+                                style="padding: 12px 36px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                       border: none; border-radius: 12px; color: white; font-size: 15px; font-weight: 600; 
+                                       cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
+                            Start Quiz →
+                        </button>
+                    </div>
+                    
+                </div>
+            </div>
+        `;
+    },
+    
+    nextStep() {
+        const steps = ['concept1', 'concept2'];
+        const currentIndex = steps.indexOf(this.currentStep);
+        if (currentIndex < steps.length - 1) {
+            this.currentStep = steps[currentIndex + 1];
+            const container = document.getElementById('phaseContainer');
+            this.render(container);
+            SoundManager.play('click');
+        }
     },
     
     startChallenges() {
@@ -160,12 +257,19 @@ window.phase5 = {
         const progress = this.currentChallenge + 1;
         const total = this.challenges.length;
         
+        // Shuffle options to randomize correct answer position
+        const shuffledOptions = challenge.options.map((option, idx) => ({ option, originalIdx: idx }));
+        for (let i = shuffledOptions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+        }
+        
         container.innerHTML = `
             <div class="phase">
                 <div class="phase-sidebar">
                     <div>
                         <h2 class="phase-title">Test Your Knowledge</h2>
-                        <p class="phase-subtitle">Challenge ${progress} of ${total}</p>
+                        <p class="phase-subtitle">Answer questions about generation</p>
                     </div>
                     
                     <div class="phase-description">
@@ -187,7 +291,7 @@ window.phase5 = {
                     </div>
                     
                     <div style="padding: 12px; background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 8px; margin-top: 16px;">
-                        <p style="font-size: 11px; color: var(--text-secondary); margin: 0; line-height: 1.6;">
+                        <p style="font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.6;">
                             💡 Think about what you learned: LLMs follow patterns, not meaning!
                         </p>
                     </div>
@@ -208,8 +312,8 @@ window.phase5 = {
                         
                         <!-- Options -->
                         <div id="challengeOptions" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
-                            ${challenge.options.map((option, idx) => `
-                                <button onclick="phase5.checkAnswer(${idx})"
+                            ${shuffledOptions.map((item, idx) => `
+                                <button onclick="phase5.checkAnswer(${item.originalIdx})"
                                         class="challenge-option"
                                         style="padding: 18px 20px; background: rgba(255, 255, 255, 0.02); 
                                                border: 2px solid rgba(0, 212, 255, 0.2); border-radius: 12px; 
@@ -221,7 +325,7 @@ window.phase5 = {
                                                  font-family: 'JetBrains Mono', monospace;">
                                         ${String.fromCharCode(65 + idx)}
                                     </span>
-                                    ${option}
+                                    ${item.option}
                                 </button>
                             `).join('')}
                         </div>
@@ -476,7 +580,7 @@ window.phase5 = {
                     `}).join('')}
                 </div>
                 <div style="margin-top: 12px; padding: 10px; background: rgba(0, 212, 255, 0.05); border-radius: 8px; font-size: 11px; color: var(--text-secondary);">
-                    💡 <strong>Showing top 6</strong> most likely continuations based on your training data patterns
+                    💡 <strong>Showing top</strong> most likely continuations based on your training data patterns
                 </div>
             </div>
         `;
@@ -524,139 +628,75 @@ window.phase5 = {
         const quizPercent = Math.round((this.challengeCorrect / quizTotal) * 100);
         
         container.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 30px; overflow-y: auto;">
-                <div style="max-width: 900px; width: 100%;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px; overflow-y: auto;">
+                <div style="max-width: 750px; width: 100%;">
                     
-                    <h1 style="font-size: 32px; text-align: center; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                    <h1 style="font-size: 22px; text-align: center; margin-bottom: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
                                -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
                         ✓ Phase 5 Complete: Generation
                     </h1>
                     
-                    <p style="font-size: 15px; color: var(--text-secondary); text-align: center; margin-bottom: 32px;">
+                    <p style="font-size: 12px; color: var(--text-secondary); text-align: center; margin-bottom: 16px;">
                         You generated NEW text using your trained model!
                     </p>
                     
                     <!-- Quiz Performance -->
-                    <div style="padding: 20px; background: linear-gradient(135deg, ${quizPercent >= 75 ? 'rgba(34, 197, 94, 0.15)' : 'rgba(251, 191, 36, 0.15)'}, rgba(0, 0, 0, 0.1)); 
-                               border: 2px solid ${quizPercent >= 75 ? '#22c55e' : '#fbbf24'}; border-radius: 12px; margin-bottom: 24px; text-align: center;">
-                        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">
+                    <div style="padding: 12px; background: linear-gradient(135deg, ${quizPercent >= 75 ? 'rgba(34, 197, 94, 0.15)' : 'rgba(251, 191, 36, 0.15)'}, rgba(0, 0, 0, 0.1)); 
+                               border: 2px solid ${quizPercent >= 75 ? '#22c55e' : '#fbbf24'}; border-radius: 10px; margin-bottom: 14px; text-align: center;">
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">
                             🎯 Your Quiz Score
                         </div>
-                        <div style="font-size: 48px; font-weight: 700; color: ${quizPercent >= 75 ? '#22c55e' : '#fbbf24'}; margin-bottom: 8px;">
+                        <div style="font-size: 32px; font-weight: 700; color: ${quizPercent >= 75 ? '#22c55e' : '#fbbf24'}; margin-bottom: 4px;">
                             ${quizPercent}%
                         </div>
-                        <div style="font-size: 13px; color: var(--text-secondary);">
+                        <div style="font-size: 11px; color: var(--text-secondary);">
                             ${this.challengeCorrect} correct out of ${quizTotal} questions
                         </div>
-                        <div style="margin-top: 12px; font-size: 13px; color: ${quizPercent >= 75 ? '#22c55e' : '#f59e0b'}; font-weight: 600;">
-                            ${quizPercent >= 100 ? '🏆 Perfect Score!' : quizPercent >= 75 ? '✓ Great Understanding!' : '👍 Keep Learning!'}
+                        <div style="margin-top: 6px; font-size: 11px; color: ${quizPercent >= 75 ? '#22c55e' : '#f59e0b'}; font-weight: 600;">
+                            ${quizPercent >= 100 ? '🏆 Perfect Score!' : quizPercent >= 75 ? '✓ Great!' : '👍 Keep Learning!'}
                         </div>
                     </div>
                     
                     <!-- Generated Text -->
-                    <div style="padding: 24px; background: rgba(0, 212, 255, 0.08); border: 2px solid var(--primary); border-radius: 12px; margin-bottom: 24px;">
-                        <div style="text-align: center; margin-bottom: 16px;">
-                            <span style="font-size: 12px; color: var(--text-secondary);">✨ YOUR AI-GENERATED TEXT</span>
+                    <div style="padding: 16px; background: rgba(0, 212, 255, 0.08); border: 2px solid var(--primary); border-radius: 10px; margin-bottom: 14px;">
+                        <div style="text-align: center; margin-bottom: 10px;">
+                            <span style="font-size: 10px; color: var(--text-secondary);">✨ YOUR AI-GENERATED TEXT</span>
                         </div>
-                        <div style="font-size: 20px; font-family: 'JetBrains Mono', monospace; color: white; text-align: center; line-height: 1.8;">
+                        <div style="font-size: 15px; font-family: 'JetBrains Mono', monospace; color: white; text-align: center; line-height: 1.6;">
                             "${generated}"
                         </div>
                     </div>
                     
-                    <!-- What Happened -->
-                    <div style="padding: 20px; background: rgba(255, 255, 255, 0.02); border-radius: 12px; margin-bottom: 24px;">
-                        <h3 style="font-size: 16px; color: var(--primary); margin-bottom: 12px;">📊 What Just Happened:</h3>
-                        <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary); font-size: 14px; line-height: 1.8;">
-                            <li>You picked words based on <strong>learned probabilities</strong></li>
-                            <li>Each choice came from <strong>your training data</strong></li>
-                            <li>The model doesn't "know" what words mean - just which followed which</li>
-                            <li>You created <strong>new text</strong> from statistical patterns!</li>
-                        </ul>
-                    </div>
-                    
                     <!-- Limited Dataset Explanation -->
-                    <div style="padding: 16px; background: rgba(239, 68, 68, 0.08); border: 2px solid rgba(239, 68, 68, 0.25); 
-                               border-radius: 12px; margin-bottom: 24px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                            <span style="font-size: 20px;">⚠️</span>
-                            <h3 style="font-size: 15px; color: #ef4444; margin: 0; font-weight: 700;">About Your Generated Text</h3>
+                    <div style="padding: 12px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); 
+                               border-radius: 10px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span style="font-size: 16px;">⚠️</span>
+                            <h3 style="font-size: 12px; color: #ef4444; margin: 0; font-weight: 700;">About Your Generated Text</h3>
                         </div>
-                        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.7;">
-                            <p style="margin: 0 0 10px 0;">
-                                Your generated text might seem odd or hit "dead ends" - this is <strong style="color: #ef4444;">expected with limited training data</strong>! 
+                        <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.5;">
+                            <p style="margin: 0 0 6px 0;">
+                                Your text might seem odd or hit "dead ends" - this is <strong style="color: #ef4444;">expected with limited training data</strong>! 
                             </p>
-                            <p style="margin: 0 0 10px 0;">
-                                <strong style="color: #fbbf24;">Why it happens:</strong> With only ${sentenceCount} training sentences, 
+                            <p style="margin: 0 0 6px 0;">
+                                <strong style="color: #fbbf24;">Why:</strong> With only ${sentenceCount} training sentences, 
                                 the model has seen very few word combinations. Real LLMs train on trillions of tokens!
                             </p>
                             <p style="margin: 0;">
                                 <strong style="color: #22c55e;">What's impressive:</strong> Despite the tiny dataset, your text still makes SOME sense! 
-                                The words are real, the grammar often works, and it follows patterns from training. 
-                                It won't generate completely random gibberish - the statistical patterns still guide it toward sensible output.
+                                The statistical patterns guide it toward sensible output.
                             </p>
                         </div>
                     </div>
                     
-                    <!-- Journey Checkpoint -->
-                    <div style="padding: 24px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.08)); 
-                               border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 14px; margin-bottom: 32px;">
-                        <div style="text-align: center; margin-bottom: 16px;">
-                            <span style="font-size: 32px;">🏁</span>
-                            <h3 style="font-size: 18px; color: #fbbf24; margin: 8px 0 0 0; font-weight: 700;">Final Checkpoint</h3>
-                        </div>
-                        
-                        <div style="display: grid; gap: 14px;">
-                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #22c55e; border-radius: 6px;">
-                                <div style="font-size: 13px; font-weight: 600; color: #22c55e; margin-bottom: 6px;">🎉 What You Accomplished</div>
-                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    You built a <strong>complete working LLM</strong> from scratch! Tokenization → Embeddings → Attention → Training → Generation. 
-                                    That's the full pipeline used by GPT, Claude, and every modern LLM!
-                                </div>
-                            </div>
-                            
-                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--primary); border-radius: 6px;">
-                                <div style="font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 6px;">✅ What You Created</div>
-                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    Your AI generated "${generated}" using only statistical patterns. 
-                                    No hard-coded rules, no human intervention after training - pure learned probabilities in action!
-                                </div>
-                            </div>
-                            
-                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid var(--secondary); border-radius: 6px;">
-                                <div style="font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px;">🔬 What's Next</div>
-                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    Learn about <strong>Sampling Parameters</strong>: Temperature, Top-p, Repetition Penalty, and Presence Penalty. 
-                                    These control HOW the model picks tokens to generate more creative or focused output!
-                                </div>
-                            </div>
-                            
-                            <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-left: 3px solid #fbbf24; border-radius: 6px;">
-                                <div style="font-size: 13px; font-weight: 600; color: #fbbf24; margin-bottom: 6px;">💡 The Big Picture</div>
-                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    You now understand how LLMs really work! They're not magic - just massive scale versions of what you built. 
-                                    More data, more parameters, more compute, but the same fundamental process: pattern recognition through mathematics.
-                                </div>
-                            </div>
-                        </div>
+                    <div style="text-align: center;">
+                        <button id="continueToJourneyBtn"
+                                style="padding: 10px 28px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                       border: none; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; 
+                                       cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); transition: all 0.3s;">
+                            Continue: View Progress →
+                        </button>
                     </div>
-                    
-                    <!-- ANIMATED SCALE COMPARISON -->
-                    <div style="margin: 40px 0; padding: 32px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(20, 184, 166, 0.05)); 
-                               border: 3px solid rgba(34, 197, 94, 0.3); border-radius: 16px;">
-                        <div style="text-align: center; margin-bottom: 30px;">
-                            <h3 style="font-size: 22px; color: #22c55e; margin-bottom: 10px; font-weight: 700;">
-                                📖 Context Window: Your Sequence vs. Real LLMs
-                            </h3>
-                            <p style="font-size: 14px; color: var(--text-secondary);">
-                                See how much text production models can process at once
-                            </p>
-                        </div>
-                        <div id="contextScaleAnimation" style="min-height: 600px;"></div>
-                    </div>
-                    
-                    <button class="btn-primary" onclick="phase5.completePhase()" style="width: 100%; font-size: 17px; padding: 14px;">
-                        Continue to Sampling Parameters →
-                    </button>
                     
                 </div>
             </div>
@@ -669,6 +709,54 @@ window.phase5 = {
                 ScaleAnimations.animateContextComparison(generatedLength);
             }
         }, 500);
+        
+        // Add event listener for continue button after rendering
+        setTimeout(() => {
+            const btn = document.getElementById('continueToJourneyBtn');
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    this.currentStep = 'journey_checkpoint';
+                    this.render(document.getElementById('phaseContainer'));
+                });
+            }
+        }, 0);
+    },
+    
+    renderJourneyCheckpoint(container) {
+        const generated = Game.state.generatedText || '';
+        const wordCount = generated.split(/\s+/).filter(w => w.length > 0).length;
+        
+        const phaseData = {
+            title: 'Generation',
+            subtitle: `You generated ${wordCount} words of new text`,
+            whereYouAre: 'You have a <strong>complete working LLM</strong>! From tokenization to embeddings, attention to training, and now generation - you built the full pipeline used by GPT, Claude, and all modern LLMs.',
+            whatYouDid: `You generated "${generated}" by sampling from probability distributions. Each word was picked based on training patterns, not rules. The model learned "which words follow which" and used that to create new text!`,
+            whatsNext: '<strong>Sampling Parameters:</strong> Learn about Temperature, Top-p, Repetition Penalty, and Presence Penalty. These knobs control HOW the model picks tokens - turning deterministic math into creative generation!',
+            whyItMatters: 'Generation is where everything comes together! Tokenization broke text into pieces, embeddings captured patterns, attention found relationships, training learned probabilities - and now generation CREATES new text from all that knowledge. This is what makes LLMs "AI"!',
+            buttonText: 'Continue to Sampling Parameters',
+            onContinue: 'phase5.completePhaseAndAdvance()'
+        };
+        
+        Game.renderJourneyCheckpoint(5, phaseData);
+    },
+    
+    completePhaseAndAdvance() {
+        // Mark phase 5 as complete
+        if (!Game.state.phaseCompleted[5]) {
+            Game.state.phaseCompleted[5] = true;
+            Game.saveState();
+        }
+        
+        // Award transition bonus only once
+        if (!Game.state.pointsAwarded['phase5_transition']) {
+            Game.addScore(100); // Phase transition bonus
+            Game.state.pointsAwarded['phase5_transition'] = true;
+            Game.saveState();
+        }
+        
+        // Advance to next phase
+        SoundManager.play('success');
+        Game.nextPhase();
     },
     
     completePhase() {

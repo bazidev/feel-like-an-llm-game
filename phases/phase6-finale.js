@@ -12,7 +12,7 @@ window.phase6 = {
     },
     
     nextStep() {
-        const steps = ['celebration', 'journey', 'comparison', 'resources'];
+        const steps = ['endgame', 'celebration', 'comparison', 'resources'];
         const currentIndex = steps.indexOf(this.currentStep);
         if (currentIndex < steps.length - 1) {
             this.currentStep = steps[currentIndex + 1];
@@ -45,15 +45,157 @@ window.phase6 = {
         
         const step = this.currentStep;
         
-        if (step === 'celebration') {
+        if (step === 'endgame') {
+            this.renderEndGameScore(container);
+        } else if (step === 'celebration') {
             this.renderCelebration(container);
-        } else if (step === 'journey') {
-            this.renderJourney(container);
         } else if (step === 'comparison') {
             this.renderComparison(container);
         } else if (step === 'resources') {
             this.renderResources(container);
         }
+    },
+    
+    renderEndGameScore(container) {
+        // End game score page - clean and copy-friendly
+        this.currentStep = 'endgame';
+        Game.state.finaleStep = this.currentStep;
+        
+        // Freeze the game state (stop timer, save final values)
+        if (!Game.state.gameCompleted) {
+            Game.freezeGameComplete();
+        }
+        
+        Game.saveState();
+        
+        // Get score data
+        const scoreboardResult = Game.saveToScoreboard();
+        const ratingData = Game.getRatingGrade(scoreboardResult.record.rating);
+        
+        container.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100%; padding: 20px;">
+                <div style="max-width: 550px; width: 100%;">
+                    
+                    <!-- Header -->
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-size: 36px; margin-bottom: 6px;">🏁</div>
+                        <h1 style="font-size: 26px; margin-bottom: 4px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                                   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                            Game Complete
+                        </h1>
+                    </div>
+                    
+                    <!-- Score Card -->
+                    <div id="copyableScore" style="padding: 20px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(191, 0, 255, 0.08)); 
+                               border: 2px solid rgba(0, 212, 255, 0.4); border-radius: 12px; margin-bottom: 16px; text-align: center;">
+                        
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;">
+                            TOTAL SCORE
+                        </div>
+                        
+                        <div style="font-size: 42px; font-weight: 700; color: var(--primary); margin-bottom: 12px;">
+                            ${Math.round(Game.state.finalRating || scoreboardResult.record.rating)}
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div>
+                                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">POINTS</div>
+                                <div style="font-size: 18px; font-weight: 600; color: white;">${Game.state.finalScore || Game.state.score}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">TIME</div>
+                                <div style="font-size: 18px; font-weight: 600; color: white;">${Game.state.finalTime || Game.getElapsedTime()}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">MODEL</div>
+                                <div style="font-size: 14px; font-weight: 600; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Game.state.modelName || 'Anonymous'}</div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <!-- Action Buttons Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+                        <button onclick="window.phase6.copyEndGameScore()" class="btn-secondary" 
+                                style="padding: 12px; font-size: 13px;">
+                            📋 Copy
+                        </button>
+                        <button onclick="Game.showScoreboard()" class="btn-secondary" 
+                                style="padding: 12px; font-size: 13px;">
+                            🏆 Leaderboard
+                        </button>
+                    </div>
+                    
+                    <!-- Learn More Compact Section -->
+                    <div style="padding: 16px; background: linear-gradient(135deg, rgba(191, 0, 255, 0.1), rgba(0, 212, 255, 0.05)); 
+                               border: 2px solid rgba(191, 0, 255, 0.3); border-radius: 10px; margin-bottom: 16px; text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 6px;">🎓</div>
+                        <h2 style="font-size: 16px; color: var(--secondary); margin-bottom: 6px;">
+                            Want to Learn More?
+                        </h2>
+                        <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px;">
+                            Explore resources on transformers, attention, and AI
+                        </p>
+                        
+                        <button onclick="window.phase6.currentStep = 'resources'; window.phase6.render(document.getElementById('phaseContainer')); window.scrollTo({top: 0, behavior: 'smooth'});" 
+                                class="btn-primary" style="width: 100%; padding: 10px; font-size: 13px;">
+                            📚 Explore Resources
+                        </button>
+                    </div>
+                    
+                    <!-- Play Again Button -->
+                    <button onclick="Game.performReset()" class="btn-secondary" 
+                            style="width: 100%; padding: 12px; font-size: 14px;">
+                        🔄 Play Again
+                    </button>
+                    
+                </div>
+            </div>
+        `;
+    },
+    
+    copyEndGameScore() {
+        // Use frozen values for consistency
+        const rating = Game.state.finalRating || Game.calculateRating(Game.state.score, 0);
+        const ratingData = Game.getRatingGrade(rating);
+        
+        const text = `🎮 Feel like an LLM - Score Summary
+
+Total Score: ${Math.round(rating)}
+Points: ${Game.state.finalScore || Game.state.score}
+Time: ${Game.state.finalTime || Game.getElapsedTime()}
+Model: ${Game.state.modelName || 'Anonymous'}
+Grade: ${ratingData.label} (${ratingData.grade})
+
+Try it yourself: [Add your game URL here]`;
+        
+        navigator.clipboard.writeText(text).then(() => {
+            SoundManager.play('success');
+            
+            // Show success message
+            const msg = document.createElement('div');
+            msg.textContent = '✅ Score copied to clipboard!';
+            msg.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, var(--success), #10b981);
+                color: white;
+                padding: 20px 40px;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                z-index: 10000;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            `;
+            document.body.appendChild(msg);
+            
+            setTimeout(() => msg.remove(), 2000);
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            SoundManager.play('error');
+        });
     },
     
     renderCelebration(container) {
@@ -88,12 +230,22 @@ window.phase6 = {
         const ratingData = Game.getRatingGrade(scoreboardResult.record.rating);
         const generatedText = Game.state.generatedText || '(Generation phase not completed)';
         
+        // 🎯 LOG TOTAL SCORE (RATING) FOR GAME COMPLETION
+        console.log('🎉 GAME COMPLETE - TOTAL SCORE (RATING):', scoreboardResult.record.rating);
+        console.log('   Raw Score:', scoreboardResult.record.score);
+        console.log('   Time:', scoreboardResult.record.timeFormatted);
+        console.log('   Tokens:', scoreboardResult.record.tokens);
+        console.log('   Rank:', scoreboardResult.rank);
+        
         // Save to API asynchronously (non-blocking)
         if (window.ScoreboardAPI) {
             ScoreboardAPI.saveScore().then(result => {
                 if (result.success) {
                     if (result.isHighScore) {
-                        ScoreboardAPI.showSuccess(`🎉 New high score saved! ${Game.state.score} points`);
+                        // Calculate rating for display
+                        const elapsedSeconds = scoreboardResult.record.time;
+                        const rating = scoreboardResult.record.rating;
+                        ScoreboardAPI.showSuccess(`🎉 New high score! Rating: ${rating} (${Game.state.score} pts, ${Game.getElapsedTime()})`);
                         // Play powerup for high score!
                         SoundManager.play('powerup');
                     } else {
@@ -107,51 +259,32 @@ window.phase6 = {
         }
         
         container.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100%; padding: 30px 20px;">
-                <div style="max-width: 850px; width: 100%;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100%; padding: 20px;">
+                <div style="max-width: 600px; width: 100%;">
                     
                     <!-- Celebration Header -->
-                    <div style="text-align: center; margin-bottom: 28px;">
-                        <div style="font-size: 64px; margin-bottom: 14px;">🎉</div>
-                        <h1 style="font-size: 42px; margin-bottom: 12px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-size: 48px; margin-bottom: 8px;">🎉</div>
+                        <h1 style="font-size: 32px; margin-bottom: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); 
                                    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
                             Congratulations!
                         </h1>
-                        <p style="font-size: 18px; color: var(--text-secondary); line-height: 1.5;">
+                        <p style="font-size: 15px; color: var(--text-secondary); line-height: 1.4;">
                             You built a working mini-LLM from scratch
                         </p>
                     </div>
                     
-                    <!-- Your Creation -->
-                    <div style="padding: 22px; background: linear-gradient(135deg, rgba(191, 0, 255, 0.15), rgba(0, 212, 255, 0.08)); 
-                               border: 2px solid rgba(191, 0, 255, 0.4); border-radius: 14px; margin-bottom: 24px;">
-                        <h2 style="font-size: 19px; color: var(--secondary); margin-bottom: 14px; text-align: center;">✨ Your AI's Creation</h2>
-                        <div style="padding: 20px; background: rgba(0, 0, 0, 0.4); border-radius: 10px; text-align: center;">
-                            <div style="font-size: 20px; font-family: 'JetBrains Mono', monospace; color: white; line-height: 1.7;">
+                    <!-- Your Creation (Compact) -->
+                    <div style="padding: 16px; background: linear-gradient(135deg, rgba(191, 0, 255, 0.12), rgba(0, 212, 255, 0.06)); 
+                               border: 2px solid rgba(191, 0, 255, 0.3); border-radius: 12px; margin-bottom: 16px;">
+                        <div style="font-size: 14px; color: var(--secondary); margin-bottom: 10px; text-align: center; font-weight: 600;">✨ Your AI's Creation</div>
+                        <div style="padding: 14px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; text-align: center;">
+                            <div style="font-size: 15px; font-family: 'JetBrains Mono', monospace; color: white; line-height: 1.5;">
                                 "${generatedText}"
                             </div>
                         </div>
-                        <div style="margin-top: 12px; text-align: center; font-size: 13px; color: var(--text-secondary);">
-                            Generated purely from statistical patterns - no "understanding" required!
-                        </div>
-                    </div>
-                    
-                    <!-- Stats -->
-                    <div style="padding: 20px; background: rgba(0, 212, 255, 0.08); border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 12px; margin-bottom: 24px;">
-                        <h3 style="font-size: 18px; color: var(--primary); margin-bottom: 16px; text-align: center;">📈 Your Stats</h3>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; text-align: center;">
-                            <div>
-                                <div style="font-size: 32px; color: var(--primary); font-weight: 700; margin-bottom: 6px;">${Game.getElapsedTime()}</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">Time Spent</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 32px; color: var(--secondary); font-weight: 700; margin-bottom: 6px;">${Game.state.score}</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">Total Score</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 32px; color: white; font-weight: 700; margin-bottom: 6px;">#${scoreboardResult.rank}</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">Rank</div>
-                            </div>
+                        <div style="margin-top: 8px; text-align: center; font-size: 11px; color: var(--text-secondary);">
+                            Generated purely from statistical patterns!
                         </div>
                     </div>
                     
@@ -208,41 +341,40 @@ window.phase6 = {
                         </div>
                     </div>
                     
-                    <!-- Score Card for Screenshot -->
-                    <div id="scoreCard" style="padding: 24px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(191, 0, 255, 0.08)); 
-                               border: 2px solid rgba(0, 212, 255, 0.4); border-radius: 14px; margin-bottom: 24px; text-align: center;">
-                        <div style="font-size: 16px; color: var(--text-secondary); margin-bottom: 16px;">🎉 Congratulations!</div>
-                        <div style="font-size: 28px; font-weight: 700; color: var(--primary); margin-bottom: 8px;">
+                    <!-- Compact Stats Card -->
+                    <div id="scoreCard" style="padding: 18px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(191, 0, 255, 0.06)); 
+                               border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 12px; margin-bottom: 16px; text-align: center;">
+                        <div style="font-size: 20px; font-weight: 700; color: var(--primary); margin-bottom: 12px;">
                             ${Game.state.modelName || 'My AI Model'}
                         </div>
-                        <div style="display: flex; justify-content: center; gap: 40px; margin-top: 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
                             <div>
-                                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 6px;">⏱️ Time</div>
-                                <div style="font-size: 24px; font-weight: 700; color: white;">${Game.getElapsedTime()}</div>
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">⏱️ Time</div>
+                                <div style="font-size: 20px; font-weight: 700; color: white;">${Game.getElapsedTime()}</div>
                             </div>
                             <div>
-                                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 6px;">🎯 Score</div>
-                                <div style="font-size: 24px; font-weight: 700; color: var(--secondary);">${Game.state.score}</div>
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">🎯 Score</div>
+                                <div style="font-size: 20px; font-weight: 700; color: var(--secondary);">${Game.state.score}</div>
                             </div>
                             <div>
-                                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 6px;">🏆 Rank</div>
-                                <div style="font-size: 24px; font-weight: 700; color: var(--primary);">#${scoreboardResult.rank}</div>
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">🏆 Rank</div>
+                                <div style="font-size: 20px; font-weight: 700; color: var(--primary);">#${scoreboardResult.rank}</div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Share Score Buttons -->
-                    <div style="padding: 20px; background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 12px; margin-bottom: 32px;">
-                        <h3 style="font-size: 16px; color: var(--primary); margin-bottom: 16px; text-align: center;">📤 Share Your Score</h3>
-                        <div style="display: flex; gap: 12px; justify-content: center;">
-                            <button id="copyTextBtn" class="btn-secondary" style="padding: 12px 24px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
-                                📋 Copy as Text
+                    <div style="padding: 14px; background: rgba(0, 0, 0, 0.25); border: 2px solid rgba(0, 212, 255, 0.25); border-radius: 10px; margin-bottom: 16px;">
+                        <div style="font-size: 13px; color: var(--primary); margin-bottom: 10px; text-align: center; font-weight: 600;">📤 Share Your Score</div>
+                        <div style="display: flex; gap: 10px; justify-content: center;">
+                            <button id="copyTextBtn" class="btn-secondary" style="padding: 10px 18px; font-size: 13px;">
+                                📋 Text
                             </button>
-                            <button id="copyImageBtn" class="btn-primary" style="padding: 12px 24px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
-                                📸 Copy as Image
+                            <button id="copyImageBtn" class="btn-primary" style="padding: 10px 18px; font-size: 13px;">
+                                📸 Image
                             </button>
                         </div>
-                        <div id="shareMessage" style="margin-top: 12px; font-size: 13px; text-align: center; color: var(--success); opacity: 0; transition: opacity 0.3s;">
+                        <div id="shareMessage" style="margin-top: 10px; font-size: 12px; text-align: center; color: var(--success); opacity: 0; transition: opacity 0.3s;">
                             ✓ Copied to clipboard!
                         </div>
                     </div>
@@ -250,7 +382,7 @@ window.phase6 = {
                     <!-- Next Button -->
                     <div style="text-align: center;">
                         <button id="celebrationNextBtn"
-                                class="btn-primary" style="padding: 16px 48px; font-size: 16px;">
+                                class="btn-primary" style="padding: 14px 40px; font-size: 15px;">
                             Next: Your Journey →
                         </button>
                     </div>
@@ -289,94 +421,6 @@ window.phase6 = {
         // Mark as complete on first step
         Game.completePhase(300);
         Game.saveState();
-    },
-    
-    renderJourney(container) {
-        const tokens = Game.state.tokens;
-        const uniqueTokenCount = new Set(tokens).size;
-        const embeddingsCount = Object.keys(Game.state.embeddings).length;
-        const modelPatterns = Object.keys(Game.state.model.bigrams).length;
-        
-        container.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100%; padding: 40px 30px;">
-                <div style="max-width: 900px; width: 100%;">
-                    
-                    <!-- Journey Recap -->
-                    <div style="padding: 28px; background: rgba(0, 212, 255, 0.08); border: 2px solid var(--primary); border-radius: 16px; margin-bottom: 36px;">
-                        <h2 style="font-size: 28px; color: var(--primary); margin-bottom: 24px; text-align: center;">🗺️ Your Complete Journey</h2>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px;">
-                            <div style="padding: 20px; background: rgba(0, 0, 0, 0.3); border-radius: 12px; border: 2px solid rgba(0, 212, 255, 0.2);">
-                                <div style="font-size: 18px; margin-bottom: 10px; font-weight: 600;">✂️ Phase 1: Tokenization</div>
-                                <div style="font-size: 32px; color: var(--primary); font-weight: 700; margin-bottom: 6px;">${tokens.length}</div>
-                                <div style="font-size: 13px; color: var(--text-secondary);">tokens created</div>
-                            </div>
-                            
-                            <div style="padding: 20px; background: rgba(0, 0, 0, 0.3); border-radius: 12px; border: 2px solid rgba(191, 0, 255, 0.2);">
-                                <div style="font-size: 18px; margin-bottom: 10px; font-weight: 600;">📊 Phase 2: Embeddings</div>
-                                <div style="font-size: 32px; color: var(--secondary); font-weight: 700; margin-bottom: 6px;">${embeddingsCount}</div>
-                                <div style="font-size: 13px; color: var(--text-secondary);">vectors generated</div>
-                            </div>
-                            
-                            <div style="padding: 20px; background: rgba(0, 0, 0, 0.3); border-radius: 12px; border: 2px solid rgba(251, 191, 36, 0.2);">
-                                <div style="font-size: 18px; margin-bottom: 10px; font-weight: 600;">🎯 Phase 3: Attention</div>
-                                <div style="font-size: 32px; color: #fbbf24; font-weight: 700; margin-bottom: 6px;">✓</div>
-                                <div style="font-size: 13px; color: var(--text-secondary);">weights calculated</div>
-                            </div>
-                            
-                            <div style="padding: 20px; background: rgba(0, 0, 0, 0.3); border-radius: 12px; border: 2px solid rgba(34, 197, 94, 0.2);">
-                                <div style="font-size: 18px; margin-bottom: 10px; font-weight: 600;">🏋️ Phase 4: Training</div>
-                                <div style="font-size: 32px; color: #22c55e; font-weight: 700; margin-bottom: 6px;">${modelPatterns}</div>
-                                <div style="font-size: 13px; color: var(--text-secondary);">patterns learned</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Key Insights -->
-                    <div style="padding: 28px; background: rgba(255, 255, 255, 0.03); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 16px; margin-bottom: 40px;">
-                        <h2 style="font-size: 24px; color: var(--primary); margin-bottom: 20px; text-align: center;">💡 What You Learned</h2>
-                        <div style="display: grid; gap: 14px;">
-                            <div style="padding: 16px; background: rgba(0, 0, 0, 0.3); border-left: 4px solid var(--primary); border-radius: 8px;">
-                                <div style="font-size: 15px; font-weight: 600; color: white; margin-bottom: 6px;">No Understanding Needed</div>
-                                <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">LLMs don't "know" meanings - they recognize patterns from massive training data</div>
-                            </div>
-                            <div style="padding: 16px; background: rgba(0, 0, 0, 0.3); border-left: 4px solid var(--secondary); border-radius: 8px;">
-                                <div style="font-size: 15px; font-weight: 600; color: white; margin-bottom: 6px;">It's All Math</div>
-                                <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">Embeddings, attention, probabilities - pure mathematical operations on numbers</div>
-                            </div>
-                            <div style="padding: 16px; background: rgba(0, 0, 0, 0.3); border-left: 4px solid #fbbf24; border-radius: 8px;">
-                                <div style="font-size: 15px; font-weight: 600; color: white; margin-bottom: 6px;">Data is Everything</div>
-                                <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">The model's "knowledge" comes entirely from training examples - garbage in, garbage out</div>
-                            </div>
-                            <div style="padding: 16px; background: rgba(0, 0, 0, 0.3); border-left: 4px solid #22c55e; border-radius: 8px;">
-                                <div style="font-size: 15px; font-weight: 600; color: white; margin-bottom: 6px;">Pattern Recognition</div>
-                                <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">Your LLM learned to predict what comes next based on what it saw during training</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Navigation -->
-                    <div style="text-align: center;">
-                        <button id="journeyNextBtn"
-                                class="btn-primary" style="padding: 16px 48px; font-size: 16px;">
-                            Next: Size Comparison →
-                        </button>
-                    </div>
-                    
-                </div>
-            </div>
-        `;
-        
-        // Attach event listener to button
-        setTimeout(() => {
-            const btn = document.getElementById('journeyNextBtn');
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    console.log('Journey Next button clicked!');
-                    window.phase6.nextStep();
-                });
-            }
-        }, 0);
     },
     
     renderComparison(container) {

@@ -111,11 +111,19 @@
         <div class="modal-content">
             <h2>🏁 End Game Early?</h2>
             <p>Are you sure you want to end the game now?</p>
-            <p style="margin-top: 12px;">Your current score of <strong style="color: var(--primary);"><span id="endGameScoreDisplay">0</span> points</strong> will be submitted to the leaderboard.</p>
-            <p style="color: var(--text-secondary); font-size: 13px; margin-top: 16px;">You'll be taken to the final summary where you can review what you've learned and explore additional resources.</p>
+            <div style="margin-top: 20px; padding: 16px; background: rgba(0, 212, 255, 0.08); border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 12px;">
+                <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Your Total Score:</div>
+                <div style="font-size: 32px; font-weight: 700; color: var(--primary); margin-bottom: 4px;">
+                    <span id="endGameScoreDisplay">0</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary);">
+                    <span id="endGameScoreRaw">0</span> points • <span id="endGameTimeDisplay">00:00</span>
+                </div>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-top: 16px;">You'll be taken to your score summary where you can review your performance.</p>
             <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
                 <button class="btn-secondary" id="cancelEndGameBtn">Cancel</button>
-                <button class="btn-primary" id="confirmEndGameBtn" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">confirm</button>
+                <button class="btn-primary" id="confirmEndGameBtn" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">Confirm</button>
             </div>
         </div>
     </div>

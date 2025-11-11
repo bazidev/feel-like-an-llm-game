@@ -643,8 +643,8 @@ window.ScaleAnimations = {
         const paramCount = Math.max(10, userPatterns || 50);
         
         container.innerHTML = `
-            <div style="text-align: center; margin-bottom: 50px;">
-                <div style="font-size: 24px; color: var(--primary); font-weight: 700; margin-bottom: 25px; text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);">
+            <div id="yourParamsSection" style="text-align: center; margin-bottom: 50px; transition: all 1s ease;">
+                <div id="yourParamsTitle" style="font-size: 18px; color: var(--primary); font-weight: 700; margin-bottom: 20px; text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);">
                     YOUR MODEL PARAMETERS
                 </div>
                 <div id="userParams" style="display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; max-width: 500px; margin: 0 auto 20px auto;">
@@ -652,57 +652,56 @@ window.ScaleAnimations = {
                         <div class="param-dot" style="width: 10px; height: 10px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 50%; opacity: 0; transform: scale(0); box-shadow: 0 0 8px rgba(0, 212, 255, 0.6);"></div>
                     `).join('')}
                 </div>
-                <div style="margin-top: 20px; font-size: 22px; color: var(--primary); font-weight: 700; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 15px rgba(0, 212, 255, 0.6);">
+                <div id="yourParamsCount" style="margin-top: 20px; font-size: 20px; color: var(--primary); font-weight: 700; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 15px rgba(0, 212, 255, 0.6);">
                     ${paramCount.toLocaleString()} parameters
                 </div>
             </div>
             
-            <div id="modelComparison" style="opacity: 0; margin-top: 50px;">
-                <div style="text-align: center; margin-bottom: 40px;">
-                    <div style="font-size: 22px; color: var(--secondary); font-weight: 700; text-shadow: 0 0 15px rgba(168, 85, 247, 0.5);">
+            <div id="modelComparison" style="opacity: 0;     margin-top: -150px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="font-size: 14px; color: var(--secondary); font-weight: 700; text-shadow: 0 0 15px rgba(168, 85, 247, 0.5);">
                         REAL LLM PARAMETERS
                     </div>
-                    <div style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">
                         The gulf between your mini-model and production systems
                     </div>
                 </div>
                 
-                <div style="position: relative; height: 340px; background: rgba(0, 0, 0, 0.2); border-radius: 16px; padding: 20px; border: 2px solid rgba(255, 255, 255, 0.1);">
+                <div style="position: relative; height: 280px; padding: 20px;">
                     <!-- Your Model (microscopic dot) -->
                     <div style="position: absolute; left: 8%; bottom: 30px; text-align: center;">
-                        <div style="width: 4px; height: 4px; background: var(--primary); margin: 0 auto 12px auto; border-radius: 50%; box-shadow: 0 0 10px var(--primary);"></div>
+                        <div style="width: 4px; height: 4px; background: var(--primary); margin: 0 auto 12px auto; border-radius: 50%; box-shadow: 0 0 5px var(--primary);"></div>
                         <div style="font-size: 11px; color: var(--primary); font-weight: 700; white-space: nowrap;">You</div>
                         <div style="font-size: 10px; color: var(--text-secondary); white-space: nowrap;">${paramCount}</div>
                     </div>
                     
                     <!-- GPT-2: Small -->
                     <div class="param-explosion" data-model="gpt2" style="position: absolute; left: 22%; bottom: 30px; text-align: center; opacity: 0;">
-                        <div style="width: 50px; height: 50px; background: radial-gradient(circle, #8b5cf6, #6b46c1); margin: 0 auto 12px auto; border-radius: 50%; box-shadow: 0 0 25px rgba(139, 92, 246, 0.8);"></div>
-                        <div style="font-size: 13px; color: #8b5cf6; font-weight: 700; white-space: nowrap;">GPT-2</div>
-                        <div style="font-size: 12px; color: var(--text-secondary); white-space: nowrap;">1.5 Billion</div>
+                        <div style="width: 40px; height: 40px; background: radial-gradient(circle, #8b5cf6, #6b46c1); margin: 0 auto 12px auto; border-radius: 50%; box-shadow: 0 0 10px rgba(139, 92, 246, 0.8);"></div>
+                        <div style="font-size: 11px; color: #8b5cf6; font-weight: 700; white-space: nowrap;">GPT-2</div>
+                        <div style="font-size: 10px; color: var(--text-secondary); white-space: nowrap;">1.5B</div>
                     </div>
                     
                     <!-- GPT-3: Medium -->
                     <div class="param-explosion" data-model="gpt3" style="position: absolute; left: 45%; transform: translateX(-50%); bottom: 30px; text-align: center; opacity: 0;">
-                        <div style="width: 140px; height: 140px; background: radial-gradient(circle, #ec4899, #db2777); margin: 0 auto 12px auto; border-radius: 50%; box-shadow: 0 0 40px rgba(236, 72, 153, 1), 0 0 80px rgba(236, 72, 153, 0.5);"></div>
-                        <div style="font-size: 16px; color: #ec4899; font-weight: 700; white-space: nowrap;">GPT-3</div>
-                        <div style="font-size: 13px; color: var(--text-secondary); white-space: nowrap;">175 Billion</div>
+                        <div style="width: 100px; height: 100px; background: radial-gradient(circle, #ec4899, #db2777); margin: 0 auto 12px auto; border-radius: 50%; box-shadow: 0 0 20px rgba(236, 72, 153, 1), 0 0 60px rgba(236, 72, 153, 0.5);"></div>
+                        <div style="font-size: 13px; color: #ec4899; font-weight: 700; white-space: nowrap;">GPT-3</div>
+                        <div style="font-size: 11px; color: var(--text-secondary); white-space: nowrap;">175B</div>
                     </div>
                     
                     <!-- GPT-4: MASSIVE -->
                     <div class="param-explosion" data-model="gpt4" style="position: absolute; right: 5%; bottom: 30px; text-align: center; opacity: 0;">
-                        <div style="width: 220px; height: 220px; background: radial-gradient(circle at center, #f59e0b, #ef4444, #dc2626); margin: 0 auto 12px auto; border-radius: 50%; box-shadow: 0 0 60px rgba(245, 158, 11, 1), 0 0 120px rgba(245, 158, 11, 0.7), 0 0 180px rgba(245, 158, 11, 0.4);"></div>
-                        <div style="font-size: 18px; color: #f59e0b; font-weight: 700; white-space: nowrap;">GPT-4</div>
-                        <div style="font-size: 14px; color: var(--text-secondary); white-space: nowrap;">~1.76 Trillion</div>
+                        <div style="width: 160px; height: 160px; background: radial-gradient(circle at center, #f59e0b, #ef4444, #dc2626); margin: 0 auto 12px auto; border-radius: 50%; box-shadow: 0 0 30px rgba(245, 158, 11, 1), 0 0 100px rgba(245, 158, 11, 0.6);"></div>
+                        <div style="font-size: 15px; color: #f59e0b; font-weight: 700; white-space: nowrap;">GPT-4</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); white-space: nowrap;">~1.76T</div>
                     </div>
                 </div>
                 
-                <div style="margin-top: 35px; padding: 24px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(34, 197, 94, 0.08)); border: 3px solid rgba(251, 191, 36, 0.4); border-radius: 12px; opacity: 0;" id="paramNote">
-                    <div style="font-size: 15px; color: var(--text-secondary); text-align: center; line-height: 1.9;">
-                        💡 <strong style="color: #fbbf24; font-size: 17px;">1.76 TRILLION parameters</strong> means GPT-4 stores 
+                <div style="margin-top: 15px; padding: 8px; opacity: 0;" id="paramNote">
+                    <div style="font-size: 12px; color: var(--text-secondary); text-align: center; line-height: 1.8;">
+                        💡 <strong style="color: #fbbf24; font-size: 13px;">1.76T parameters</strong> means GPT-4 stores 
                         <strong style="color: #22c55e;">${(1760000000000 / paramCount).toLocaleString(undefined, {maximumFractionDigits: 0})}&times;</strong> 
                         more relationships than your model!<br>
-                        <span style="font-size: 13px; opacity: 0.8;">Every pattern, correlation, and statistical relationship learned from the entire internet.</span>
                     </div>
                 </div>
             </div>
@@ -732,18 +731,30 @@ window.ScaleAnimations = {
                 
                 // Shrink user params after display
                 setTimeout(() => {
+                    // Shrink the dots but keep them visible
                     gsap.to('#userParams', {
                         scale: 0.15,
                         y: -60,
-                        opacity: 0.3,
+                        opacity: 0,
                         duration: 1.3,
                         ease: 'power2.inOut'
                     });
                     
-                    // Show model comparison
+                    // Move the entire section up to make room for comparison
+                    gsap.to('#yourParamsSection', {
+                        marginBottom: '20px',
+                        scale: 0,
+                        opacity: 0,
+                        y: -60,
+                        duration: 1.3,
+                        ease: 'power2.inOut'
+                    });
+                    
+                    // Show model comparison and move it into view
                     gsap.to('#modelComparison', {
                         opacity: 1,
-                        duration: 0.6,
+                        y: -50,
+                        duration: 0.8,
                         delay: 0.4
                     });
                     
