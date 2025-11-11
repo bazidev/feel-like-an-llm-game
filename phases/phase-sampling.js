@@ -1125,7 +1125,6 @@ window.phaseSampling = {
                             <li>Temperature adjusts the probability distribution shape</li>
                             <li>Top-p dynamically limits which tokens are considered</li>
                             <li>Repetition & presence penalties prevent boring, repetitive output</li>
-                            <li>These knobs turn deterministic math into creative generation!</li>
                         </ul>
                     </div>
                     
@@ -1168,7 +1167,7 @@ window.phaseSampling = {
             subtitle: 'You mastered the 4 control knobs for text generation',
             whereYouAre: 'You\'ve completed the <strong>full LLM pipeline</strong>! From text to tokens, vectors to attention, training to generation, and now fine-tuned control with sampling parameters.',
             whatYouDid: 'You mastered the 4 sampling parameters: Temperature (randomness), Top-p (token selection), Repetition penalty (avoid loops), and Presence penalty (topic diversity). These are the same controls used in ChatGPT, Claude, and all production LLMs!',
-            whatsNext: '<strong>The Finale:</strong> Reflect on your complete journey, see how all pieces fit together, and understand what separates your tiny model from billion-parameter giants like GPT-4. Celebrate what you\'ve built!',
+            whatsNext: '<strong>See Your Score:</strong> Next, you\'ll see your final score and celebrate your achievement! Then you can reflect on your complete journey and understand what separates your tiny model from billion-parameter giants like GPT-4.',
             whyItMatters: 'Sampling parameters are why LLMs feel "intelligent" and "creative." Without them, every response would be identical and deterministic. Temperature=0? Boring but accurate. Temperature=1.5? Creative but unpredictable. You now control the personality of AI!',
             buttonText: 'Continue to Finale',
             onContinue: 'phaseSampling.completePhaseAndAdvance()'

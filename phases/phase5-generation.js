@@ -315,6 +315,7 @@ window.phase5 = {
                             ${shuffledOptions.map((item, idx) => `
                                 <button onclick="phase5.checkAnswer(${item.originalIdx})"
                                         class="challenge-option"
+                                        data-original-idx="${item.originalIdx}"
                                         style="padding: 18px 20px; background: rgba(255, 255, 255, 0.02); 
                                                border: 2px solid rgba(0, 212, 255, 0.2); border-radius: 12px; 
                                                cursor: pointer; transition: all 0.3s; text-align: left; 
@@ -355,12 +356,12 @@ window.phase5 = {
                 }
                 
                 .challenge-option.correct {
-                    background: rgba(34, 197, 94, 0.15) !important;
+                    background: rgba(34, 197, 94, 0.2) !important;
                     border-color: #22c55e !important;
                 }
                 
                 .challenge-option.wrong {
-                    background: rgba(239, 68, 68, 0.15) !important;
+                    background: rgba(239, 68, 68, 0.2) !important;
                     border-color: #ef4444 !important;
                 }
                 
@@ -388,14 +389,20 @@ window.phase5 = {
         
         // Disable all buttons and highlight correct/wrong
         const options = document.querySelectorAll('.challenge-option');
-        options.forEach((btn, idx) => {
-            btn.classList.add('disabled');
+        options.forEach((btn) => {
             btn.style.pointerEvents = 'none';
             
-            if (idx === challenge.correct) {
+            const btnOriginalIdx = parseInt(btn.getAttribute('data-original-idx'));
+            
+            if (btnOriginalIdx === challenge.correct) {
+                // Highlight correct answer in green (full opacity)
                 btn.classList.add('correct');
-            } else if (idx === selectedIdx && !isCorrect) {
+            } else if (btnOriginalIdx === selectedIdx && !isCorrect) {
+                // Highlight wrong answer in red (full opacity)
                 btn.classList.add('wrong');
+            } else {
+                // Fade out other options
+                btn.classList.add('disabled');
             }
         });
         
@@ -539,7 +546,7 @@ window.phase5 = {
                     <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
                         "<strong>${lastWord}</strong>" never appeared before another word in training.<br>
                         This word only appears at the <strong>end of sentences</strong> in your training data!<br><br>
-                        💡 <strong>Tip:</strong> Choose words that appear in the middle of sentences.
+                        💡 <strong>Tip:</strong>Next time, Choose words that appear in the middle of sentences.
                     </div>
                 </div>
             `;
@@ -646,7 +653,7 @@ window.phase5 = {
                         <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">
                             🎯 Your Quiz Score
                         </div>
-                        <div style="font-size: 32px; font-weight: 700; color: ${quizPercent >= 75 ? '#22c55e' : '#fbbf24'}; margin-bottom: 4px;">
+                        <div style="font-size: 25px; font-weight: 700; color: ${quizPercent >= 75 ? '#22c55e' : '#fbbf24'}; margin-bottom: 4px;">
                             ${quizPercent}%
                         </div>
                         <div style="font-size: 11px; color: var(--text-secondary);">
@@ -672,9 +679,9 @@ window.phase5 = {
                                border-radius: 10px; margin-bottom: 16px;">
                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
                             <span style="font-size: 16px;">⚠️</span>
-                            <h3 style="font-size: 12px; color: #ef4444; margin: 0; font-weight: 700;">About Your Generated Text</h3>
+                            <h3 style="font-size: 14px; color: #ef4444; margin: 0; font-weight: 700;">About Your Generated Text</h3>
                         </div>
-                        <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.5;">
+                        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
                             <p style="margin: 0 0 6px 0;">
                                 Your text might seem odd or hit "dead ends" - this is <strong style="color: #ef4444;">expected with limited training data</strong>! 
                             </p>
