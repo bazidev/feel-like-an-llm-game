@@ -135,7 +135,6 @@ const Game = {
         document.getElementById('hintToggle').addEventListener('click', () => this.toggleHint());
         
         // Modal buttons
-        document.getElementById('continueBtn').addEventListener('click', () => this.closeModal('congratsModal'));
         document.getElementById('playAgainBtn').addEventListener('click', () => this.reset());
         document.getElementById('cancelResetBtn').addEventListener('click', () => this.closeModal('resetConfirmModal'));
         document.getElementById('confirmResetBtn').addEventListener('click', () => this.performReset());
@@ -497,7 +496,6 @@ const Game = {
             console.log('🎉 Game Complete! Showing final recap on screen.');
         } else {
             // Regular phase completion - show modal
-            this.showCongratsModal(pointsEarned, message);
             SoundManager.play('levelUp');
         }
     },
@@ -882,12 +880,6 @@ const Game = {
         SoundManager.play('click');
     },
     
-    // Modals
-    showCongratsModal(points, message) {
-        document.getElementById('phaseCompleteMessage').textContent = message;
-        document.getElementById('pointsEarned').textContent = `+${points} points!`;
-        document.getElementById('congratsModal').classList.add('active');
-    },
     
     showGameCompleteModal() {
         const timeTaken = Math.floor((Date.now() - this.state.startTime) / 1000 / 60);
@@ -920,21 +912,6 @@ const Game = {
             modal.classList.remove('active');
             // Force reflow
             modal.offsetHeight;
-        }
-        
-        if (modalId === 'congratsModal') {
-            console.log('📍 Current phase:', this.state.currentPhase);
-            console.log('✅ Phase completed:', this.state.phaseCompleted[this.state.currentPhase]);
-            // Small delay to ensure modal is closed before advancing
-            setTimeout(() => {
-                if (this.state.currentPhase < this.state.totalPhases - 1) {
-                    console.log('➡️ Advancing to next phase...');
-                    this.nextPhase();
-                } else {
-                    console.log('🏁 Already at last phase, just rendering current');
-                    this.renderCurrentPhase();
-                }
-            }, 100);
         }
     },
     

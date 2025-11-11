@@ -784,14 +784,14 @@ window.phase2 = {
                 this.targetGroups.subjects.push(token);
             }
             // ACTIONS - Verbs (complete words, not suffixes)
-            else if (['cooked', 'cook', 'played', 'play', 'kicked', 'kick', 'scored', 'score',
+            else if (['cooked', 'cook', 'played', 'play', 'kicked', 'kick', 'scored', 'score', 'scor',
                      'loves', 'love', 'tastes', 'taste', 'wrote', 'write', 'came', 'come',
                      'launched', 'launch', 'floated', 'float', 'orbits', 'orbit', 'shine',
-                     'shines', 'carried', 'carry', 'wore', 'wear', 'trained', 'train', 'trains',
+                     'shines', 'carried', 'carry', 'carri', 'wore', 'wear', 'trained', 'train', 'trains',
                      'reflects', 'reflect', 'serves', 'serve', 'baked', 'bake', 'sharing', 'share',
                      'looks', 'look', 'needs', 'need', 'form', 'sang', 'sing', 'watched', 'watch',
                      'processed', 'process', 'runs', 'run', 'builds', 'build', 'celebrates', 'celebrate',
-                     'competing', 'compete', 'winning', 'win', 'sleep', 'sleeps', 'has', 'chased', 'chase',
+                     'competing', 'compete', 'winning', 'win', 'sleep', 'sleeps', 'has', 'chased', 'chase', 'chas',
                      'chirped', 'chirp', 'working', 'work', 'cooking', 'monitors', 'monitor', 'likes', 
                      'includes', 'sat'].includes(t)) {
                 this.targetGroups.actions.push(token);
@@ -802,19 +802,21 @@ window.phase2 = {
                 this.targetGroups.prepositions.push(token);
             }
             // OBJECTS/DESCRIPTORS - Things, places, qualities (things acted upon or locations)
-            else if (['ball', 'goal', 'fish', 'milk', 'bones', 'treats', 'window', 'garden', 
-                     'sofa', 'toy', 'tree', 'seeds', 'water', 'friends', 'branch',
+            else if (['ball', 'goal', 'goals', 'fish', 'milk', 'bones', 'treats', 'window', 'garden', 
+                     'sofa', 'toy', 'toys', 'tree', 'seeds', 'water', 'bowls', 'friends', 'branch',
                      'code', 'data', 'software', 'features', 'calculations', 'programs', 
                      'applications', 'documentation', 'users', 'task', 'problems',
                      'pasta', 'cuisine', 'meals', 'cheese', 'tomatoes', 'ingredients',  // pasta is object in "cooked pasta"
-                     'sauce', 'Italy', 'recipes', 'people', 'food', 'kitchen', 'customers', 'fresh', 'hot',
-                     'oven', 'mat',
+                     'sauce', 'italy', 'recipes', 'people', 'food', 'kitchen', 'customers', 'fresh', 'hot',
+                     'oven', 'mat', 'clean', 'delicious', 'beautiful', 'high', 'modern', 'new', 'protective', 
+                     'useful', 'together', 'speed', 'spe', 'action', 'rest', 'top', 'three',
                      'space', 'sky', 'night', 'suit', 'equipment', 'patterns',
-                     'orbit', 'Earth', 'planet',  // Earth/planet are objects (things orbited)
-                     'fuel', 'sunlight', 'years', 'today',
+                     'orbit', 'earth', 'planet',  // Earth/planet are objects (things orbited)
+                     'fuel', 'sunlight', 'years',
                      'football', 'games', 'victory', 'skill', 'training', 'rivals', 
                      'championship', 'minute', 'matches', 'dedication', 'project', 
-                     'solutions', 'editor', 'feedback', 'dawn', 'strategies'].includes(t)) {
+                     'solutions', 'editor', 'feedback', 'dawn', 'strategies', 'great', 'greate', 'final',
+                     'carefully', 'eagerly', 'continuously', 'efficiently', 'loudly', 'proudly', 'quickly', 'regularly'].includes(t)) {
                 this.targetGroups.objects.push(token);
             }
         });

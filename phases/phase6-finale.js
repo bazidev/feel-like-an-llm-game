@@ -145,11 +145,11 @@ window.phase6 = {
         
         const text = `🎮 Feel like an LLM - Score Summary
 
-Total Score: ${totalScore}
-Points: ${Game.state.finalScore}
-Time: ${Game.state.finalTime}
-Model Name: ${Game.state.modelName}
-User ID: ${Game.state.uniqueUserId}
+🤖 Model Name: ${Game.state.modelName}
+👤 User ID: ${Game.state.uniqueUserId}
+🏆 Total Score: ${totalScore}
+🎯 Points: ${Game.state.finalScore}
+⏱️ Time: ${Game.state.finalTime}
 
 Try it yourself: ${gameURL}`;
         
@@ -188,13 +188,16 @@ Try it yourself: ${gameURL}`;
         
         // Save the current step to game state for page refresh
         Game.state.finaleStep = this.currentStep;
-        Game.saveState();
         
         // 🎉 PLAY VICTORY SOUND FOR GAME COMPLETION!
         SoundManager.play('victory');
         
-        // STOP THE TIMER - Game is complete!
-        Game.stopTimer();
+        // Freeze the game state (stop timer, save final values) - MUST BE DONE FIRST!
+        if (!Game.state.gameCompleted) {
+            Game.freezeGameComplete();
+        }
+        
+        Game.saveState();
         
         // Award game completion bonus - NEW SCORING SYSTEM
         if (!Game.state.phaseCompleted[7]) {
@@ -202,11 +205,14 @@ Try it yourself: ${gameURL}`;
             Game.saveState();
         }
         
-        // Award completion bonus only once
+        // Award completion bonus only once (INCREASED TO 1000!)
         if (!Game.state.pointsAwarded['game_completion']) {
-            Game.addScore(500); // Game completion bonus!
+            Game.addScore(1000); // Game completion bonus!
             Game.state.pointsAwarded['game_completion'] = true;
             Game.saveState();
+            
+            // Show celebration overlay for 2 seconds
+            this.showCompletionBonusOverlay();
         }
         
         // Save to local scoreboard
@@ -299,20 +305,20 @@ Try it yourself: ${gameURL}`;
                         
                         <!-- Stats Grid -->
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px;">
+                            <div style="text-align: center; padding: 16px; background: rgba(0, 212, 255, 0.08); 
+                                       border-radius: 12px; border: 1px solid rgba(0, 212, 255, 0.3);">
+                                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">🏆 TOTAL SCORE</div>
+                                <div style="font-size: 28px; font-weight: 700; color: #00d4ff;">${scoreboardResult.record.rating}</div>
+                            </div>
+                            <div style="text-align: center; padding: 16px; background: rgba(191, 0, 255, 0.08); 
+                                       border-radius: 12px; border: 1px solid rgba(191, 0, 255, 0.3);">
+                                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">🎯 POINTS</div>
+                                <div style="font-size: 28px; font-weight: 700; color: #bf00ff;">${Game.state.score}</div>
+                            </div>
                             <div style="text-align: center; padding: 16px; background: rgba(255, 255, 255, 0.03); 
                                        border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
                                 <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">⏱️ TIME</div>
                                 <div style="font-size: 28px; font-weight: 700; color: white;">${Game.getElapsedTime()}</div>
-                            </div>
-                            <div style="text-align: center; padding: 16px; background: rgba(191, 0, 255, 0.08); 
-                                       border-radius: 12px; border: 1px solid rgba(191, 0, 255, 0.3);">
-                                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">💎 SCORE</div>
-                                <div style="font-size: 28px; font-weight: 700; color: #bf00ff;">${Game.state.score}</div>
-                            </div>
-                            <div style="text-align: center; padding: 16px; background: rgba(0, 212, 255, 0.08); 
-                                       border-radius: 12px; border: 1px solid rgba(0, 212, 255, 0.3);">
-                                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">🏆 RANK</div>
-                                <div style="font-size: 28px; font-weight: 700; color: #00d4ff;">#${scoreboardResult.rank}</div>
                             </div>
                         </div>
                         
@@ -332,41 +338,37 @@ Try it yourself: ${gameURL}`;
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
                             <div>
-                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">⏱️ Time</div>
-                                <div style="font-size: 20px; font-weight: 700; color: white;">${Game.getElapsedTime()}</div>
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">🏆 Total Score</div>
+                                <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${scoreboardResult.record.rating}</div>
                             </div>
                             <div>
-                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">🎯 Score</div>
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">🎯 Points</div>
                                 <div style="font-size: 20px; font-weight: 700; color: var(--secondary);">${Game.state.score}</div>
                             </div>
                             <div>
-                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">🏆 Rank</div>
-                                <div style="font-size: 20px; font-weight: 700; color: var(--primary);">#${scoreboardResult.rank}</div>
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">⏱️ Time</div>
+                                <div style="font-size: 20px; font-weight: 700; color: white;">${Game.getElapsedTime()}</div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Share Score Buttons -->
-                    <div style="padding: 14px; background: rgba(0, 0, 0, 0.25); border: 2px solid rgba(0, 212, 255, 0.25); border-radius: 10px; margin-bottom: 16px;">
-                        <div style="font-size: 13px; color: var(--primary); margin-bottom: 10px; text-align: center; font-weight: 600;">📤 Share Your Score</div>
-                        <div style="display: flex; gap: 10px; justify-content: center;">
-                            <button id="copyTextBtn" class="btn-secondary" style="padding: 10px 18px; font-size: 13px;">
-                                📋 Text
-                            </button>
-                            <button id="copyImageBtn" class="btn-primary" style="padding: 10px 18px; font-size: 13px;">
-                                📸 Image
-                            </button>
-                        </div>
-                        <div id="shareMessage" style="margin-top: 10px; font-size: 12px; text-align: center; color: var(--success); opacity: 0; transition: opacity 0.3s;">
-                            ✓ Copied to clipboard!
-                        </div>
+                    <!-- Action Buttons -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                        <button onclick="Game.showScoreboard()" class="btn-secondary" 
+                                style="padding: 12px; font-size: 13px;">
+                            🏆 See Scoreboard
+                        </button>
+                        <button id="copyResultBtn" class="btn-secondary" 
+                                style="padding: 12px; font-size: 13px;">
+                            📋 Copy Result
+                        </button>
                     </div>
                     
-                    <!-- Next Button -->
+                    <!-- Play Again Button -->
                     <div style="text-align: center;">
-                        <button id="celebrationNextBtn"
-                                class="btn-primary" style="padding: 14px 40px; font-size: 15px;">
-                            Next: Your Journey →
+                        <button onclick="Game.performReset()" class="btn-primary" 
+                                style="width: 100%; padding: 14px 40px; font-size: 15px;">
+                            🔄 Play Again
                         </button>
                     </div>
                     
@@ -374,29 +376,13 @@ Try it yourself: ${gameURL}`;
             </div>
         `;
         
-        // Attach event listener to button
+        // Attach event listener to copy result button
         setTimeout(() => {
-            const btn = document.getElementById('celebrationNextBtn');
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    console.log('Celebration Next button clicked!');
-                    window.phase6.nextStep();
-                });
-            }
-            
-            // Copy as Text button
-            const copyTextBtn = document.getElementById('copyTextBtn');
-            if (copyTextBtn) {
-                copyTextBtn.addEventListener('click', () => {
+            // Copy Result button
+            const copyResultBtn = document.getElementById('copyResultBtn');
+            if (copyResultBtn) {
+                copyResultBtn.addEventListener('click', () => {
                     window.phase6.copyScoreAsText(scoreboardResult);
-                });
-            }
-            
-            // Copy as Image button
-            const copyImageBtn = document.getElementById('copyImageBtn');
-            if (copyImageBtn) {
-                copyImageBtn.addEventListener('click', () => {
-                    window.phase6.copyScoreAsImage();
                 });
             }
         }, 0);
@@ -669,7 +655,8 @@ Try it yourself: ${gameURL}`;
     copyScoreAsText(scoreboardResult) {
         const modelName = Game.state.modelName;
         const uniqueUserId = Game.state.uniqueUserId;
-        const score = Game.state.score;
+        const totalScore = scoreboardResult.record.rating; // Total score (rating)
+        const score = Game.state.score; // Raw points
         const time = Game.getElapsedTime();
         const rank = scoreboardResult.rank;
         const generatedText = Game.state.generatedText;
@@ -681,9 +668,9 @@ Try it yourself: ${gameURL}`;
 
 🤖 Model Name: ${modelName}
 👤 User ID: ${uniqueUserId}
+🏆 Total Score: ${totalScore}
+🎯 Points: ${score}
 ⏱️ Time: ${time}
-🎯 Score: ${score} points
-🏆 Rank: #${rank}
 
 ✨ My AI Generated: "${generatedText}"
 
@@ -691,30 +678,31 @@ Try it yourself: ${gameURL}`;
 
         // Copy to clipboard
         navigator.clipboard.writeText(textToShare).then(() => {
-            this.showShareMessage();
-            if (window.SoundManager) {
-                SoundManager.play('success');
-            }
+            SoundManager.play('success');
+            
+            // Show success message (same as copyEndGameScore)
+            const msg = document.createElement('div');
+            msg.textContent = '✅ Score copied to clipboard!';
+            msg.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background:  #10b981d6;
+                color: white;
+                padding: 20px 40px;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                z-index: 10000;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            `;
+            document.body.appendChild(msg);
+            
+            setTimeout(() => msg.remove(), 2000);
         }).catch(err => {
-            console.error('Failed to copy text:', err);
-            // Fallback for older browsers
-            const textArea = document.createElement('textarea');
-            textArea.value = textToShare;
-            textArea.style.position = 'fixed';
-            textArea.style.left = '-999999px';
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                this.showShareMessage();
-                if (window.SoundManager) {
-                    SoundManager.play('success');
-                }
-            } catch (err) {
-                console.error('Fallback: Failed to copy', err);
-                alert('Failed to copy to clipboard');
-            }
-            document.body.removeChild(textArea);
+            console.error('Failed to copy:', err);
+            SoundManager.play('error');
         });
     },
     
@@ -842,5 +830,73 @@ Try it yourself: ${gameURL}`;
                 shareMessage.style.opacity = '0';
             }, 3000);
         }
+    },
+    
+    // Show completion bonus overlay animation (2 seconds)
+    showCompletionBonusOverlay() {
+        // Create overlay element
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease-in-out;
+        `;
+        
+        // Create content
+        overlay.innerHTML = `
+            <style>
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes scaleIn {
+                    0% { transform: scale(0.5); opacity: 0; }
+                    50% { transform: scale(1.1); }
+                    100% { transform: scale(1); opacity: 1; }
+                }
+                @keyframes pulse {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.05); }
+                }
+            </style>
+            <div style="text-align: center; animation: scaleIn 0.5s ease-out;">
+                <div style="font-size: 80px; margin-bottom: 20px; animation: pulse 1s ease-in-out infinite;">
+                    🎉
+                </div>
+                <div style="font-size: 48px; font-weight: 700; color: #fbbf24; margin-bottom: 16px; 
+                           text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);">
+                    +1000 Points!
+                </div>
+                <div style="font-size: 24px; color: var(--primary); font-weight: 600;">
+                    Completion Bonus
+                </div>
+            </div>
+        `;
+        
+        // Add to document
+        document.body.appendChild(overlay);
+        
+        // Play success sound
+        if (window.SoundManager) {
+            SoundManager.play('powerup');
+        }
+        
+        // Remove after 2 seconds
+        setTimeout(() => {
+            overlay.style.animation = 'fadeIn 0.3s ease-in-out reverse';
+            setTimeout(() => {
+                overlay.remove();
+            }, 300);
+        }, 2000);
     }
 };
+
